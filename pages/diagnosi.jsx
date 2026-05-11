@@ -244,7 +244,7 @@ useEffect(() => {
           ...prev,
           { role: "assistant", content: errMsg },
         ]);
-      }
+      
       } finally {
         setLoading(false);
         setAnalysisActive(false);
