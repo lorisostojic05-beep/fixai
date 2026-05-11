@@ -234,11 +234,12 @@ useEffect(() => {
         }
       } catch (err) {
         console.error("Errore API:", err);
-        const errMsg = err.message?.includes("fetch")
-          ? "⚠️ Problema di rete. Controlla la connessione internet e riprova."
-          : err.message?.includes("500")
-          ? "⚠️ Servizio temporaneamente non disponibile. Riprova tra qualche secondo."
-          : "⚠️ Qualcosa è andato storto. Riprova o clicca **Genera referto** per salvare la diagnosi fin qui.";
+        let errMsg = "⚠️ Qualcosa è andato storto. Riprova o clicca Genera referto per salvare la diagnosi fin qui.";
+        if (err.message && err.message.includes("fetch")) {
+          errMsg = "⚠️ Problema di rete. Controlla la connessione internet e riprova.";
+        } else if (err.message && err.message.includes("500")) {
+          errMsg = "⚠️ Servizio temporaneamente non disponibile. Riprova tra qualche secondo.";
+        }
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: errMsg },
