@@ -532,29 +532,6 @@ onClick={() => {
     ✅ Referto inviato a {emailUtente}!
   </p>
 )}
-}        const res = await fetch("/api/invia-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: emailUtente,
-            report,
-            appliance,
-            brand,
-            problem,
-          }),
-        });
-        const data = await res.json();
-        if (data.inviata) setEmailInviata(true);
-      }}
-    >
-      ✉️ Invia
-    </button>
-  </div>
-) : (
-  <p style={{ textAlign: "center", color: "#0F6E56", fontSize: "13px", marginTop: "12px" }}>
-    ✅ Referto inviato a {emailUtente}!
-  </p>
-)}
         </div>
       </div>
     );
