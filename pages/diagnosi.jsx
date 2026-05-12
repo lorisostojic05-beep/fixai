@@ -97,6 +97,9 @@ useEffect(() => {
   const params = new URLSearchParams(window.location.search);
   const esitoPagamento = params.get("pagamento");
   const stripeSessionId = params.get("session_id");
+  const urlAppliance = params.get("appliance");
+  const urlBrand = params.get("brand");
+  const urlProblem = params.get("problem");
 
   if (esitoPagamento === "ok" && stripeSessionId) {
     setVerificandoPagamento(true);
@@ -104,24 +107,13 @@ useEffect(() => {
       .then((r) => r.json())
       .then((data) => {
         if (data.pagato) {
-          const savedAppliance = sessionStorage.getItem("fixai_appliance");
-          const savedBrand = sessionStorage.getItem("fixai_brand");
-          const savedProblem = sessionStorage.getItem("fixai_problem");
-
-          if (savedAppliance) setAppliance(savedAppliance);
-          if (savedBrand) setBrand(savedBrand);
-          if (savedProblem) setProblem(savedProblem);
+          if (urlAppliance) setAppliance(urlAppliance);
+          if (urlBrand) setBrand(urlBrand);
+          if (urlProblem) setProblem(urlProblem);
 
           setPagamentoVerificato(true);
           sessionStorage.setItem("fixai_pagato", "true");
-          sessionStorage.removeItem("fixai_appliance");
-          sessionStorage.removeItem("fixai_brand");
-          sessionStorage.removeItem("fixai_problem");
-
-          const sa = sessionStorage.getItem("fixai_appliance");
-          const sb = sessionStorage.getItem("fixai_brand");
-          const sp = sessionStorage.getItem("fixai_problem");
-          setTimeout(() => startSession(sa, sb, sp), 500);
+          setTimeout(() => startSession(urlAppliance, urlBrand, urlProblem), 500);
         } else {
           alert("Pagamento non confermato. Riprova.");
         }
@@ -298,7 +290,11 @@ const avviaCheckout = async () => {
   sessionStorage.setItem("fixai_appliance", appliance);
 sessionStorage.setItem("fixai_brand", brand.charAt(0).toUpperCase() + brand.slice(1).toLowerCase());  sessionStorage.setItem("fixai_problem", problem);
 
-  const res = await fetch("/api/checkout", { method: "POST" });
+  const res = await fetch("/api/checkout", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ appliance, brand, problem }),
+});
   const data = await res.json();
   if (data.url) {
     window.location.href = data.url;

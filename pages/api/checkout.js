@@ -7,6 +7,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Metodo non consentito" });
   }
 
+  const { appliance, brand, problem } = req.body;
+
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -24,7 +26,7 @@ export default async function handler(req, res) {
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.origin}/diagnosi?pagamento=ok&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${req.headers.origin}/diagnosi?pagamento=ok&session_id={CHECKOUT_SESSION_ID}&appliance=${encodeURIComponent(appliance || "")}&brand=${encodeURIComponent(brand || "")}&problem=${encodeURIComponent(problem || "")}`,
       cancel_url: `${req.headers.origin}/diagnosi?pagamento=annullato`,
     });
 
