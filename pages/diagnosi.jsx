@@ -352,7 +352,12 @@ leggiAd(welcomeMsg.content);
 const leggiAd = (testo) => {
   if (!voceAttiva) return;
   window.speechSynthesis.cancel();
-  const pulito = testo.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
+  const pulito = testo
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/[\u{1F000}-\u{1FFFF}]/gu, "")
+    .replace(/[\u2600-\u27FF]/g, "")
+    .replace(/⚠️|✅|🔧|📋|⏱️|💰|🔍/g, "");
   const utterance = new SpeechSynthesisUtterance(pulito);
   utterance.lang = "it-IT";
   utterance.rate = 1.05;
