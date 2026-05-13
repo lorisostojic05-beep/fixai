@@ -171,12 +171,14 @@
   flex: 1;
   overflow: hidden;
   gap: 0;
+  flex-direction: column;
 }
 
 /* ── Video panel ─────────────────────────────────────────────── */
 .videoPanel {
   position: relative;
-  width: 45%;
+  width: 100%;
+  height: 220px;
   background: #2C2C2A;
   flex-shrink: 0;
 }
@@ -239,7 +241,10 @@
   display: flex;
   flex-direction: column;
   background: white;
-  border-left: 1px solid #e8e8e6;
+  border-left: none;
+  border-top: 1px solid #e8e8e6;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .chatMessages {
@@ -249,6 +254,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-height: 0;
 }
 
 .bubble {
@@ -435,10 +441,10 @@
 .restartBtn:hover { background: #e8e8e6; }
 
 /* ── Mobile ──────────────────────────────────────────────────── */
-@media (max-width: 600px) {
-  .sessionLayout { flex-direction: column; }
-  .videoPanel { width: 100%; height: 220px; }
-  .chatPanel { border-left: none; border-top: 1px solid #e8e8e6; }
+@media (min-width: 768px) {
+  .sessionLayout { flex-direction: row; }
+  .videoPanel { width: 45%; height: 100%; }
+  .chatPanel { border-left: 1px solid #e8e8e6; border-top: none; }
 }
 .micBtn {
   background: #f5f5f3;
