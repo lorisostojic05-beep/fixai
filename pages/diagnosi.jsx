@@ -216,13 +216,13 @@ useEffect(() => {
         const data = await res.json();
         if (data.error) throw new Error(data.error);
 
-        if (data.message !== "[SKIP]") {
-  const aiMsg = { role: "assistant", content: data.message };
-  const withAi = [...messagesRef.current, aiMsg];
-  messagesRef.current = withAi;
-  setMessages(withAi);
-  leggiAd(data.message);
-}
+  if (!data.message.includes("SKIP")) {
+    const aiMsg = { role: "assistant", content: data.message };
+    const withAi = [...messagesRef.current, aiMsg];
+    messagesRef.current = withAi;
+    setMessages(withAi);
+    leggiAd(data.message);
+    }
 
         if (data.report) {
           setReport(data.report);
@@ -322,7 +322,8 @@ sessionStorage.setItem("fixai_brand", brand.charAt(0).toUpperCase() + brand.slic
       role: "assistant",
       content: `Ciao! Sono FixAI. Vedo che hai un problema con la tua **${currentBrand ? currentBrand + " " : ""}${currentAppliance}**: *"${currentProblem}"*.\n\n⚠️ **Prima di tutto:** assicurati che l'elettrodomestico sia **spento e staccato dalla presa elettrica**. Se devi aprire sportelli o toccare componenti, chiudi anche il rubinetto dell'acqua.\n\nFatto questo, punta la camera verso l'elettrodomestico e dimmi: **vedi messaggi di errore o spie lampeggianti?**`,    };
     messagesRef.current = [welcomeMsg];
-    setMessages([welcomeMsg]);
+setMessages([welcomeMsg]);
+leggiAd(welcomeMsg.content);
 
     setTimeout(startPeriodicAnalysis, 30000);
     // Timeout automatico dopo 30 minuti

@@ -198,7 +198,7 @@ result.push({
               },
               {
                 type: "text",
-                text: "Guarda questo frame in silenzio. Rispondi SOLO se vedi qualcosa di nuovo e importante (codice errore, perdita d'acqua, componente danneggiato). Se non vedi nulla di nuovo, rispondi esattamente con: [SKIP]",
+                text: "Guarda questo frame in silenzio. Rispondi SOLO se vedi qualcosa di nuovo e importante (codice errore, perdita d'acqua, componente danneggiato). Se non vedi nulla di nuovo o di rilevante, rispondi SOLO con la parola: SKIP (senza parentesi quadre)",
               },
             ],
           });
