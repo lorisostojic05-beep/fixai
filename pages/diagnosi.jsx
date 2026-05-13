@@ -72,11 +72,14 @@ export default function Diagnosi() {
   const [report, setReport] = useState(null);
   const [emailUtente, setEmailUtente] = useState("");
   const [emailInviata, setEmailInviata] = useState(false);
+  const [voceAttiva, setVoceAttiva] = useState(true);
+  const [ascoltoAttivo, setAscoltoAttivo] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
   const [sessionId] = useState(() => `session_${Date.now()}`);
   const [pagamentoVerificato, setPagamentoVerificato] = useState(false);
   const [verificandoPagamento, setVerificandoPagamento] = useState(false);
   const messagesRef = useRef([]);
+  const recognitionRef = useRef(null);
   const sessionTimeoutRef = useRef(null);
 
   // Scroll automatico
@@ -214,11 +217,12 @@ useEffect(() => {
         if (data.error) throw new Error(data.error);
 
         if (data.message !== "[SKIP]") {
-          const aiMsg = { role: "assistant", content: data.message };
-          const withAi = [...messagesRef.current, aiMsg];
-          messagesRef.current = withAi;
-          setMessages(withAi);
-        }
+  const aiMsg = { role: "assistant", content: data.message };
+  const withAi = [...messagesRef.current, aiMsg];
+  messagesRef.current = withAi;
+  setMessages(withAi);
+  leggiAd(data.message);
+}
 
         if (data.report) {
           setReport(data.report);
@@ -343,7 +347,44 @@ sessionStorage.setItem("fixai_brand", brand.charAt(0).toUpperCase() + brand.slic
   };
 
   // ── Rendering ──────────────────────────────────────────────────
+// Sintesi vocale — legge il messaggio AI
+const leggiAd = (testo) => {
+  if (!voceAttiva) return;
+  window.speechSynthesis.cancel();
+  const pulito = testo.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
+  const utterance = new SpeechSynthesisUtterance(pulito);
+  utterance.lang = "it-IT";
+  utterance.rate = 1.05;
+  window.speechSynthesis.speak(utterance);
+};
 
+// Avvia riconoscimento vocale
+const avviaAscolto = () => {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert("Il tuo browser non supporta il riconoscimento vocale. Usa Chrome.");
+    return;
+  }
+  const recognition = new SpeechRecognition();
+  recognition.lang = "it-IT";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.onresult = (e) => {
+    const testo = e.results[0][0].transcript;
+    setInputText(testo);
+  };
+  recognition.onend = () => setAscoltoAttivo(false);
+  recognition.onerror = () => setAscoltoAttivo(false);
+  recognitionRef.current = recognition;
+  recognition.start();
+  setAscoltoAttivo(true);
+};
+
+const fermaAscolto = () => {
+  if (recognitionRef.current) {
+    recognitionRef.current.stop();
+  }
+};
   if (phase === "setup") {
     return (
       <div className={styles.container}>
@@ -542,9 +583,19 @@ onClick={() => {
         <div className={styles.logo}>FixAI</div>
         <div className={styles.sessionInfo}>
           <span className={styles.sessionAppliance}>{brand} {appliance}</span>
-          <button className={styles.endBtn} onClick={requestReport}>
-            📋 Genera referto
-          </button>
+          <button
+  className={styles.endBtn}
+  onClick={() => {
+    setVoceAttiva(!voceAttiva);
+    window.speechSynthesis.cancel();
+  }}
+  title={voceAttiva ? "Silenzia voce" : "Attiva voce"}
+>
+  {voceAttiva ? "🔊" : "🔇"}
+</button>
+<button className={styles.endBtn} onClick={requestReport}>
+  📋 Genera referto
+</button>
         </div>
       </div>
 
@@ -572,24 +623,35 @@ onClick={() => {
           </div>
 
           <div className={styles.inputRow}>
-            <input
-              id="chat-input"
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Rispondi all'AI..."
-              className={styles.chatInput}
-              disabled={loading}
-            />
-            <button
-              className={styles.sendBtn}
-              onClick={handleSend}
-              disabled={loading || !inputText.trim()}
-            >
-              ➤
-            </button>
-          </div>
+  <button
+    className={`${styles.micBtn} ${ascoltoAttivo ? styles.micAttivo : ""}`}
+    onMouseDown={avviaAscolto}
+    onMouseUp={() => { fermaAscolto(); setTimeout(handleSend, 600); }}
+    onTouchStart={avviaAscolto}
+    onTouchEnd={() => { fermaAscolto(); setTimeout(handleSend, 600); }}
+    disabled={loading}
+    title="Tieni premuto per parlare"
+  >
+    {ascoltoAttivo ? "🔴" : "🎤"}
+  </button>
+  <input
+    id="chat-input"
+    type="text"
+    value={inputText}
+    onChange={(e) => setInputText(e.target.value)}
+    onKeyDown={(e) => e.key === "Enter" && handleSend()}
+    placeholder="Parla o scrivi..."
+    className={styles.chatInput}
+    disabled={loading}
+  />
+  <button
+    className={styles.sendBtn}
+    onClick={handleSend}
+    disabled={loading || !inputText.trim()}
+  >
+    ➤
+  </button>
+</div>
         </div>
       </div>
     </div>
