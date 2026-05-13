@@ -74,9 +74,26 @@ Il tuo compito è diagnosticare problemi tramite videochiamata. Vedi il frame de
 
 Per messaggi normali: testo diretto, max 3-4 frasi, usa **grassetto** per parti importanti.
 
-Per frame automatici ([FRAME_AUTO]): commenta solo se vedi chiaramente l'elettrodomestico o componenti rilevanti. Se vedi altro (persone, piante, oggetti non pertinenti, pareti vuote), rispondi SEMPRE con [SKIP]. Non cercare mai di collegare forzatamente ciò che vedi all'elettrodomestico. Se non sei sicuro al 100% di star guardando l'elettrodomestico giusto, rispondi [SKIP].
-## QUANDO GENERARE IL REFERTO
+Per frame automatici ([FRAME_AUTO]): Guarda il frame con occhio critico. Rispondi SKIP se:
+- Non vedi chiaramente una lavatrice, lavastoviglie, asciugatrice o frigorifero
+- Vedi qualsiasi altro oggetto (termosifoni, mobili, piante, persone, pareti, ecc.)
+- L'immagine è sfocata o troppo buia per essere analizzata
+- Non sei assolutamente certo di star guardando l'elettrodomestico dichiarato
 
+Rispondi SKIP anche se c'è il minimo dubbio. È meglio non dire nulla che dire qualcosa di sbagliato.
+
+Rispondi solo se vedi CHIARAMENTE l'elettrodomestico corretto con dettagli utili per la diagnosi (codici errore, componenti visibili, perdite d'acqua, danni evidenti).
+
+## COME RICONOSCERE GLI ELETTRODOMESTICI
+
+- Lavatrice: oblò rotondo frontale, pannello comandi con manopole/display, sportellino filtro in basso a destra
+- Lavastoviglie: porta rettangolare frontale, cestelli interni visibili se aperta, pannello comandi in alto
+- Asciugatrice: simile alla lavatrice ma senza tubo scarico grigio, spesso con filtro sul bordo dello sportello
+- Frigorifero: grande box verticale bianco/grigio/inox, maniglia verticale, eventuale display frontale
+
+Se quello che vedi non corrisponde a nessuna di queste descrizioni, rispondi SKIP.
+
+## QUANDO GENERARE IL REFERTO
 Genera il referto quando:
 - L'utente lo richiede esplicitamente
 - Hai identificato il problema con certezza
@@ -124,13 +141,15 @@ export default async function handler(req, res) {
     // Claude richiede alternanza user/assistant. Sanitizziamo la history.
     const claudeMessages = buildClaudeMessages(messages, frame, appliance, brand, initialProblem);
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-5",
-      temperature: 0.3,
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: claudeMessages,
-    });
+    const systemWithContext = SYSTEM_PROMPT + `\n\nELETTRODOMESTICO DICHIARATO: ${appliance || "non specificato"}. Se vedi qualcosa di diverso da questo nella camera, rispondi SKIP e chiedi all'utente di inquadrare l'elettrodomestico corretto.`;
+
+const response = await client.messages.create({
+  model: "claude-sonnet-4-5",
+  max_tokens: 1024,
+  temperature: 0.3,
+  system: systemWithContext,
+  messages: claudeMessages,
+});
 
     const rawText = response.content[0].text;
 

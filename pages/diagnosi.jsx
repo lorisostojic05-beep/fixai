@@ -6,7 +6,7 @@ import { generaRefertoPDF } from "../lib/generaPDF";
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 // ─── Configurazione ────────────────────────────────────────────────
-const SCREENSHOT_INTERVAL_MS = 15000; // cattura frame ogni 4 secondi
+const SCREENSHOT_INTERVAL_MS = 25000; // cattura frame ogni 4 secondi
 const MAX_HISTORY = 20;              // massimo messaggi nella history
 
 // ─── Componenti UI ─────────────────────────────────────────────────
@@ -176,8 +176,8 @@ useEffect(() => {
     const canvas = canvasRef.current;
     if (!video || !canvas || video.readyState < 2) return null;
 
-    canvas.width = 320;
-    canvas.height = 240;
+    canvas.width = 640;
+    canvas.height = 480;
     const ctx = canvas.getContext("2d");
     ctx.drawImage(video, 0, 0, 320, 240);
     // Ritorna base64 senza il prefisso "data:image/jpeg;base64,"
@@ -267,8 +267,14 @@ useEffect(() => {
       const inputEl = document.getElementById('chat-input');
       if (inputEl && inputEl.value.length > 0) return;
       const frame = captureFrame();
-      if (!frame) return;
-      await callAI("[FRAME_AUTO]", frame);
+if (!frame) return;
+setMessages((prev) => {
+  const last = prev[prev.length - 1];
+  if (last?.content === "📷 Sto analizzando quello che inquadri...") return prev;
+  return [...prev, { role: "assistant", content: "📷 Sto analizzando quello che inquadri..." }];
+});
+await callAI("[FRAME_AUTO]", frame);
+setMessages((prev) => prev.filter(m => m.content !== "📷 Sto analizzando quello che inquadri..."));
     }, SCREENSHOT_INTERVAL_MS);
   }, [loading, captureFrame, callAI]);
 
