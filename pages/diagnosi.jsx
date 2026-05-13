@@ -331,7 +331,8 @@ sessionStorage.setItem("fixai_brand", brand.charAt(0).toUpperCase() + brand.slic
 setMessages([welcomeMsg]);
 leggiAd(welcomeMsg.content);
 
-    setTimeout(startPeriodicAnalysis, 30000);
+    // Analisi automatica disabilitata — usa il pulsante "Analizza ora"
+// setTimeout(startPeriodicAnalysis, 30000);
     // Timeout automatico dopo 30 minuti
     sessionTimeoutRef.current = setTimeout(() => {
     stopCamera();
@@ -596,15 +597,30 @@ onClick={() => {
         <div className={styles.sessionInfo}>
           <span className={styles.sessionAppliance}>{brand} {appliance}</span>
           <button
-  className={styles.endBtn}
-  onClick={() => {
-    setVoceAttiva(!voceAttiva);
-    window.speechSynthesis.cancel();
-  }}
-  title={voceAttiva ? "Silenzia voce" : "Attiva voce"}
->
-  {voceAttiva ? "🔊" : "🔇"}
-</button>
+            className={styles.endBtn}
+            onClick={() => {
+              setVoceAttiva(!voceAttiva);
+              window.speechSynthesis.cancel();
+            }}
+            title={voceAttiva ? "Silenzia voce" : "Attiva voce"}
+          >
+            {voceAttiva ? "🔊" : "🔇"}
+          </button>
+          <button
+            className={styles.endBtn}
+            onClick={async () => {
+              const frame = captureFrame();
+              if (!frame) {
+                alert("Camera non attiva.");
+                return;
+              }
+              await callAI("[FRAME_AUTO]", frame);
+            }}
+            disabled={loading}
+            title="Analizza quello che inquadri ora"
+          >
+            📷 Analizza
+          </button>
 <button className={styles.endBtn} onClick={requestReport}>
   📋 Genera referto
 </button>
