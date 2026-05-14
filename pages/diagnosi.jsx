@@ -461,23 +461,6 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
   >
     🎥 Avvia videodiagnosi
   </button>
-  <button
-  className={styles.startBtn}
-  style={{ background: "#666", marginTop: "8px" }}
-  onClick={() => {
-    setPhase("session");
-    const welcomeMsg = {
-      role: "assistant",
-      content: `Ciao! Sono FixAI. Vedo che hai un problema con la tua **${brand ? brand + " " : ""}${appliance}**: *"${problem}"*.\n\n⚠️ **Prima di tutto:** assicurati che l'elettrodomestico sia **spento e staccato dalla presa elettrica**.\n\nModalità solo testo attiva — descrivimi il problema nel dettaglio e ti guido passo passo!\n\n*(You can also write in English, Spanish, French or German — I'll reply in your language)*`,
-    };
-    messagesRef.current = [welcomeMsg];
-    setMessages([welcomeMsg]);
-    leggiAd(welcomeMsg.content);
-  }}
-  disabled={!appliance || !problem || !brand}
->
-  💬 Solo chat (senza camera)
-</button>
 </>
 ) : (
   <>
@@ -685,6 +668,19 @@ onClick={() => {
           >
             {voceAttiva ? "🔊" : "🔇"}
           </button>
+          <button
+  className={styles.endBtn}
+  onClick={() => {
+    if (cameraActive) {
+      stopCamera();
+    } else {
+      startCamera();
+    }
+  }}
+  title={cameraActive ? "Disattiva camera" : "Attiva camera"}
+>
+  {cameraActive ? "📷" : "📷 Off"}
+</button>
           <button
             className={styles.endBtn}
             onClick={async () => {
