@@ -360,6 +360,14 @@ sessionStorage.setItem("fixai_brand", brand.charAt(0).toUpperCase() + brand.slic
 
   // ── Rendering ──────────────────────────────────────────────────
 // Sintesi vocale — legge il messaggio AI
+const rilevaLingua = (testo) => {
+  if (/\b(the|is|are|you|your|please|this|that|have|has)\b/i.test(testo)) return "en-GB";
+  if (/\b(el|la|los|las|es|son|tiene|puede|para)\b/i.test(testo)) return "es-ES";
+  if (/\b(le|les|est|sont|vous|votre|pour|avec)\b/i.test(testo)) return "fr-FR";
+  if (/\b(der|die|das|ist|sind|haben|Sie|Ihr)\b/i.test(testo)) return "de-DE";
+  return "it-IT";
+};
+
 const leggiAd = (testo) => {
   if (!voceAttiva) return;
   window.speechSynthesis.cancel();
@@ -370,7 +378,7 @@ const leggiAd = (testo) => {
     .replace(/[\u2600-\u27FF]/g, "")
     .replace(/⚠️|✅|🔧|📋|⏱️|💰|🔍/g, "");
   const utterance = new SpeechSynthesisUtterance(pulito);
-  utterance.lang = "it-IT";
+  utterance.lang = rilevaLingua(pulito);
   utterance.rate = 1.05;
   window.speechSynthesis.speak(utterance);
 };
