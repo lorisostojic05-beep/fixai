@@ -12,14 +12,21 @@ export default async function handler(req, res) {
 
   const { voto, risolto, appliance, brand, problem } = req.body;
 
+  console.log("URL Supabase:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log("Dati ricevuti:", { voto, risolto, appliance, brand, problem });
+
   try {
-    await supabase.from("sessioni").insert({
+    const { data, error } = await supabase.from("sessioni").insert({
       appliance,
       brand,
       problem,
       feedback_voto: voto,
       feedback_risolto: risolto,
     });
+
+    console.log("Risultato:", data, "Errore:", error);
+
+    if (error) throw error;
 
     return res.status(200).json({ ok: true });
   } catch (err) {
