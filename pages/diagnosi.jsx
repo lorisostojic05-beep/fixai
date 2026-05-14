@@ -74,6 +74,7 @@ export default function Diagnosi() {
   const [emailInviata, setEmailInviata] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [feedbackInviato, setFeedbackInviato] = useState(false);
+  const sessionStartRef = useRef(null);
   const [voceAttiva, setVoceAttiva] = useState(true);
   const voceAttivaRef = useRef(true);
   const [ascoltoAttivo, setAscoltoAttivo] = useState(false);
@@ -330,6 +331,7 @@ sessionStorage.setItem("fixai_brand", brand.charAt(0).toUpperCase() + brand.slic
       role: "assistant",
       content: `Ciao! Sono FixAI. Vedo che hai un problema con la tua **${currentBrand ? currentBrand + " " : ""}${currentAppliance}**: *"${currentProblem}"*.\n\n⚠️ **Prima di tutto:** assicurati che l'elettrodomestico sia **spento e staccato dalla presa elettrica**. Se devi aprire sportelli o toccare componenti, chiudi anche il rubinetto dell'acqua.\n\nPer darti una diagnosi più precisa, cerca la **targhetta del modello** — di solito si trova:\n- Lavatrice/Lavastoviglie: **dentro lo sportello**, sul bordo\n- Frigorifero: **dentro il vano**, sulla parete laterale\n\nClicca **📷 Analizza** puntando sulla targhetta. Se non riesci a trovarla, scrivi pure e iniziamo lo stesso!\n\n*(You can also write in English, Spanish, French or German — I'll reply in your language)*`,
     };
+    sessionStartRef.current = Date.now();
     messagesRef.current = [welcomeMsg];
     setMessages([welcomeMsg]);
     leggiAd(welcomeMsg.content);
@@ -664,10 +666,23 @@ onClick={() => {
     <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginBottom: "10px" }}>
       <button
         onClick={async () => {
+          const durata = sessionStartRef.current 
+            ? Math.round((Date.now() - sessionStartRef.current) / 1000) 
+            : null;
           await fetch("/api/feedback", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ voto: feedback, risolto: true, appliance, brand, problem }),
+            body: JSON.stringify({ 
+              voto: feedback, 
+              risolto: true, 
+              appliance, 
+              brand, 
+              problem,
+              report,
+              messages: messagesRef.current,
+              email_utente: emailUtente || null,
+              durata_secondi: durata,
+            }),
           });
           setFeedbackInviato(true);
         }}
@@ -677,10 +692,23 @@ onClick={() => {
       </button>
       <button
         onClick={async () => {
+          const durata = sessionStartRef.current 
+            ? Math.round((Date.now() - sessionStartRef.current) / 1000) 
+            : null;
           await fetch("/api/feedback", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ voto: feedback, risolto: false, appliance, brand, problem }),
+            body: JSON.stringify({ 
+              voto: feedback, 
+              risolto: false, 
+              appliance, 
+              brand, 
+              problem,
+              report,
+              messages: messagesRef.current,
+              email_utente: emailUtente || null,
+              durata_secondi: durata,
+            }),
           });
           setFeedbackInviato(true);
         }}

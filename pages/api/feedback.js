@@ -10,8 +10,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Metodo non consentito" });
   }
 
-  const { voto, risolto, appliance, brand, problem } = req.body;
-
+const { voto, risolto, appliance, brand, problem, report, messages, email_utente, durata_secondi } = req.body;
   console.log("URL Supabase:", process.env.NEXT_PUBLIC_SUPABASE_URL);
   console.log("Dati ricevuti:", { voto, risolto, appliance, brand, problem });
 
@@ -22,6 +21,10 @@ export default async function handler(req, res) {
       problem,
       feedback_voto: voto,
       feedback_risolto: risolto,
+      report: report || null,
+      messages: messages || null,
+      email_utente: email_utente || null,
+      durata_secondi: durata_secondi || null,
     });
 
     console.log("Risultato:", data, "Errore:", error);
