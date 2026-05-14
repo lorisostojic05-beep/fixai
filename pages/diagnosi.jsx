@@ -256,9 +256,7 @@ useEffect(() => {
     if (!inputText.trim() || loading) return;
     const text = inputText.trim();
     setInputText("");
-    // Cattura un frame al momento dell'invio (se camera attiva)
-    const frame = cameraActive ? captureFrame() : null;
-    await callAI(text, frame);
+    await callAI(text, null);
   };
 
   // ── Analisi periodica automatica ────────────────────────────────
