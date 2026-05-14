@@ -119,7 +119,8 @@ useEffect(() => {
 
           setPagamentoVerificato(true);
           sessionStorage.setItem("fixai_pagato", "true");
-          setTimeout(() => startSession(urlAppliance, urlBrand, urlProblem), 500);
+          setPhase("confermaPagamento");
+          setTimeout(() => startSession(urlAppliance, urlBrand, urlProblem), 3000);
         } else {
           alert("Pagamento non confermato. Riprova.");
         }
@@ -422,6 +423,36 @@ const fermaAscolto = () => {
     recognitionRef.current.stop();
   }
 };
+if (phase === "confermaPagamento") {
+  return (
+    <div className={styles.container}>
+      <div className={styles.setupCard} style={{ textAlign: "center" }}>
+        <div style={{ fontSize: "48px", marginBottom: "16px" }}>✅</div>
+        <div className={styles.logo}>FixAI</div>
+        <h1 style={{ marginTop: "8px" }}>Pagamento confermato!</h1>
+        <p className={styles.subtitle}>
+          Ottimo! Tra pochi secondi inizia la tua sessione di videodiagnosi.
+        </p>
+        <div style={{ 
+          background: "#e8f5f0", 
+          borderRadius: "10px", 
+          padding: "14px", 
+          marginTop: "16px",
+          fontSize: "13px",
+          color: "#0F6E56"
+        }}>
+          <p><strong>Preparati:</strong></p>
+          <p>⚠️ Stacca la spina dell'elettrodomestico</p>
+          <p>💡 Assicurati di avere buona illuminazione</p>
+          <p>📷 Tieni il telefono pronto per inquadrare</p>
+        </div>
+        <div style={{ marginTop: "16px", color: "#999", fontSize: "13px" }}>
+          La sessione inizia automaticamente...
+        </div>
+      </div>
+    </div>
+  );
+}
   if (phase === "setup") {
     return (
       <div className={styles.container}>

@@ -1,5 +1,9 @@
-import fs from "fs";
-import path from "path";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -8,16 +12,18 @@ export default async function handler(req, res) {
 
   const { voto, risolto, appliance, brand, problem } = req.body;
 
-  const entry = {
-    data: new Date().toISOString(),
-    voto,
-    risolto,
-    appliance,
-    brand,
-    problem,
-  };
+  try {
+    await supabase.from("sessioni").insert({
+      appliance,
+      brand,
+      problem,
+      feedback_voto: voto,
+      feedback_risolto: risolto,
+    });
 
-  console.log("FEEDBACK:", JSON.stringify(entry));
-
-  return res.status(200).json({ ok: true });
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error("Errore salvataggio feedback:", err);
+    return res.status(500).json({ error: err.message });
+  }
 }
