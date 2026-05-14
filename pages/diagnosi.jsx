@@ -72,6 +72,8 @@ export default function Diagnosi() {
   const [report, setReport] = useState(null);
   const [emailUtente, setEmailUtente] = useState("");
   const [emailInviata, setEmailInviata] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [feedbackInviato, setFeedbackInviato] = useState(false);
   const [voceAttiva, setVoceAttiva] = useState(true);
   const [ascoltoAttivo, setAscoltoAttivo] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
@@ -326,22 +328,24 @@ sessionStorage.setItem("fixai_brand", brand.charAt(0).toUpperCase() + brand.slic
 
     const welcomeMsg = {
       role: "assistant",
-      content: `Ciao! Sono FixAI. Vedo che hai un problema con la tua **${currentBrand ? currentBrand + " " : ""}${currentAppliance}**: *"${currentProblem}"*.\n\n⚠️ **Prima di tutto:** assicurati che l'elettrodomestico sia **spento e staccato dalla presa elettrica**. Se devi aprire sportelli o toccare componenti, chiudi anche il rubinetto dell'acqua.\n\nFatto questo, punta la camera verso l'elettrodomestico e dimmi: **vedi messaggi di errore o spie lampeggianti?**`,    };
+      content: `Ciao! Sono FixAI. Vedo che hai un problema con la tua **${currentBrand ? currentBrand + " " : ""}${currentAppliance}**: *"${currentProblem}"*.\n\n⚠️ **Prima di tutto:** assicurati che l'elettrodomestico sia **spento e staccato dalla presa elettrica**. Se devi aprire sportelli o toccare componenti, chiudi anche il rubinetto dell'acqua.\n\nPer darti una diagnosi più precisa, cerca la **targhetta del modello** — di solito si trova:\n- Lavatrice/Lavastoviglie: **dentro lo sportello**, sul bordo\n- Frigorifero: **dentro il vano**, sulla parete laterale\n\nClicca **📷 Analizza** puntando sulla targhetta. Se non riesci a trovarla, scrivi pure e iniziamo lo stesso!\n\n*(You can also write in English, Spanish, French or German — I'll reply in your language)*`,
+    };
     messagesRef.current = [welcomeMsg];
-setMessages([welcomeMsg]);
-leggiAd(welcomeMsg.content);
+    setMessages([welcomeMsg]);
+    leggiAd(welcomeMsg.content);
 
     // Analisi automatica disabilitata — usa il pulsante "Analizza ora"
-// setTimeout(startPeriodicAnalysis, 30000);
+    // setTimeout(startPeriodicAnalysis, 30000);
+
     // Timeout automatico dopo 30 minuti
     sessionTimeoutRef.current = setTimeout(() => {
-    stopCamera();
-    stopPeriodicAnalysis();
-    setMessages((prev) => [
-    ...prev,
-    { role: "assistant", content: "⏱️ La sessione è scaduta dopo 30 minuti. Clicca **Genera referto** per ricevere la diagnosi con le informazioni raccolte finora." },
-  ]);
-}, 30 * 60 * 1000);
+      stopCamera();
+      stopPeriodicAnalysis();
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "⏱️ La sessione è scaduta dopo 30 minuti. Clicca **Genera referto** per ricevere la diagnosi con le informazioni raccolte finora." },
+      ]);
+    }, 30 * 60 * 1000);
   };
 
   // ── Genera referto manuale ──────────────────────────────────────
@@ -449,6 +453,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
     ⏳ Verifica pagamento...
   </button>
 ) : pagamentoVerificato ? (
+  <>
   <button
     className={styles.startBtn}
     onClick={startSession}
@@ -456,6 +461,24 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
   >
     🎥 Avvia videodiagnosi
   </button>
+  <button
+  className={styles.startBtn}
+  style={{ background: "#666", marginTop: "8px" }}
+  onClick={() => {
+    setPhase("session");
+    const welcomeMsg = {
+      role: "assistant",
+      content: `Ciao! Sono FixAI. Vedo che hai un problema con la tua **${brand ? brand + " " : ""}${appliance}**: *"${problem}"*.\n\n⚠️ **Prima di tutto:** assicurati che l'elettrodomestico sia **spento e staccato dalla presa elettrica**.\n\nModalità solo testo attiva — descrivimi il problema nel dettaglio e ti guido passo passo!\n\n*(You can also write in English, Spanish, French or German — I'll reply in your language)*`,
+    };
+    messagesRef.current = [welcomeMsg];
+    setMessages([welcomeMsg]);
+    leggiAd(welcomeMsg.content);
+  }}
+  disabled={!appliance || !problem || !brand}
+>
+  💬 Solo chat (senza camera)
+</button>
+</>
 ) : (
   <>
     <button
@@ -580,6 +603,62 @@ onClick={() => {
 ) : (
   <p style={{ textAlign: "center", color: "#0F6E56", fontSize: "13px", marginTop: "12px" }}>
     ✅ Referto inviato a {emailUtente}!
+  </p>
+)}
+{!feedbackInviato ? (
+  <div style={{ marginTop: "16px", background: "#f5f5f3", borderRadius: "10px", padding: "14px" }}>
+    <p style={{ fontSize: "13px", fontWeight: "500", marginBottom: "10px", textAlign: "center" }}>
+      La diagnosi era utile?
+    </p>
+    <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginBottom: "10px" }}>
+      {[1,2,3,4,5].map((v) => (
+        <button
+          key={v}
+          onClick={() => setFeedback(v)}
+          style={{
+            width: "36px", height: "36px", borderRadius: "50%", border: "2px solid",
+            borderColor: feedback === v ? "#1D9E75" : "#e0e0de",
+            background: feedback === v ? "#1D9E75" : "white",
+            color: feedback === v ? "white" : "#333",
+            fontWeight: "600", cursor: "pointer", fontSize: "14px"
+          }}
+        >
+          {v}
+        </button>
+      ))}
+    </div>
+    <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginBottom: "10px" }}>
+      <button
+        onClick={async () => {
+          await fetch("/api/feedback", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ voto: feedback, risolto: true, appliance, brand, problem }),
+          });
+          setFeedbackInviato(true);
+        }}
+        style={{ background: "#1D9E75", color: "white", border: "none", borderRadius: "8px", padding: "8px 16px", fontSize: "13px", cursor: "pointer" }}
+      >
+        ✅ Risolto da solo
+      </button>
+      <button
+        onClick={async () => {
+          await fetch("/api/feedback", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ voto: feedback, risolto: false, appliance, brand, problem }),
+          });
+          setFeedbackInviato(true);
+        }}
+        style={{ background: "#f5f5f3", color: "#333", border: "1px solid #e0e0de", borderRadius: "8px", padding: "8px 16px", fontSize: "13px", cursor: "pointer" }}
+      >
+        ❌ Serve il tecnico
+      </button>
+    </div>
+  </div>
+) : (
+  <p style={{ textAlign: "center", color: "#0F6E56", fontSize: "13px", marginTop: "12px" }}>
+    Grazie per il feedback! 🙏
   </p>
 )}
         </div>
