@@ -75,6 +75,7 @@ export default function Diagnosi() {
   const [feedback, setFeedback] = useState(null);
   const [feedbackInviato, setFeedbackInviato] = useState(false);
   const [voceAttiva, setVoceAttiva] = useState(true);
+  const voceAttivaRef = useRef(true);
   const [ascoltoAttivo, setAscoltoAttivo] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
   const [sessionId] = useState(() => `session_${Date.now()}`);
@@ -359,15 +360,22 @@ sessionStorage.setItem("fixai_brand", brand.charAt(0).toUpperCase() + brand.slic
   // ── Rendering ──────────────────────────────────────────────────
 // Sintesi vocale — legge il messaggio AI
 const rilevaLingua = (testo) => {
-  if (/\b(the|is|are|you|your|please|this|that|have|has)\b/i.test(testo)) return "en-GB";
-  if (/\b(el|la|los|las|es|son|tiene|puede|para)\b/i.test(testo)) return "es-ES";
-  if (/\b(le|les|est|sont|vous|votre|pour|avec)\b/i.test(testo)) return "fr-FR";
-  if (/\b(der|die|das|ist|sind|haben|Sie|Ihr)\b/i.test(testo)) return "de-DE";
+  const paroleEN = (testo.match(/\b(the|is|are|you|your|please|this|that|have|has|can|will|with|for|not|but)\b/gi) || []).length;
+  const paroleES = (testo.match(/\b(el|la|los|las|es|son|tiene|puede|para|con|que|del)\b/gi) || []).length;
+  const paroleFR = (testo.match(/\b(le|les|est|sont|vous|votre|pour|avec|que|des)\b/gi) || []).length;
+  const paroleDE = (testo.match(/\b(der|die|das|ist|sind|haben|Sie|Ihr|und|mit)\b/gi) || []).length;
+  
+  const max = Math.max(paroleEN, paroleES, paroleFR, paroleDE);
+  if (max < 3) return "it-IT"; // Se meno di 3 parole chiave → italiano
+  if (max === paroleEN) return "en-GB";
+  if (max === paroleES) return "es-ES";
+  if (max === paroleFR) return "fr-FR";
+  if (max === paroleDE) return "de-DE";
   return "it-IT";
 };
 
 const leggiAd = (testo) => {
-  if (!voceAttiva) return;
+ if (!voceAttivaRef.current) return;
   window.speechSynthesis.cancel();
   const pulito = testo
     .replace(/\*\*(.*?)\*\*/g, "$1")
@@ -667,9 +675,11 @@ onClick={() => {
           <button
             className={styles.endBtn}
             onClick={() => {
-              setVoceAttiva(!voceAttiva);
-              window.speechSynthesis.cancel();
-            }}
+    const nuovoValore = !voceAttiva;
+    setVoceAttiva(nuovoValore);
+    voceAttivaRef.current = nuovoValore;
+    window.speechSynthesis.cancel();
+  }}
             title={voceAttiva ? "Silenzia voce" : "Attiva voce"}
           >
             {voceAttiva ? "🔊" : "🔇"}
