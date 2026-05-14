@@ -360,17 +360,23 @@ sessionStorage.setItem("fixai_brand", brand.charAt(0).toUpperCase() + brand.slic
   // ── Rendering ──────────────────────────────────────────────────
 // Sintesi vocale — legge il messaggio AI
 const rilevaLingua = (testo) => {
-  const paroleEN = (testo.match(/\b(the|is|are|you|your|please|this|that|have|has|can|will|with|for|not|but)\b/gi) || []).length;
-  const paroleES = (testo.match(/\b(el|la|los|las|es|son|tiene|puede|para|con|que|del)\b/gi) || []).length;
-  const paroleFR = (testo.match(/\b(le|les|est|sont|vous|votre|pour|avec|que|des)\b/gi) || []).length;
-  const paroleDE = (testo.match(/\b(der|die|das|ist|sind|haben|Sie|Ihr|und|mit)\b/gi) || []).length;
-  
-  const max = Math.max(paroleEN, paroleES, paroleFR, paroleDE);
-  if (max < 3) return "it-IT"; // Se meno di 3 parole chiave → italiano
-  if (max === paroleEN) return "en-GB";
-  if (max === paroleES) return "es-ES";
-  if (max === paroleFR) return "fr-FR";
-  if (max === paroleDE) return "de-DE";
+  // Parole esclusive di ogni lingua (non esistono in italiano)
+  const soloEN = /\b(the|this|that|your|you're|don't|can't|I'm|it's|there's|have|has)\b/gi;
+  const soloES = /\b(está|están|también|porque|aunque|después|siempre|nunca|mucho|poco)\b/gi;
+  const soloFR = /\b(est|sont|très|aussi|mais|donc|encore|toujours|jamais|beaucoup)\b/gi;
+  const soloDE = /\b(ist|sind|haben|nicht|auch|noch|aber|oder|wenn|dann|schon)\b/gi;
+
+  const countEN = (testo.match(soloEN) || []).length;
+  const countES = (testo.match(soloES) || []).length;
+  const countFR = (testo.match(soloFR) || []).length;
+  const countDE = (testo.match(soloDE) || []).length;
+
+  const max = Math.max(countEN, countES, countFR, countDE);
+  if (max < 2) return "it-IT"; // Default italiano
+  if (max === countEN) return "en-GB";
+  if (max === countES) return "es-ES";
+  if (max === countFR) return "fr-FR";
+  if (max === countDE) return "de-DE";
   return "it-IT";
 };
 
