@@ -20,13 +20,13 @@ export default async function handler(req, res) {
 
   const html = `<!DOCTYPE html>
 <html lang="it">
-<head><meta charset="UTF-8"><title>Referto FixAI</title></head>
+<head><meta charset="UTF-8"><title>Referto Fixi</title></head>
 <body style="margin:0;padding:0;background:#f5f5f3;font-family:system-ui,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f3;padding:32px 16px;">
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 20px rgba(0,0,0,0.08);">
 <tr><td style="background:#0F6E56;padding:32px 40px;">
-  <p style="margin:0;color:white;font-size:28px;font-weight:800;">FixAI</p>
+  <p style="margin:0;color:white;font-size:28px;font-weight:800;">Fixi</p>
   <p style="margin:4px 0 0;color:#b4e6d2;font-size:13px;">Diagnosi elettrodomestici via videochiamata AI</p>
   <p style="margin:16px 0 0;color:#b4e6d2;font-size:12px;">Referto ${refNum} — ${data}</p>
 </td></tr>
@@ -75,7 +75,7 @@ ${report.urgency ? `
 </td></tr>` : ""}
 <tr><td style="height:24px;"></td></tr>
 <tr><td style="background:#0F6E56;padding:20px 40px;">
-  <p style="margin:0;color:white;font-size:13px;font-weight:600;">FixAI</p>
+  <p style="margin:0;color:white;font-size:13px;font-weight:600;">Fixi</p>
   <p style="margin:4px 0 0;color:#b4e6d2;font-size:11px;">Referto generato da sistema AI. Consultare sempre un tecnico qualificato.</p>
 </td></tr>
 </table>
@@ -86,9 +86,9 @@ ${report.urgency ? `
 
   try {
     await resend.emails.send({
-      from: "FixAI <onboarding@resend.dev>",
+      from: "Fixi <onboarding@resend.dev>",
       to: email,
-      subject: `Il tuo referto FixAI — ${brand ? brand + " " : ""}${appliance}`,
+      subject: `Il tuo referto Fixi — ${brand ? brand + " " : ""}${appliance}`,
       html,
     });
     return res.status(200).json({ inviata: true });

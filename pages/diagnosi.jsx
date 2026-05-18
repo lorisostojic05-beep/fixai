@@ -14,7 +14,7 @@ function ChatBubble({ message }) {
   return (
     <div className={`${styles.bubble} ${styles[message.role]}`}>
       {message.role === "assistant" && (
-        <div className={styles.aiLabel}>FixAI</div>
+        <div className={styles.aiLabel}>Fixi</div>
       )}
       <p dangerouslySetInnerHTML={{ __html: message.content.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }} />
       {message.suggestions && (
@@ -93,7 +93,7 @@ useEffect(() => {
 
 // Ripristina pagamento se utente ricarica la pagina
 useEffect(() => {
-  const giaPagato = sessionStorage.getItem("fixai_pagato");
+  const giaPagato = sessionStorage.getItem("Fixi_pagato");
   if (giaPagato === "true") {
     setPagamentoVerificato(true);
   }
@@ -119,7 +119,7 @@ useEffect(() => {
           if (urlProblem) setProblem(urlProblem);
 
           setPagamentoVerificato(true);
-          sessionStorage.setItem("fixai_pagato", "true");
+          sessionStorage.setItem("Fixi_pagato", "true");
           setPhase("confermaPagamento");
           setTimeout(() => startSession(urlAppliance, urlBrand, urlProblem), 3000);
         } else {
@@ -152,7 +152,7 @@ useEffect(() => {
       stopPeriodicAnalysis();
       setPhase("setup");
       if (err.name === "NotAllowedError") {
-        alert("⚠️ Hai negato l'accesso alla camera. Per usare FixAI devi consentire l'accesso alla camera nelle impostazioni del browser.");
+        alert("⚠️ Hai negato l'accesso alla camera. Per usare Fixi devi consentire l'accesso alla camera nelle impostazioni del browser.");
       } else if (err.name === "NotFoundError") {
         alert("⚠️ Nessuna camera trovata. Assicurati che il dispositivo abbia una camera funzionante.");
       } else if (err.name === "NotReadableError") {
@@ -300,8 +300,8 @@ const avviaCheckout = async () => {
     return;
   }
   // Salva le info prima di andare su Stripe
-  sessionStorage.setItem("fixai_appliance", appliance);
-sessionStorage.setItem("fixai_brand", brand.charAt(0).toUpperCase() + brand.slice(1).toLowerCase());  sessionStorage.setItem("fixai_problem", problem);
+  sessionStorage.setItem("Fixi_appliance", appliance);
+sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice(1).toLowerCase());  sessionStorage.setItem("Fixi_problem", problem);
 
   const res = await fetch("/api/checkout", {
   method: "POST",
@@ -323,13 +323,13 @@ sessionStorage.setItem("fixai_brand", brand.charAt(0).toUpperCase() + brand.slic
       alert("Seleziona l'elettrodomestico e descrivi il problema.");
       return;
     }
-    sessionStorage.removeItem("fixai_pagato");
+    sessionStorage.removeItem("Fixi_pagato");
     await startCamera();
     setPhase("session");
 
     const welcomeMsg = {
       role: "assistant",
-      content: `Ciao! Sono FixAI. Vedo che hai un problema con la tua **${currentBrand ? currentBrand + " " : ""}${currentAppliance}**: *"${currentProblem}"*.\n\n⚠️ **Prima di tutto:** assicurati che l'elettrodomestico sia **spento e staccato dalla presa elettrica**. Se devi aprire sportelli o toccare componenti, chiudi anche il rubinetto dell'acqua.\n\nPer darti una diagnosi più precisa, cerca la **targhetta del modello** — di solito si trova:\n- Lavatrice/Lavastoviglie: **dentro lo sportello**, sul bordo\n- Frigorifero: **dentro il vano**, sulla parete laterale\n\nClicca **📷 Analizza** puntando sulla targhetta. Se non riesci a trovarla, scrivi pure e iniziamo lo stesso!\n\n*(You can also write in English, Spanish, French or German — I'll reply in your language)*`,
+      content: `Ciao! Sono Fixi. Vedo che hai un problema con la tua **${currentBrand ? currentBrand + " " : ""}${currentAppliance}**: *"${currentProblem}"*.\n\n⚠️ **Prima di tutto:** assicurati che l'elettrodomestico sia **spento e staccato dalla presa elettrica**. Se devi aprire sportelli o toccare componenti, chiudi anche il rubinetto dell'acqua.\n\nPer darti una diagnosi più precisa, cerca la **targhetta del modello** — di solito si trova:\n- Lavatrice/Lavastoviglie: **dentro lo sportello**, sul bordo\n- Frigorifero: **dentro il vano**, sulla parete laterale\n\nClicca **📷 Analizza** puntando sulla targhetta. Se non riesci a trovarla, scrivi pure e iniziamo lo stesso!\n\n*(You can also write in English, Spanish, French or German — I'll reply in your language)*`,
     };
     sessionStartRef.current = Date.now();
     messagesRef.current = [welcomeMsg];
@@ -354,9 +354,9 @@ sessionStorage.setItem("fixai_brand", brand.charAt(0).toUpperCase() + brand.slic
   const requestReport = async () => {
     stopPeriodicAnalysis();
     // Salva appliance e brand prima di generare il referto
-    sessionStorage.setItem("fixai_report_appliance", appliance);
-    sessionStorage.setItem("fixai_report_brand", brand);
-    sessionStorage.setItem("fixai_report_problem", problem);
+    sessionStorage.setItem("Fixi_report_appliance", appliance);
+    sessionStorage.setItem("Fixi_report_brand", brand);
+    sessionStorage.setItem("Fixi_report_problem", problem);
     await callAI("Genera ora il referto finale con diagnosi, soluzione e stima costi.");
   };
 
@@ -430,7 +430,7 @@ if (phase === "confermaPagamento") {
     <div className={styles.container}>
       <div className={styles.setupCard} style={{ textAlign: "center" }}>
         <div style={{ fontSize: "48px", marginBottom: "16px" }}>✅</div>
-        <div className={styles.logo}>FixAI</div>
+        <div className={styles.logo}>Fixi</div>
         <h1 style={{ marginTop: "8px" }}>Pagamento confermato!</h1>
         <p className={styles.subtitle}>
           Ottimo! Tra pochi secondi inizia la tua sessione di videodiagnosi.
@@ -459,7 +459,7 @@ if (phase === "confermaPagamento") {
     return (
       <div className={styles.container}>
         <div className={styles.setupCard}>
-          <div className={styles.logo}>FixAI</div>
+          <div className={styles.logo}>Fixi</div>
           <h1>Diagnosi elettrodomestico</h1>
           <p className={styles.subtitle}>
             Risparmia fino a €70 sulla visita del tecnico. La nostra AI diagnostica il problema via videochiamata.
@@ -543,7 +543,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
       <div className={styles.container}>
         <div className={styles.reportCard}>
           <div className={styles.reportHeader}>
-            <div className={styles.logo}>FixAI</div>
+            <div className={styles.logo}>Fixi</div>
             <h2>📋 Referto diagnosi</h2>
             <p className={styles.reportDate}>{new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}</p>
           </div>
@@ -583,9 +583,9 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
   <button
     className={styles.downloadBtn}
 onClick={() => {
-  const a = sessionStorage.getItem("fixai_report_appliance") || appliance;
-  const b = sessionStorage.getItem("fixai_report_brand") || brand;
-  const p = sessionStorage.getItem("fixai_report_problem") || problem;
+  const a = sessionStorage.getItem("Fixi_report_appliance") || appliance;
+  const b = sessionStorage.getItem("Fixi_report_brand") || brand;
+  const p = sessionStorage.getItem("Fixi_report_problem") || problem;
   generaRefertoPDF(report, a, b, p);
 }}  >
     📄 Scarica PDF
@@ -734,7 +734,7 @@ onClick={() => {
       <canvas ref={canvasRef} style={{ display: "none" }} />
 
       <div className={styles.sessionHeader}>
-        <div className={styles.logo}>FixAI</div>
+        <div className={styles.logo}>Fixi</div>
         <div className={styles.sessionInfo}>
           <span className={styles.sessionAppliance}>{brand} {appliance}</span>
           <button
@@ -797,7 +797,7 @@ onClick={() => {
             ))}
             {loading && (
               <div className={`${styles.bubble} ${styles.assistant}`}>
-                <div className={styles.aiLabel}>FixAI</div>
+                <div className={styles.aiLabel}>Fixi</div>
                 <div className={styles.typingDots}>
                   <span /><span /><span />
                 </div>

@@ -1,4 +1,4 @@
-# FixAI — Diagnosi elettrodomestici via AI
+# Fixi — Diagnosi elettrodomestici via AI
 
 Sessione di videodiagnosi con Claude Vision per lavatrici e lavastoviglie.
 
@@ -7,7 +7,7 @@ Sessione di videodiagnosi con Claude Vision per lavatrici e lavastoviglie.
 ## Struttura del progetto
 
 ```
-fixai/
+Fixi/
 ├── pages/
 │   ├── diagnosi.jsx          ← Interfaccia utente (setup + sessione + referto)
 │   └── api/

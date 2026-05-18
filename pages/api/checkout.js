@@ -17,7 +17,7 @@ export default async function handler(req, res) {
           price_data: {
             currency: "eur",
             product_data: {
-              name: "Diagnosi FixAI",
+              name: "Diagnosi Fixi",
               description: "Sessione di videodiagnosi con AI — referto incluso",
             },
             unit_amount: 990,
