@@ -1,21 +1,14 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Metodo non consentito" });
   }
 
-const { voto, risolto, appliance, brand, problem, report, messages, email_utente, durata_secondi } = req.body;
-  console.log("URL Supabase:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-  console.log("Dati ricevuti:", { voto, risolto, appliance, brand, problem });
+  const { voto, risolto, appliance, brand, problem, report, messages, email_utente, durata_secondi } = req.body;
 
   try {
-    const { data, error } = await supabase.from("sessioni").insert({
+    const { error } = await supabase.from("sessioni").insert({
       appliance,
       brand,
       problem,
@@ -26,8 +19,6 @@ const { voto, risolto, appliance, brand, problem, report, messages, email_utente
       email_utente: email_utente || null,
       durata_secondi: durata_secondi || null,
     });
-
-    console.log("Risultato:", data, "Errore:", error);
 
     if (error) throw error;
 

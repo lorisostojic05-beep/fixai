@@ -6,17 +6,22 @@ import { generaRefertoPDF } from "../lib/generaPDF";
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 // ─── Configurazione ────────────────────────────────────────────────
-const SCREENSHOT_INTERVAL_MS = 25000; // cattura frame ogni 4 secondi
+const SCREENSHOT_INTERVAL_MS = 25000; // cattura frame ogni 25 secondi
 const MAX_HISTORY = 20;              // massimo messaggi nella history
 
 // ─── Componenti UI ─────────────────────────────────────────────────
 function ChatBubble({ message }) {
+  const htmlSicuro = message.content
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
   return (
     <div className={`${styles.bubble} ${styles[message.role]}`}>
       {message.role === "assistant" && (
         <div className={styles.aiLabel}>Fixi</div>
       )}
-      <p dangerouslySetInnerHTML={{ __html: message.content.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }} />
+      <p dangerouslySetInnerHTML={{ __html: htmlSicuro }} />
       {message.suggestions && (
         <div className={styles.suggestions}>
           {message.suggestions.map((s, i) => (
@@ -85,6 +90,7 @@ export default function Diagnosi() {
   const messagesRef = useRef([]);
   const recognitionRef = useRef(null);
   const sessionTimeoutRef = useRef(null);
+  const stripeSessionRef = useRef(null); // id sessione Stripe: il server lo verifica a ogni messaggio
 
   // Scroll automatico
 useEffect(() => {
@@ -93,8 +99,9 @@ useEffect(() => {
 
 // Ripristina pagamento se utente ricarica la pagina
 useEffect(() => {
-  const giaPagato = sessionStorage.getItem("Fixi_pagato");
-  if (giaPagato === "true") {
+  const sid = sessionStorage.getItem("Fixi_stripe_session");
+  if (sid) {
+    stripeSessionRef.current = sid;
     setPagamentoVerificato(true);
   }
 }, []);
@@ -119,7 +126,8 @@ useEffect(() => {
           if (urlProblem) setProblem(urlProblem);
 
           setPagamentoVerificato(true);
-          sessionStorage.setItem("Fixi_pagato", "true");
+          stripeSessionRef.current = stripeSessionId;
+          sessionStorage.setItem("Fixi_stripe_session", stripeSessionId);
           setPhase("confermaPagamento");
           setTimeout(() => startSession(urlAppliance, urlBrand, urlProblem), 3000);
         } else {
@@ -184,7 +192,7 @@ useEffect(() => {
     canvas.width = 640;
     canvas.height = 480;
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, 320, 240);
+    ctx.drawImage(video, 0, 0, 640, 480);
     // Ritorna base64 senza il prefisso "data:image/jpeg;base64,"
     return canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
   }, []);
@@ -210,6 +218,7 @@ useEffect(() => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             sessionId,
+            stripeSessionId: stripeSessionRef.current,
             messages: updatedMessages,
             frame: frameBase64,
             appliance,
@@ -219,6 +228,16 @@ useEffect(() => {
         });
 
         const data = await res.json();
+
+        if (res.status === 402) {
+          // Pagamento mancante o scaduto: mostra il motivo esatto dal server
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: `⚠️ ${data.error}` },
+          ]);
+          return;
+        }
+
         if (data.error) throw new Error(data.error);
 
   if (!data.message.includes("SKIP")) {
@@ -323,7 +342,6 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
       alert("Seleziona l'elettrodomestico e descrivi il problema.");
       return;
     }
-    sessionStorage.removeItem("Fixi_pagato");
     await startCamera();
     setPhase("session");
 
@@ -592,7 +610,16 @@ onClick={() => {
   </button>
   <button
     className={styles.restartBtn}
-    onClick={() => { setPhase("setup"); setMessages([]); setReport(null); stopCamera(); }}
+    onClick={() => {
+      setPhase("setup");
+      setMessages([]);
+      setReport(null);
+      stopCamera();
+      // Una diagnosi = un pagamento: la nuova sessione richiede un nuovo checkout
+      sessionStorage.removeItem("Fixi_stripe_session");
+      stripeSessionRef.current = null;
+      setPagamentoVerificato(false);
+    }}
   >
     🔄 Nuova diagnosi
   </button>

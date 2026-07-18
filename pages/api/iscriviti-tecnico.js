@@ -1,10 +1,5 @@
 // pages/api/iscriviti-tecnico.js
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

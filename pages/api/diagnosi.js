@@ -2,10 +2,88 @@
 // Backend della sessione di diagnosi — chiama Claude con visione + history
 
 import Anthropic from "@anthropic-ai/sdk";
+import Stripe from "stripe";
+import { supabaseAdmin } from "../../lib/supabase-admin";
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+// Finestra di validità di un pagamento: la sessione client dura 30 min,
+// lasciamo margine per ricaricamenti pagina e generazione referto.
+const FINESTRA_PAGAMENTO_MS = 60 * 60 * 1000;
+const MAX_RICHIESTE_PER_PAGAMENTO = 80;
+
+/**
+ * Verifica che la richiesta sia coperta da un pagamento Stripe valido.
+ * La tabella `pagamenti` fa da registro anti-riuso: prima richiesta → si
+ * verifica con Stripe e si registra; richieste successive → si controllano
+ * finestra temporale e numero massimo di messaggi.
+ */
+async function verificaAccesso(stripeSessionId) {
+  if (process.env.SKIP_PAYMENT_CHECK === "true") return { ok: true };
+
+  if (!stripeSessionId) {
+    return { ok: false, motivo: "Nessun pagamento associato alla sessione. Completa il pagamento per avviare la diagnosi." };
+  }
+
+  let registro = null;
+  let tabellaDisponibile = true;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("pagamenti")
+      .select("*")
+      .eq("stripe_session_id", stripeSessionId)
+      .maybeSingle();
+    if (error) throw error;
+    registro = data;
+  } catch (e) {
+    // Tabella mancante o Supabase giù: si degrada alla sola verifica Stripe
+    tabellaDisponibile = false;
+    console.warn("Tabella pagamenti non disponibile, verifico solo con Stripe:", e.message);
+  }
+
+  if (!registro) {
+    let session;
+    try {
+      session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+    } catch {
+      return { ok: false, motivo: "Pagamento non riconosciuto. Riprova dal pulsante di pagamento." };
+    }
+    if (session.payment_status !== "paid") {
+      return { ok: false, motivo: "Il pagamento non risulta completato." };
+    }
+    if (tabellaDisponibile) {
+      const { error } = await supabaseAdmin.from("pagamenti").insert({
+        stripe_session_id: stripeSessionId,
+        attivata_at: new Date().toISOString(),
+        richieste: 1,
+      });
+      if (error && error.code !== "23505") {
+        // 23505 = riga già inserita da una richiesta concorrente: va bene
+        console.warn("Impossibile registrare il pagamento:", error.message);
+      }
+    }
+    return { ok: true };
+  }
+
+  const attivata = new Date(registro.attivata_at).getTime();
+  if (Date.now() - attivata > FINESTRA_PAGAMENTO_MS) {
+    return { ok: false, motivo: "La sessione pagata è scaduta. Per continuare avvia una nuova diagnosi." };
+  }
+  if ((registro.richieste || 0) >= MAX_RICHIESTE_PER_PAGAMENTO) {
+    return { ok: false, motivo: "Hai raggiunto il limite di messaggi per questa sessione. Genera il referto o avvia una nuova diagnosi." };
+  }
+
+  await supabaseAdmin
+    .from("pagamenti")
+    .update({ richieste: (registro.richieste || 0) + 1 })
+    .eq("stripe_session_id", stripeSessionId);
+
+  return { ok: true };
+}
 
 // ─── Sistema prompt: il "cervello" dell'AI ───────────────────────────────────
 const SYSTEM_PROMPT = `Sei Fixi, un esperto tecnico di elettrodomestici domestici con 20 anni di esperienza su lavatrici, lavastoviglie, asciugatrici e frigoriferi di tutti i marchi principali (Bosch, Samsung, Indesit, Whirlpool, Miele, Siemens, Electrolux, Hotpoint, AEG, LG, Candy, Hoover, Beko, Zanussi, Ariston).
@@ -440,10 +518,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Metodo non consentito" });
   }
 
-  const { messages, frame, appliance, brand, initialProblem, sessionId } = req.body;
+  const { messages, frame, appliance, brand, initialProblem, sessionId, stripeSessionId } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "Parametri non validi" });
+  }
+
+  const accesso = await verificaAccesso(stripeSessionId);
+  if (!accesso.ok) {
+    return res.status(402).json({ error: accesso.motivo });
   }
 
   try {

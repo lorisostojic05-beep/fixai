@@ -2,16 +2,42 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// Neutralizza HTML nei campi che finiscono nel template dell'email
+const esc = (v) =>
+  String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Metodo non consentito" });
   }
 
-  const { email, report, appliance, brand, problem } = req.body;
+  const { email, report: reportRaw, appliance: applianceRaw, brand: brandRaw, problem: problemRaw } = req.body;
 
-  if (!email || !report) {
+  if (!email || !reportRaw) {
     return res.status(400).json({ error: "Email e referto sono obbligatori" });
   }
+
+  const appliance = esc(applianceRaw);
+  const brand = esc(brandRaw);
+  const problem = esc(problemRaw);
+  const report = {
+    ...reportRaw,
+    diagnosis: esc(reportRaw.diagnosis),
+    diyInstructions: esc(reportRaw.diyInstructions),
+    technicianCost: esc(reportRaw.technicianCost),
+    urgency: ["bassa", "media", "alta"].includes(reportRaw.urgency) ? reportRaw.urgency : null,
+    sparePart: reportRaw.sparePart
+      ? {
+          name: esc(reportRaw.sparePart.name),
+          code: esc(reportRaw.sparePart.code),
+          price: esc(reportRaw.sparePart.price),
+        }
+      : null,
+  };
 
   const refNum = `#${Date.now().toString().slice(-6)}`;
   const data = new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });

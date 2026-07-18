@@ -7,6 +7,21 @@ export default function Admin() {
   const [dati, setDati] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Riprende la sessione se il token è ancora valido
+  useEffect(() => {
+    const token = sessionStorage.getItem("Fixi_admin_token");
+    if (token) {
+      setAutenticato(true);
+      caricaDati();
+    }
+  }, []);
+
+  const logout = () => {
+    sessionStorage.removeItem("Fixi_admin_token");
+    setAutenticato(false);
+    setDati(null);
+  };
+
   const login = async () => {
     const res = await fetch("/api/admin-auth", {
       method: "POST",
@@ -14,7 +29,8 @@ export default function Admin() {
       body: JSON.stringify({ password }),
     });
     const data = await res.json();
-    if (data.ok) {
+    if (data.ok && data.token) {
+      sessionStorage.setItem("Fixi_admin_token", data.token);
       setAutenticato(true);
       setErrorePassword(false);
       caricaDati();
@@ -25,10 +41,35 @@ export default function Admin() {
 
   const caricaDati = async () => {
     setLoading(true);
-    const res = await fetch("/api/admin-dati");
+    const token = sessionStorage.getItem("Fixi_admin_token");
+    const res = await fetch("/api/admin-dati", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.status === 401) {
+      logout();
+      setLoading(false);
+      return;
+    }
     const data = await res.json();
     setDati(data);
     setLoading(false);
+  };
+
+  const gestisciTecnico = async (id, approva) => {
+    const token = sessionStorage.getItem("Fixi_admin_token");
+    const res = await fetch("/api/approva-tecnico", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ id, approva }),
+    });
+    if (res.status === 401) {
+      logout();
+      return;
+    }
+    caricaDati();
   };
 
   if (!autenticato) {
@@ -81,15 +122,26 @@ export default function Admin() {
             <h1 style={{ fontSize: "24px", fontWeight: "800", color: "#0F6E56" }}>Fixi</h1>
             <p style={{ fontSize: "13px", color: "#666" }}>Dashboard amministratore</p>
           </div>
-          <button
-            onClick={caricaDati}
-            style={{
-              background: "white", border: "1px solid #e0e0de", borderRadius: "8px",
-              padding: "8px 14px", fontSize: "13px", cursor: "pointer"
-            }}
-          >
-            🔄 Aggiorna
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              onClick={caricaDati}
+              style={{
+                background: "white", border: "1px solid #e0e0de", borderRadius: "8px",
+                padding: "8px 14px", fontSize: "13px", cursor: "pointer"
+              }}
+            >
+              🔄 Aggiorna
+            </button>
+            <button
+              onClick={logout}
+              style={{
+                background: "white", border: "1px solid #e0e0de", borderRadius: "8px",
+                padding: "8px 14px", fontSize: "13px", cursor: "pointer", color: "#A01E1E"
+              }}
+            >
+              Esci
+            </button>
+          </div>
         </div>
 
         {loading && <p style={{ color: "#666", textAlign: "center" }}>Caricamento...</p>}
@@ -135,6 +187,38 @@ export default function Admin() {
                 </div>
               ))}
             </div>
+
+            {/* Tecnici in attesa di approvazione */}
+            {dati.tecniciInAttesa && dati.tecniciInAttesa.length > 0 && (
+              <div style={{ background: "white", borderRadius: "12px", padding: "1.25rem", marginBottom: "1.5rem", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+                <h2 style={{ fontSize: "15px", fontWeight: "600", marginBottom: "1rem" }}>
+                  ⏳ Tecnici in attesa ({dati.tecniciInAttesa.length})
+                </h2>
+                {dati.tecniciInAttesa.map((t, i) => (
+                  <div key={i} style={{ padding: "12px 0", borderBottom: "1px solid #f0f0ee", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <p style={{ fontWeight: "500", fontSize: "14px" }}>{t.nome} {t.cognome}</p>
+                      <p style={{ color: "#666", fontSize: "12px" }}>{t.citta} · {t.specializzazioni?.join(", ")}</p>
+                      <p style={{ color: "#666", fontSize: "12px" }}>{t.email} · {t.telefono}</p>
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <button
+                        onClick={() => gestisciTecnico(t.id, true)}
+                        style={{ background: "#1D9E75", color: "white", border: "none", borderRadius: "8px", padding: "7px 14px", fontSize: "13px", cursor: "pointer" }}
+                      >
+                        ✅ Approva
+                      </button>
+                      <button
+                        onClick={() => gestisciTecnico(t.id, false)}
+                        style={{ background: "#f5f5f3", color: "#333", border: "1px solid #e0e0de", borderRadius: "8px", padding: "7px 14px", fontSize: "13px", cursor: "pointer" }}
+                      >
+                        ❌ Rifiuta
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Sessioni recenti */}
             <div style={{ background: "white", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>

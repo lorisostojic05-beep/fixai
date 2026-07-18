@@ -1,18 +1,23 @@
 // pages/api/admin-dati.js
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
+import { verificaTokenAdmin } from "../../lib/admin-token";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Metodo non consentito" });
   }
 
+  if (!verificaTokenAdmin(req)) {
+    return res.status(401).json({ error: "Non autorizzato" });
+  }
+
   try {
     // Sessioni recenti
+    const { data: tecniciInAttesa } = await supabase
+  .from("tecnici")
+  .select("*")
+  .eq("approvato", false)
+  .order("created_at", { ascending: false });
     const { data: sessioni } = await supabase
       .from("sessioni")
       .select("*")
@@ -69,6 +74,7 @@ export default async function handler(req, res) {
       problemiComuni,
       perElettrodomestico,
       sessioni: sessioni || [],
+      tecniciInAttesa: tecniciInAttesa || [],
     });
   } catch (err) {
     console.error("Errore admin dati:", err);
