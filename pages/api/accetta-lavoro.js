@@ -15,7 +15,7 @@ const esc = (v) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
-function emailContatti({ titolo, sottotitolo, righe }) {
+function emailContatti({ titolo, sottotitolo, righe, linkArea }) {
   return `<!DOCTYPE html>
 <html lang="it"><head><meta charset="UTF-8"><title>${esc(titolo)}</title></head>
 <body style="margin:0;padding:0;background:#f5f5f3;font-family:system-ui,sans-serif;">
@@ -31,6 +31,7 @@ function emailContatti({ titolo, sottotitolo, righe }) {
     ${righe.map((r) => `<p style="margin:0 0 6px;font-size:14px;"><strong>${esc(r[0])}:</strong> ${esc(r[1])}</p>`).join("")}
   </div>
   <p style="margin:16px 0 0;font-size:12px;color:#888;">Vi consigliamo di accordarvi telefonicamente su orario e sopralluogo.</p>
+  ${linkArea ? `<p style="margin:12px 0 0;font-size:13px;"><a href="${linkArea}" style="color:#0F6E56;">Gestisci questo lavoro dalla tua area tecnico →</a></p>` : ""}
 </td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -74,7 +75,7 @@ export default async function handler(req, res) {
     try {
       const { data: tecnico } = await supabase
         .from("tecnici")
-        .select("id, nome, cognome, email, telefono, citta")
+        .select("id, nome, cognome, email, telefono, citta, accesso_token")
         .eq("id", tecnicoId)
         .eq("approvato", true)
         .maybeSingle();
@@ -108,6 +109,7 @@ export default async function handler(req, res) {
       }
 
       // Email al tecnico con i contatti del cliente
+      const baseUrl = req.headers.origin || `https://${req.headers.host}`;
       const emailPromises = [
         resend.emails.send({
           from: "Fixi <onboarding@resend.dev>",
@@ -123,6 +125,9 @@ export default async function handler(req, res) {
               ["Zona", `${assegnata.citta || ""} (CAP ${assegnata.cap})`],
               ["Guasto", `${assegnata.brand || ""} ${assegnata.appliance || ""} — ${assegnata.problem || ""}`],
             ],
+            linkArea: tecnico.accesso_token
+              ? `${baseUrl}/area-tecnico?token=${tecnico.accesso_token}`
+              : null,
           }),
         }),
       ];

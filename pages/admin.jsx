@@ -231,6 +231,7 @@ export default function Admin() {
                     nuova: { bg: "#fdeaea", col: "#A01E1E", label: "⚠️ Nessun tecnico trovato" },
                     inviata: { bg: "#faeeda", col: "#854F0B", label: `⏳ In attesa (${r.tecnici_contattati} contattati)` },
                     accettata: { bg: "#e8f5f0", col: "#0F6E56", label: "✅ Assegnata" },
+                    completata: { bg: "#e6f1fb", col: "#185FA5", label: "🏁 Completata" },
                     chiusa: { bg: "#f0f0ee", col: "#666", label: "Chiusa" },
                   }[r.stato] || { bg: "#f0f0ee", col: "#666", label: r.stato };
                   return (
@@ -248,6 +249,12 @@ export default function Admin() {
                         {r.tecnico && (
                           <p style={{ color: "#0F6E56", fontSize: "12px", marginTop: "2px" }}>
                             → {r.tecnico.nome} {r.tecnico.cognome} · {r.tecnico.telefono}
+                          </p>
+                        )}
+                        {r.recensione_voto && (
+                          <p style={{ fontSize: "12px", marginTop: "2px" }}>
+                            <span style={{ color: "#E8A21D" }}>{"★".repeat(r.recensione_voto)}{"☆".repeat(5 - r.recensione_voto)}</span>
+                            {r.recensione_commento && <span style={{ color: "#666", fontStyle: "italic" }}> "{r.recensione_commento}"</span>}
                           </p>
                         )}
                       </div>

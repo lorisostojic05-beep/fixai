@@ -13,6 +13,8 @@ Fixi/
 │   ├── diagnosi.jsx          ← Interfaccia utente (setup + sessione + referto)
 │   ├── iscriviti-tecnico.jsx ← Form iscrizione tecnici
 │   ├── accetta-lavoro.jsx    ← Pagina per il tecnico: accetta il lavoro dal link email
+│   ├── area-tecnico.jsx      ← Area personale tecnico: lavori, profilo, recensioni
+│   ├── recensione.jsx        ← Pagina recensione del cliente (voto + commento)
 │   ├── admin.jsx             ← Dashboard admin (statistiche + tecnici + richieste)
 │   └── api/
 │       ├── diagnosi.js       ← Backend AI: Claude con visione + verifica pagamento
@@ -23,6 +25,8 @@ Fixi/
 │       ├── iscriviti-tecnico.js
 │       ├── richiedi-tecnico.js← Matching tecnici di zona + email con link accettazione
 │       ├── accetta-lavoro.js  ← Assegnazione atomica + scambio contatti via email
+│       ├── area-tecnico.js    ← Profilo e lavori del tecnico, completamento lavoro
+│       ├── recensione.js      ← Salvataggio recensione cliente (token monouso)
 │       ├── admin-auth.js     ← Login admin → token firmato
 │       ├── admin-dati.js     ← Dati dashboard (richiede token)
 │       └── approva-tecnico.js← Approva/rifiuta tecnici (richiede token)
@@ -108,6 +112,10 @@ Frontend mostra referto con diagnosi, soluzione, costi
 - [x] **Database** — Supabase per sessioni, feedback e tecnici
 - [x] **Iscrizione tecnici** — form + approvazione da dashboard admin
 - [x] **Contatta un tecnico** — richiesta dal referto, email ai tecnici di zona con link di accettazione (primo che accetta vince), scambio contatti automatico
+- [x] **Area tecnico** — accesso con link personale, lavori assegnati, profilo, "segna completato"
+- [x] **Recensioni** — email al cliente a lavoro completato, voto + commento, visibili a tecnico e admin
+- [ ] **Dominio + Resend verificato** — per inviare email ai tecnici veri (prima del lancio)
+- [ ] **Deploy su Vercel** — configurare lì tutte le variabili d'ambiente
 - [ ] **Autenticazione utenti** — storico sessioni
 - [ ] **Più elettrodomestici** — forno, piano cottura, ecc.
 - [ ] **App mobile** — React Native con Expo per accesso camera migliore
