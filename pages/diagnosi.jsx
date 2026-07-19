@@ -79,6 +79,10 @@ export default function Diagnosi() {
   const [emailInviata, setEmailInviata] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [feedbackInviato, setFeedbackInviato] = useState(false);
+  // Richiesta tecnico dal referto
+  const [tecForm, setTecForm] = useState({ nome: "", telefono: "", email: "", citta: "", cap: "" });
+  const [tecLoading, setTecLoading] = useState(false);
+  const [tecEsito, setTecEsito] = useState(null); // { tecniciContattati } dopo l'invio
   const sessionStartRef = useRef(null);
   const [voceAttiva, setVoceAttiva] = useState(true);
   const voceAttivaRef = useRef(true);
@@ -366,6 +370,43 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
         { role: "assistant", content: "⏱️ La sessione è scaduta dopo 30 minuti. Clicca **Genera referto** per ricevere la diagnosi con le informazioni raccolte finora." },
       ]);
     }, 30 * 60 * 1000);
+  };
+
+  // ── Richiesta tecnico dal referto ───────────────────────────────
+  const richiediTecnico = async () => {
+    if (!tecForm.nome.trim() || !tecForm.telefono.trim()) {
+      alert("Inserisci nome e telefono: servono al tecnico per contattarti.");
+      return;
+    }
+    if (!/^\d{5}$/.test(tecForm.cap.trim())) {
+      alert("Inserisci un CAP valido di 5 cifre.");
+      return;
+    }
+    setTecLoading(true);
+    try {
+      const res = await fetch("/api/richiedi-tecnico", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...tecForm,
+          email: tecForm.email || emailUtente || null,
+          appliance: sessionStorage.getItem("Fixi_report_appliance") || appliance,
+          brand: sessionStorage.getItem("Fixi_report_brand") || brand,
+          problem: sessionStorage.getItem("Fixi_report_problem") || problem,
+          report,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(`⚠️ ${data.error}`);
+      } else {
+        setTecEsito(data);
+      }
+    } catch {
+      alert("⚠️ Problema di rete. Riprova.");
+    } finally {
+      setTecLoading(false);
+    }
   };
 
   // ── Genera referto manuale ──────────────────────────────────────
@@ -750,6 +791,73 @@ onClick={() => {
     Grazie per il feedback! 🙏
   </p>
 )}
+
+{/* Richiedi un tecnico della zona */}
+<div style={{ marginTop: "16px", background: "#e6f1fb", borderRadius: "10px", padding: "16px" }}>
+  {tecEsito ? (
+    <div style={{ textAlign: "center" }}>
+      <p style={{ fontSize: "15px", fontWeight: 600, marginBottom: "6px" }}>
+        ✅ Richiesta inviata!
+      </p>
+      <p style={{ fontSize: "13px", color: "#444", lineHeight: 1.6 }}>
+        {tecEsito.tecniciContattati > 0
+          ? `Abbiamo avvisato ${tecEsito.tecniciContattati} tecnic${tecEsito.tecniciContattati === 1 ? "o" : "i"} della tua zona con il referto già pronto. Il primo disponibile ti chiamerà al numero che hai lasciato.`
+          : "Al momento non ci sono tecnici attivi nella tua zona: abbiamo registrato la richiesta e ti contatteremo appena ne troviamo uno."}
+      </p>
+    </div>
+  ) : (
+    <>
+      <p style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>
+        🔧 Preferisci un tecnico?
+      </p>
+      <p style={{ fontSize: "12px", color: "#555", marginBottom: "12px" }}>
+        Inviamo il referto ai tecnici della tua zona: il primo disponibile ti contatta. Gratis e senza impegno.
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
+        <input
+          type="text"
+          placeholder="Nome *"
+          value={tecForm.nome}
+          onChange={(e) => setTecForm({ ...tecForm, nome: e.target.value })}
+          className={styles.input}
+        />
+        <input
+          type="tel"
+          placeholder="Telefono *"
+          value={tecForm.telefono}
+          onChange={(e) => setTecForm({ ...tecForm, telefono: e.target.value })}
+          className={styles.input}
+        />
+        <input
+          type="text"
+          placeholder="Città"
+          value={tecForm.citta}
+          onChange={(e) => setTecForm({ ...tecForm, citta: e.target.value })}
+          className={styles.input}
+        />
+        <input
+          type="text"
+          placeholder="CAP *"
+          maxLength={5}
+          value={tecForm.cap}
+          onChange={(e) => setTecForm({ ...tecForm, cap: e.target.value.replace(/\D/g, "") })}
+          className={styles.input}
+        />
+      </div>
+      <button
+        onClick={richiediTecnico}
+        disabled={tecLoading}
+        style={{
+          width: "100%", background: "#185FA5", color: "white", border: "none",
+          borderRadius: "10px", padding: "12px", fontSize: "14px", fontWeight: 600,
+          cursor: "pointer", opacity: tecLoading ? 0.7 : 1,
+        }}
+      >
+        {tecLoading ? "⏳ Invio in corso..." : "📨 Trova un tecnico nella mia zona"}
+      </button>
+    </>
+  )}
+</div>
         </div>
       </div>
     );

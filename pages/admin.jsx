@@ -220,6 +220,54 @@ export default function Admin() {
               </div>
             )}
 
+            {/* Richieste intervento */}
+            {dati.richieste && dati.richieste.length > 0 && (
+              <div style={{ background: "white", borderRadius: "12px", padding: "1.25rem", marginBottom: "1.5rem", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+                <h2 style={{ fontSize: "15px", fontWeight: "600", marginBottom: "1rem" }}>
+                  🔧 Richieste intervento ({dati.richieste.length})
+                </h2>
+                {dati.richieste.map((r, i) => {
+                  const badge = {
+                    nuova: { bg: "#fdeaea", col: "#A01E1E", label: "⚠️ Nessun tecnico trovato" },
+                    inviata: { bg: "#faeeda", col: "#854F0B", label: `⏳ In attesa (${r.tecnici_contattati} contattati)` },
+                    accettata: { bg: "#e8f5f0", col: "#0F6E56", label: "✅ Assegnata" },
+                    chiusa: { bg: "#f0f0ee", col: "#666", label: "Chiusa" },
+                  }[r.stato] || { bg: "#f0f0ee", col: "#666", label: r.stato };
+                  return (
+                    <div key={i} style={{
+                      padding: "12px 0", borderBottom: "1px solid #f0f0ee",
+                      display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "8px", fontSize: "13px"
+                    }}>
+                      <div>
+                        <p style={{ fontWeight: "500" }}>{r.nome} · {r.telefono}</p>
+                        <p style={{ color: "#666", fontSize: "12px" }}>{r.citta || "—"} ({r.cap})</p>
+                      </div>
+                      <div>
+                        <p>{r.brand} {r.appliance}</p>
+                        <p style={{ color: "#666", fontSize: "12px" }}>{r.problem}</p>
+                        {r.tecnico && (
+                          <p style={{ color: "#0F6E56", fontSize: "12px", marginTop: "2px" }}>
+                            → {r.tecnico.nome} {r.tecnico.cognome} · {r.tecnico.telefono}
+                          </p>
+                        )}
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <span style={{
+                          background: badge.bg, color: badge.col,
+                          padding: "2px 8px", borderRadius: "20px", fontSize: "11px", whiteSpace: "nowrap"
+                        }}>
+                          {badge.label}
+                        </span>
+                        <p style={{ color: "#999", fontSize: "11px", marginTop: "4px" }}>
+                          {new Date(r.created_at).toLocaleDateString("it-IT")}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Sessioni recenti */}
             <div style={{ background: "white", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
               <h2 style={{ fontSize: "15px", fontWeight: "600", marginBottom: "1rem" }}>Sessioni recenti</h2>

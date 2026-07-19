@@ -12,7 +12,8 @@ Fixi/
 │   ├── index.jsx             ← Landing page
 │   ├── diagnosi.jsx          ← Interfaccia utente (setup + sessione + referto)
 │   ├── iscriviti-tecnico.jsx ← Form iscrizione tecnici
-│   ├── admin.jsx             ← Dashboard admin (statistiche + approvazione tecnici)
+│   ├── accetta-lavoro.jsx    ← Pagina per il tecnico: accetta il lavoro dal link email
+│   ├── admin.jsx             ← Dashboard admin (statistiche + tecnici + richieste)
 │   └── api/
 │       ├── diagnosi.js       ← Backend AI: Claude con visione + verifica pagamento
 │       ├── checkout.js       ← Crea sessione Stripe Checkout
@@ -20,6 +21,8 @@ Fixi/
 │       ├── invia-email.js    ← Referto via email (Resend)
 │       ├── feedback.js       ← Salva sessione + feedback su Supabase
 │       ├── iscriviti-tecnico.js
+│       ├── richiedi-tecnico.js← Matching tecnici di zona + email con link accettazione
+│       ├── accetta-lavoro.js  ← Assegnazione atomica + scambio contatti via email
 │       ├── admin-auth.js     ← Login admin → token firmato
 │       ├── admin-dati.js     ← Dati dashboard (richiede token)
 │       └── approva-tecnico.js← Approva/rifiuta tecnici (richiede token)
@@ -104,7 +107,7 @@ Frontend mostra referto con diagnosi, soluzione, costi
 - [x] **PDF referto** — jsPDF client-side + invio via email (Resend)
 - [x] **Database** — Supabase per sessioni, feedback e tecnici
 - [x] **Iscrizione tecnici** — form + approvazione da dashboard admin
-- [ ] **Contatta un tecnico** — richiesta intervento con referto ai tecnici di zona
+- [x] **Contatta un tecnico** — richiesta dal referto, email ai tecnici di zona con link di accettazione (primo che accetta vince), scambio contatti automatico
 - [ ] **Autenticazione utenti** — storico sessioni
 - [ ] **Più elettrodomestici** — forno, piano cottura, ecc.
 - [ ] **App mobile** — React Native con Expo per accesso camera migliore

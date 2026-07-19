@@ -24,6 +24,24 @@ export default async function handler(req, res) {
       .order("created_at", { ascending: false })
       .limit(20);
 
+    // Richieste di intervento, con il nome del tecnico assegnato
+    const { data: richiesteRaw } = await supabase
+      .from("richieste_intervento")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    let richieste = richiesteRaw || [];
+    const idTecnici = [...new Set(richieste.filter((r) => r.tecnico_id).map((r) => r.tecnico_id))];
+    if (idTecnici.length > 0) {
+      const { data: tecniciAssegnati } = await supabase
+        .from("tecnici")
+        .select("id, nome, cognome, telefono")
+        .in("id", idTecnici);
+      const mappa = Object.fromEntries((tecniciAssegnati || []).map((t) => [t.id, t]));
+      richieste = richieste.map((r) => ({ ...r, tecnico: mappa[r.tecnico_id] || null }));
+    }
+
     // Statistiche
     const totale = sessioni?.length || 0;
 
@@ -75,6 +93,7 @@ export default async function handler(req, res) {
       perElettrodomestico,
       sessioni: sessioni || [],
       tecniciInAttesa: tecniciInAttesa || [],
+      richieste,
     });
   } catch (err) {
     console.error("Errore admin dati:", err);
