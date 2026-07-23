@@ -804,8 +804,12 @@ export default function Home() {
         }
 
         @media (max-width: 768px) {
-          nav { padding: 16px 24px; }
-          nav.scrolled { padding: 12px 24px; }
+          nav { padding: 16px 20px; }
+          nav.scrolled { padding: 12px 20px; }
+          /* Su mobile mostra solo logo + pulsante: le sezioni si raggiungono scorrendo */
+          .nav-links { gap: 0; }
+          .nav-links li:not(:last-child) { display: none; }
+          .btn-nav { padding: 9px 18px; white-space: nowrap; }
           .hero { padding: 100px 24px 60px; }
           .hero-grid { grid-template-columns: 1fr; gap: 48px; }
           .hero-visual { display: none; }
