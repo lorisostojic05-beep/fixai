@@ -1002,34 +1002,29 @@ export default function Home() {
           <div ref={addRef("pricing-title")} className={`fade-up ${visible["pricing-title"] ? "visible" : ""}`}>
             <div className="section-tag">Prezzi</div>
             <h2 className="section-title">Semplice e trasparente.</h2>
-            <p className="section-sub">Nessun abbonamento obbligatorio. Paghi solo quando hai bisogno.</p>
+            <p className="section-sub">Nessun abbonamento: paghi solo quando hai bisogno.</p>
           </div>
 
-          <div className="pricing-grid">
-            <div ref={addRef("price-1")} className={`price-card ${visible["price-1"] ? "visible" : ""}`}>
+          <div style={{ maxWidth: "380px", marginTop: "60px" }}>
+            <a
+              href="/diagnosi"
+              ref={addRef("price-1")}
+              className={`price-card ${visible["price-1"] ? "visible" : ""}`}
+              style={{ display: "block", textDecoration: "none", color: "inherit", cursor: "pointer" }}
+            >
               <div className="price-name">Diagnosi singola</div>
               <div className="price-amount"><sup>€</sup>9<sup>,90</sup></div>
-              <div className="price-period">sessione</div>
+              <div className="price-period">a sessione · nessun abbonamento</div>
               <ul className="price-features">
                 <li>30 min videochiamata AI</li>
                 <li>Referto PDF scaricabile</li>
                 <li>Guida fai-da-te inclusa</li>
                 <li>Stima costo tecnico</li>
               </ul>
-            </div>
-
-            <div ref={addRef("price-2")} className={`price-card featured ${visible["price-2"] ? "visible" : ""}`}>
-              <div className="price-badge">✦ Più scelto</div>
-              <div className="price-name">Family</div>
-              <div className="price-amount"><sup>€</sup>7<sup>,90</sup></div>
-              <div className="price-period">/mese · sessioni illimitate</div>
-              <ul className="price-features">
-                <li>Sessioni illimitate</li>
-                <li>Storico diagnosi</li>
-                <li>Tutti gli elettrodomestici</li>
-                <li>Priorità supporto</li>
-              </ul>
-            </div>
+              <div style={{ marginTop: "24px", background: "var(--verde)", color: "white", textAlign: "center", padding: "13px", borderRadius: "100px", fontWeight: 500, fontSize: "15px" }}>
+                Avvia diagnosi →
+              </div>
+            </a>
           </div>
         </div>
       </section>
