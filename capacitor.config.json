@@ -1,0 +1,10 @@
+{
+  "appId": "casa.fixi.app",
+  "appName": "Fixi",
+  "webDir": "mobile/www",
+  "server": {
+    "url": "https://fixai-svq7.vercel.app",
+    "cleartext": false,
+    "androidScheme": "https"
+  }
+}
