@@ -9,6 +9,24 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
 const SCREENSHOT_INTERVAL_MS = 25000; // cattura frame ogni 25 secondi
 const MAX_HISTORY = 20;              // massimo messaggi nella history
 
+// Sceglie la voce più naturale tra quelle disponibili per la lingua richiesta.
+// Le voci "Google"/"Natural" suonano molto meglio della predefinita robotica.
+function scegliVoceNaturale(voci, lang) {
+  const base = (lang || "it-IT").split("-")[0].toLowerCase();
+  const candidati = (voci || []).filter((v) => v.lang && v.lang.toLowerCase().startsWith(base));
+  if (candidati.length === 0) return null;
+  const punteggio = (v) => {
+    const n = (v.name || "").toLowerCase();
+    let s = 0;
+    if (n.includes("google")) s += 6;
+    if (/natural|enhanced|premium|neural|wavenet/.test(n)) s += 5;
+    if (!v.localService) s += 2; // le voci di rete sono spesso più naturali
+    if (v.lang.toLowerCase() === (lang || "").toLowerCase()) s += 1;
+    return s;
+  };
+  return candidati.slice().sort((a, b) => punteggio(b) - punteggio(a))[0];
+}
+
 // ─── Componenti UI ─────────────────────────────────────────────────
 function ChatBubble({ message }) {
   const htmlSicuro = message.content
@@ -64,6 +82,7 @@ export default function Diagnosi() {
   const intervalRef = useRef(null);
   const chatEndRef = useRef(null);
   const canvasRef = useRef(null);
+  const voicesRef = useRef([]);
 
   const [phase, setPhase] = useState("setup");       // setup | session | report
   const [cameraActive, setCameraActive] = useState(false);
@@ -100,6 +119,18 @@ export default function Diagnosi() {
 useEffect(() => {
   chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
 }, [messages]);
+
+// Carica le voci disponibili per la sintesi vocale (arrivano in modo asincrono)
+useEffect(() => {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  const carica = () => {
+    const v = window.speechSynthesis.getVoices() || [];
+    if (v.length) voicesRef.current = v;
+  };
+  carica();
+  window.speechSynthesis.onvoiceschanged = carica;
+  return () => { window.speechSynthesis.onvoiceschanged = null; };
+}, []);
 
 // Ripristina pagamento se utente ricarica la pagina
 useEffect(() => {
@@ -453,7 +484,11 @@ const leggiAd = (testo) => {
     .replace(/⚠️|✅|🔧|📋|⏱️|💰|🔍/g, "");
   const utterance = new SpeechSynthesisUtterance(pulito);
   utterance.lang = rilevaLingua(pulito);
-  utterance.rate = 1.05;
+  const voci = voicesRef.current.length ? voicesRef.current : window.speechSynthesis.getVoices();
+  const voce = scegliVoceNaturale(voci, utterance.lang);
+  if (voce) utterance.voice = voce;
+  utterance.rate = 1.0;
+  utterance.pitch = 1.05;
   window.speechSynthesis.speak(utterance);
 };
 
