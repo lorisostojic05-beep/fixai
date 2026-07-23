@@ -1090,7 +1090,10 @@ export default function Home() {
       <footer>
         <div className="footer-logo">Fixi</div>
         <div>Diagnosi elettrodomestici via AI · fixi.casa</div>
-        <div>© 2026 Fixi</div>
+        <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+          <a href="/privacy" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>Privacy</a>
+          <span>© 2026 Fixi</span>
+        </div>
       </footer>
     </>
   );
