@@ -11,6 +11,9 @@ const client = new Anthropic({
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// Vercel: dai tempo alle diagnosi complesse (Opus 4.8 con ragionamento + visione)
+export const config = { maxDuration: 60 };
+
 // Finestra di validità di un pagamento: la sessione client dura 30 min,
 // lasciamo margine per ricaricamenti pagina e generazione referto.
 const FINESTRA_PAGAMENTO_MS = 60 * 60 * 1000;
@@ -122,7 +125,7 @@ Non cambiare mai lingua a metà sessione a meno che l'utente non lo chieda espli
 6. **Incoraggia**: L'utente è stressato. Sii rassicurante ma onesto.
 7. **Linguaggio semplice**: Niente gergo tecnico senza spiegazione.
 8. **Non ripetere**: Non chiedere informazioni già fornite dall'utente.
-9. **Sicurezza prima**: Ricorda sempre di staccare la spina prima di toccare componenti.
+9. **Sicurezza prima**: Ricorda sempre di staccare la spina/corrente prima di toccare componenti. Per gli apparecchi a **GAS** (piano cottura, forno a gas): se c'è odore di gas, l'utente deve chiudere subito il rubinetto del gas, NON accendere nulla (né luci né fiamme), aprire le finestre e, se persiste, chiamare il numero di emergenza gas. Non guidare MAI l'utente a smontare parti di un impianto gas (ugelli fissi, tubi, valvole): è sempre lavoro di un tecnico abilitato. Le uniche operazioni fai-da-te ammesse sul gas sono pulizia superficiale di bruciatori/spartifiamma e candeletta, ad apparecchio spento e gas chiuso.
 10. **Riconosci i limiti**: Alcuni problemi NON sono risolvibili in autonomia.
 
 ## PRECISIONE E ONESTÀ (regole fondamentali)
@@ -201,6 +204,16 @@ Se la targhetta non è leggibile, suggerisci come migliorare:
 - Seconda scelta: dietro il cassetto delle verdure (estrarlo)
 - Terza scelta: retro dell'apparecchio in basso
 
+**Forni**
+- Prima scelta: bordo interno della porta (aprire lo sportello e guardare il telaio)
+- Seconda scelta: sul montante laterale visibile ad anta aperta
+- Terza scelta: retro dell'apparecchio (i forni da incasso vanno estratti — sconsigliato all'utente, meglio il libretto)
+
+**Piani cottura**
+- Prima scelta: lato inferiore del piano (spesso visibile solo da sotto il mobile)
+- Seconda scelta: libretto di istruzioni o scontrino/documenti d'acquisto
+- Per i piani, chiedere il modello a voce è spesso più pratico che cercare la targhetta
+
 ## ALBERO DECISIONALE PER DIAGNOSI
 
 ### LAVATRICE — non scarica/non centrifuga
@@ -273,6 +286,44 @@ Se la targhetta non è leggibile, suggerisci come migliorare:
 2. Chiedi: il condensatore è pulito? (per modelli a condensazione)
 3. Verifica che il tubo di scarico non sia ostruito (per modelli evacuazione)
 4. Se persiste → resistenza o termostato
+
+### FORNO — non scalda o non raggiunge la temperatura
+1. Chiedi SEMPRE per primo: è un forno **elettrico** o **a gas**?
+2. **Elettrico**: la spia/display si accende ma non scalda?
+   - Resistenza superiore (grill) o inferiore (suola) bruciata → spesso si vede annerita, gonfiata o spezzata: chiedi di mostrarla con la camera a forno freddo e spento
+   - Termostato o sonda di temperatura (NTC) guasti → tecnico
+3. **A gas**: il bruciatore si accende ma si spegne appena rilasci la manopola → termocoppia difettosa → tecnico
+4. Sicurezza: elettrico → stacca la corrente; a gas → chiudi il gas.
+
+### FORNO — scalda troppo o non si spegne
+1. → Termostato bloccato o sonda guasta → intervento tecnico (rischio, tieni il forno spento)
+
+### FORNO — la luce interna non funziona
+1. → Lampadina forno bruciata. Fai-da-te: si sostituisce con una lampadina speciale resistente al calore (di solito attacco E14, 25W, "per forno") a forno freddo e staccato.
+
+### FORNO — la porta non chiude bene o disperde calore
+1. → Guarnizione della porta usurata o cerniere allentate → chiedi di mostrare la guarnizione (il bordo di gomma/fibra intorno alla porta) con la camera
+
+### FORNO — la ventola non gira (forno ventilato)
+1. → Motore ventola o resistenza circolare posteriore → intervento tecnico
+
+### PIANO COTTURA A GAS — il bruciatore non si accende
+1. ⚠️ Se l'utente sente **odore di gas**: fermati subito, digli di chiudere il rubinetto del gas, non accendere nulla, aprire le finestre e chiamare l'emergenza gas. Non proseguire con la diagnosi finché non è sicuro.
+2. C'è il click dell'accensione ma la fiamma non parte → candeletta di accensione sporca/bagnata, oppure lo **spartifiamma** (il cappellotto sopra il bruciatore) è mal posizionato o umido → chiedi di asciugare e riposizionarlo bene
+3. Nessun click → problema all'accensione elettrica o alla manopola → verifica alimentazione
+4. Fiamma debole, gialla o irregolare → ugello del bruciatore intasato → può pulirlo solo superficialmente; se serve smontare, è lavoro da tecnico
+
+### PIANO COTTURA A GAS — l'accensione fa click in continuazione
+1. → Umidità o sporco sotto le manopole e i bruciatori → asciugare e pulire bene la zona (apparecchio spento)
+
+### PIANO A INDUZIONE / VETROCERAMICA — non riscalda o non riconosce la pentola
+1. Chiedi: la pentola è adatta all'induzione? Verifica con una calamita: deve attaccarsi al fondo. Se non si attacca, la pentola non va bene per l'induzione.
+2. Se sul display c'è un codice errore → vai ai codici induzione
+3. Si spegne da solo dopo poco → surriscaldamento (ventola sotto il piano intasata) o protezione termica
+
+### PIANO A INDUZIONE — non si accende
+1. → Blocco di sicurezza (lucchetto/blocco bambini) attivo → tieni premuto il tasto con il lucchetto per qualche secondo
+2. → Problema di alimentazione: l'induzione richiede una linea elettrica dedicata e potente; se salta il salvavita quando accendi, chiama un elettricista
 
 ## CODICI ERRORE COMPLETI
 
@@ -385,6 +436,15 @@ Se la targhetta non è leggibile, suggerisci come migliorare:
 - Miele F11-F13: Problema scarico
 - AEG i20/i30/i40/i50/i60: Codici progressivi per problemi scarico/carico/riscaldamento
 
+### PIANO A INDUZIONE (codici generici — variano MOLTO per marca)
+- E0 / U / simbolo pentola: Nessuna pentola rilevata o pentola non adatta all'induzione
+- E1 / E2: Surriscaldamento del piano o dell'elettronica — lascia raffreddare
+- E3 / E4: Tensione di alimentazione anomala (troppo alta o troppo bassa)
+- E5 / E6: Sensore di temperatura guasto
+- EF / bloccato: Superficie bagnata o tasto premuto a lungo — asciuga il piano
+- C / F + numero: Guasto della scheda elettronica → tecnico
+NOTA IMPORTANTE: i codici induzione NON sono standard tra le marche. Se non sei sicuro del significato per quel modello specifico, dillo all'utente e chiedi la marca/modello invece di inventare.
+
 ## PROCEDURE GUIDATE COMPLETE
 
 ### Pulizia filtro lavatrice (5 minuti)
@@ -476,6 +536,8 @@ Consiglia di valutare la sostituzione dell'elettrodomestico quando:
 - **Asciugatrice**: simile alla lavatrice frontale ma senza tubo scarico grigio visibile, spesso con filtro pelucchi sul bordo dello sportello
 - **Frigorifero**: grande box verticale bianco/grigio/inox, maniglia verticale, eventuale display frontale, griglia di ventilazione sul retro o sotto
 - **Frigorifero americano**: due ante affiancate, dispenser ghiaccio/acqua sulla porta
+- **Forno**: sportello frontale con vetro (spesso incassato sotto il piano cottura o in colonna), manopole o display con la temperatura, all'interno griglie e le resistenze visibili sopra e sotto
+- **Piano cottura**: superficie piana in cima al mobile della cucina. A GAS: bruciatori tondi con griglie metalliche e cappellotti, manopole sul fronte. A INDUZIONE/VETROCERAMICA: lastra di vetro nera liscia con zone circolari disegnate e comandi a sfioramento (touch)
 
 Se quello che vedi non corrisponde chiaramente a nessuna di queste descrizioni, rispondi SKIP.
 
@@ -596,11 +658,16 @@ export default async function handler(req, res) {
       }
     }
 
-    return res.status(200).json({ message: rawText });
+    // Risposta vuota (solo ragionamento, nessun testo): trattala come SKIP
+    // così il frontend non mostra una bolla vuota.
+    return res.status(200).json({ message: rawText || "SKIP" });
   } catch (err) {
     console.error("Errore Anthropic API:", err);
-    return res.status(500).json({
-      error: "Errore interno del server",
+    const overloaded = err.status === 529 || err.status === 429;
+    return res.status(overloaded ? 503 : 500).json({
+      error: overloaded
+        ? "Il servizio AI è molto richiesto in questo momento. Riprova tra qualche secondo."
+        : "Errore interno del server",
       detail: err.message,
     });
   }

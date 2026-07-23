@@ -22,6 +22,8 @@ const SPEC_PER_APPLIANCE = {
   Lavastoviglie: "Lavastoviglie",
   Asciugatrice: "Asciugatrici",
   Frigorifero: "Frigoriferi",
+  Forno: "Forni",
+  "Piano cottura": "Piani cottura",
 };
 
 async function trovaTecnici(appliance, cap) {

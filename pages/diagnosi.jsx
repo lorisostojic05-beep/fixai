@@ -254,40 +254,53 @@ useEffect(() => {
       }
 
       try {
-        const res = await fetch("/api/diagnosi", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId,
-            stripeSessionId: stripeSessionRef.current,
-            messages: updatedMessages,
-            frame: frameBase64,
-            appliance,
-            brand,
-            initialProblem: problem,
-          }),
-        });
+        // Timeout di sicurezza: se il server non risponde entro 60s, annulla
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000);
+        let res;
+        try {
+          res = await fetch("/api/diagnosi", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId,
+              stripeSessionId: stripeSessionRef.current,
+              messages: updatedMessages,
+              frame: frameBase64,
+              appliance,
+              brand,
+              initialProblem: problem,
+            }),
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
 
-        const data = await res.json();
+        // Se il server restituisce testo non-JSON (errore grave), non crashare
+        const data = await res.json().catch(() => ({}));
 
         if (res.status === 402) {
           // Pagamento mancante o scaduto: mostra il motivo esatto dal server
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: `⚠️ ${data.error}` },
+            { role: "assistant", content: `⚠️ ${data.error || "Pagamento non valido."}` },
           ]);
           return;
         }
 
-        if (data.error) throw new Error(data.error);
+        if (!res.ok) {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
 
-  if (!data.message.includes("SKIP")) {
-    const aiMsg = { role: "assistant", content: data.message };
-    const withAi = [...messagesRef.current, aiMsg];
-    messagesRef.current = withAi;
-    setMessages(withAi);
-    leggiAd(data.message);
-    }
+        const testoAI = data.message || "";
+        if (testoAI && !testoAI.includes("SKIP")) {
+          const aiMsg = { role: "assistant", content: testoAI };
+          const withAi = [...messagesRef.current, aiMsg];
+          messagesRef.current = withAi;
+          setMessages(withAi);
+          leggiAd(testoAI);
+        }
 
         if (data.report) {
           setReport(data.report);
@@ -295,17 +308,19 @@ useEffect(() => {
         }
       } catch (err) {
         console.error("Errore API:", err);
-        let errMsg = "⚠️ Qualcosa è andato storto. Riprova o clicca Genera referto per salvare la diagnosi fin qui.";
-        if (err.message && err.message.includes("fetch")) {
-          errMsg = "⚠️ Problema di rete. Controlla la connessione internet e riprova.";
-        } else if (err.message && err.message.includes("500")) {
-          errMsg = "⚠️ Servizio temporaneamente non disponibile. Riprova tra qualche secondo.";
+        let errMsg = "⚠️ Qualcosa è andato storto. Riprova, oppure clicca 📋 Genera referto per salvare la diagnosi raccolta finora.";
+        if (err.name === "AbortError") {
+          errMsg = "⚠️ La risposta ci sta mettendo troppo. Controlla la connessione e riprova tra un momento.";
+        } else if (err.message && /network|fetch|failed to fetch/i.test(err.message)) {
+          errMsg = "⚠️ Problema di rete. Controlla la connessione a internet e riprova.";
+        } else if (err.message && /50\d|503|non disponibile|richiesto/i.test(err.message)) {
+          errMsg = "⚠️ Servizio AI momentaneamente sovraccarico. Riprova tra qualche secondo.";
         }
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: errMsg },
         ]);
-      
+
       } finally {
         setLoading(false);
         setAnalysisActive(false);
@@ -388,7 +403,7 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
 
     const welcomeMsg = {
       role: "assistant",
-      content: `Ciao! Sono Fixi. Vedo che hai un problema con la tua **${currentBrand ? currentBrand + " " : ""}${currentAppliance}**: *"${currentProblem}"*.\n\n⚠️ **Prima di tutto:** assicurati che l'elettrodomestico sia **spento e staccato dalla presa elettrica**. Se devi aprire sportelli o toccare componenti, chiudi anche il rubinetto dell'acqua.\n\nPer darti una diagnosi più precisa, cerca la **targhetta del modello** — di solito si trova:\n- Lavatrice/Lavastoviglie: **dentro lo sportello**, sul bordo\n- Frigorifero: **dentro il vano**, sulla parete laterale\n\nClicca **📷 Analizza** puntando sulla targhetta. Se non riesci a trovarla, scrivi pure e iniziamo lo stesso!\n\n*(You can also write in English, Spanish, French or German — I'll reply in your language)*`,
+      content: `Ciao! Sono Fixi. Vedo che hai un problema con la tua **${currentBrand ? currentBrand + " " : ""}${currentAppliance}**: *"${currentProblem}"*.\n\n⚠️ **Prima di tutto:** assicurati che l'elettrodomestico sia **spento e staccato dalla presa elettrica**. Se lavora con l'acqua, chiudi il rubinetto dell'acqua. Se è a **gas** (piano cottura o forno a gas) e senti **odore di gas**, chiudi subito il rubinetto del gas, non accendere nulla e apri le finestre.\n\nPer darti una diagnosi più precisa, cerca la **targhetta del modello** — di solito si trova:\n- Lavatrice/Lavastoviglie: **dentro lo sportello**, sul bordo\n- Frigorifero: **dentro il vano**, sulla parete laterale\n- Forno: **sul bordo della porta** aprendo lo sportello\n- Piano cottura: **sotto il piano** o sul **libretto di istruzioni**\n\nClicca **📷 Analizza** puntando sulla targhetta. Se non riesci a trovarla, scrivi pure e iniziamo lo stesso!\n\n*(You can also write in English, Spanish, French or German — I'll reply in your language)*`,
     };
     sessionStartRef.current = Date.now();
     messagesRef.current = [welcomeMsg];
@@ -481,6 +496,7 @@ const rilevaLingua = (testo) => {
 
 const leggiAd = (testo) => {
  if (!voceAttivaRef.current) return;
+  if (typeof window === "undefined" || !window.speechSynthesis) return; // browser senza sintesi vocale
   window.speechSynthesis.cancel();
   const pulito = testo
     .replace(/\*\*(.*?)\*\*/g, "$1")
@@ -568,13 +584,20 @@ if (phase === "confermaPagamento") {
           <div className={styles.formGroup}>
             <label>Che elettrodomestico?</label>
             <div className={styles.applianceGrid}>
-              {["Lavatrice", "Lavastoviglie", "Asciugatrice", "Frigorifero"].map((a) => (
+              {[
+                { nome: "Lavatrice", icona: "🫧" },
+                { nome: "Lavastoviglie", icona: "🍽️" },
+                { nome: "Asciugatrice", icona: "🌀" },
+                { nome: "Frigorifero", icona: "🧊" },
+                { nome: "Forno", icona: "🔥" },
+                { nome: "Piano cottura", icona: "🍳" },
+              ].map(({ nome, icona }) => (
                 <button
-                  key={a}
-                  className={`${styles.applianceBtn} ${appliance === a ? styles.selected : ""}`}
-                  onClick={() => setAppliance(a)}
+                  key={nome}
+                  className={`${styles.applianceBtn} ${appliance === nome ? styles.selected : ""}`}
+                  onClick={() => setAppliance(nome)}
                 >
-                  {a === "Lavatrice" ? "🫧" : a === "Lavastoviglie" ? "🍽️" : a === "Asciugatrice" ? "🌀" : "🧊"} {a}
+                  {icona} {nome}
                 </button>
               ))}
             </div>
@@ -726,20 +749,26 @@ onClick={() => {
           return;
         }
         setEmailLoading(true);
-        const res = await fetch("/api/invia-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: emailUtente,
-            report,
-            appliance,
-            brand,
-            problem,
-          }),
-        });
-        const data = await res.json();
-        if (data.inviata) setEmailInviata(true);
-        setEmailLoading(false);
+        try {
+          const res = await fetch("/api/invia-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: emailUtente,
+              report,
+              appliance,
+              brand,
+              problem,
+            }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (data.inviata) setEmailInviata(true);
+          else alert("Non è stato possibile inviare l'email. Riprova, oppure scarica il PDF.");
+        } catch {
+          alert("⚠️ Problema di rete: email non inviata. Controlla la connessione e riprova.");
+        } finally {
+          setEmailLoading(false);
+        }
       }}
     >
       {emailLoading ? "⏳ Invio..." : "✉️ Invia"}
