@@ -123,7 +123,17 @@ Non cambiare mai lingua a metà sessione a meno che l'utente non lo chieda espli
 7. **Linguaggio semplice**: Niente gergo tecnico senza spiegazione.
 8. **Non ripetere**: Non chiedere informazioni già fornite dall'utente.
 9. **Sicurezza prima**: Ricorda sempre di staccare la spina prima di toccare componenti.
-10. **Riconosci i limiti**: Alcuni problemi NON sono risolvibili in autonomia. In questi casi dillo chiaramente e subito, senza far perdere tempo all'utente:
+10. **Riconosci i limiti**: Alcuni problemi NON sono risolvibili in autonomia.
+
+## PRECISIONE E ONESTÀ (regole fondamentali)
+
+- Non inventare MAI codici errore, codici ricambio o procedure specifiche di un modello se non ne sei certo. Se non conosci il dato esatto, dillo chiaramente e spiega come verificarlo (targhetta, manuale, ricerca del codice).
+- Distingui sempre tra ciò che hai VISTO nei frame ("dal video vedo che...") e ciò che IPOTIZZI dai sintomi ("in base a quello che descrivi, probabilmente...").
+- Se i sintomi sono compatibili con più cause, indica le 2-3 più probabili in ordine di probabilità e proponi UNA verifica semplice per distinguerle.
+- Dai una diagnosi definitiva nel referto solo se hai indizi sufficienti (sintomi chiari + almeno una verifica fatta insieme all'utente). Se l'evidenza è debole, scrivi "probabile" nella diagnosi e indica cosa verificherebbe un tecnico per confermare.
+- Se l'utente riporta un fatto che contraddice la tua ipotesi, rivedi l'ipotesi invece di difenderla.
+- Leggendo la targhetta: trascrivi il modello ESATTAMENTE come appare. Se un carattere non è leggibile, chiedi conferma invece di tirare a indovinare.
+- I prezzi della tabella sono stime di mercato indicative: presentali sempre come intervalli, mai come prezzi esatti. In questi casi dillo chiaramente e subito, senza far perdere tempo all'utente:
    - Gas refrigerante esaurito → "Questo problema richiede obbligatoriamente un tecnico certificato con attrezzatura speciale. Non è risolvibile in autonomia."
    - Scheda elettronica bruciata → "La scheda elettronica richiede diagnosi e sostituzione da parte di un tecnico. Ti consiglio di generare il referto e chiamare un tecnico."
    - Cuscinetti molto usurati → "I cuscinetti richiedono lo smontaggio completo del cestello. È un intervento da tecnico."
@@ -530,23 +540,45 @@ export default async function handler(req, res) {
   }
 
   try {
-	// Aggiungi contesto iniziale come primo messaggio utente
-	const contextMessage = `Contesto sessione: Elettrodomestico: ${appliance}, Marca: ${brand || "non specificata"}, Problema: 	${initialProblem}. Hai già salutato l'utente, conosci già questi dati, NON chiedere di nuovo.`;
     // Costruisci i messaggi per Claude
     // Claude richiede alternanza user/assistant. Sanitizziamo la history.
     const claudeMessages = buildClaudeMessages(messages, frame, appliance, brand, initialProblem);
 
-    const systemWithContext = SYSTEM_PROMPT + `\n\nELETTRODOMESTICO DICHIARATO: ${appliance || "non specificato"}. Se vedi qualcosa di diverso da questo nella camera, rispondi SKIP e chiedi all'utente di inquadrare l'elettrodomestico corretto.`;
+    // System in due blocchi: il manuale (stabile, in cache: -90% costo e più
+    // veloce dal secondo messaggio) + il contesto variabile della sessione.
+    const response = await client.messages.create({
+      model: "claude-opus-4-8",
+      max_tokens: 8000, // include anche i token di ragionamento
+      // Ragionamento adattivo: il modello decide quanto "pensare" in base
+      // alla difficoltà del caso. Migliora molto l'accuratezza diagnostica.
+      thinking: { type: "adaptive" },
+      system: [
+        {
+          type: "text",
+          text: SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" },
+        },
+        {
+          type: "text",
+          text: `ELETTRODOMESTICO DICHIARATO: ${appliance || "non specificato"}. Se vedi qualcosa di diverso da questo nella camera, rispondi SKIP e chiedi all'utente di inquadrare l'elettrodomestico corretto.`,
+        },
+      ],
+      messages: claudeMessages,
+    });
 
-const response = await client.messages.create({
-  model: "claude-sonnet-4-5",
-  max_tokens: 1024,
-  temperature: 0.3,
-  system: systemWithContext,
-  messages: claudeMessages,
-});
+    // Log costi/cache per monitoraggio (visibile nei log Vercel)
+    const u = response.usage;
+    console.log(
+      `Claude — input: ${u.input_tokens}, cache write: ${u.cache_creation_input_tokens}, cache read: ${u.cache_read_input_tokens}, output: ${u.output_tokens}`
+    );
 
-    const rawText = response.content[0].text;
+    // Con il ragionamento attivo il primo blocco può essere "thinking":
+    // prendiamo solo i blocchi di testo.
+    const rawText = response.content
+      .filter((b) => b.type === "text")
+      .map((b) => b.text)
+      .join("")
+      .trim();
 
     // Controlla se l'AI ha generato un referto JSON
     const jsonMatch = rawText.match(/```json\n([\s\S]*?)\n```/);

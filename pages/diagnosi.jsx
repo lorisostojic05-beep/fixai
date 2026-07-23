@@ -179,7 +179,8 @@ useEffect(() => {
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: 640, height: 480 },
+        // HD: fondamentale per leggere targhette modello e codici errore
+        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
       streamRef.current = stream;
@@ -224,12 +225,17 @@ useEffect(() => {
     const canvas = canvasRef.current;
     if (!video || !canvas || video.readyState < 2) return null;
 
-    canvas.width = 640;
-    canvas.height = 480;
+    // Usa la risoluzione reale della camera, con lato lungo max 1568px
+    // (il punto ottimale per l'analisi visiva dell'AI)
+    const w = video.videoWidth || 1280;
+    const h = video.videoHeight || 720;
+    const scala = Math.min(1, 1568 / Math.max(w, h));
+    canvas.width = Math.round(w * scala);
+    canvas.height = Math.round(h * scala);
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, 640, 480);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     // Ritorna base64 senza il prefisso "data:image/jpeg;base64,"
-    return canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
+    return canvas.toDataURL("image/jpeg", 0.85).split(",")[1];
   }, []);
 
   // ── Chiama l'API backend ────────────────────────────────────────
