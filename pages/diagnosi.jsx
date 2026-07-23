@@ -90,6 +90,7 @@ export default function Diagnosi() {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const [appliance, setAppliance] = useState("");
   const [brand, setBrand] = useState("");
   const [problem, setProblem] = useState("");
@@ -254,9 +255,17 @@ useEffect(() => {
       }
 
       try {
-        // Timeout di sicurezza: se il server non risponde entro 60s, annulla
+        const isFrame = userMessage === "[FRAME_AUTO]";
+
+        // Timeout d'inattività: annulla solo se non arriva nulla per 60s
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000);
+        let timeoutId;
+        const resetTimeout = () => {
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => controller.abort(), 60000);
+        };
+        resetTimeout();
+
         let res;
         try {
           res = await fetch("/api/diagnosi", {
@@ -273,37 +282,89 @@ useEffect(() => {
             }),
             signal: controller.signal,
           });
-        } finally {
+        } catch (e) {
           clearTimeout(timeoutId);
+          throw e;
         }
 
-        // Se il server restituisce testo non-JSON (errore grave), non crashare
-        const data = await res.json().catch(() => ({}));
-
+        // Pagamento non valido: risposta JSON, non stream
         if (res.status === 402) {
-          // Pagamento mancante o scaduto: mostra il motivo esatto dal server
-          setMessages((prev) => [
-            ...prev,
-            { role: "assistant", content: `⚠️ ${data.error || "Pagamento non valido."}` },
+          clearTimeout(timeoutId);
+          const d = await res.json().catch(() => ({}));
+          setMessages([
+            ...messagesRef.current,
+            { role: "assistant", content: `⚠️ ${d.error || "Pagamento non valido."}` },
           ]);
           return;
         }
-
-        if (!res.ok) {
-          throw new Error(data.error || `HTTP ${res.status}`);
+        if (!res.ok || !res.body) {
+          clearTimeout(timeoutId);
+          const d = await res.json().catch(() => ({}));
+          throw new Error(d.error || `HTTP ${res.status}`);
         }
 
-        const testoAI = data.message || "";
-        if (testoAI && !testoAI.includes("SKIP")) {
-          const aiMsg = { role: "assistant", content: testoAI };
-          const withAi = [...messagesRef.current, aiMsg];
-          messagesRef.current = withAi;
-          setMessages(withAi);
-          leggiAd(testoAI);
-        }
+        // Bolla "in diretta": base pulita + testo che cresce. Per i frame non
+        // mostriamo nulla finché non sappiamo se è un'osservazione utile o SKIP.
+        const mostraLive = (contenuto) => {
+          if (isFrame) return;
+          setStreaming(true);
+          setMessages([
+            ...messagesRef.current,
+            { role: "assistant", content: contenuto, streaming: true },
+          ]);
+        };
 
-        if (data.report) {
-          setReport(data.report);
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let testoLive = "";
+        let finalMessage = "";
+        let report = null;
+        let serverError = null;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          resetTimeout();
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split("\n\n");
+          buffer = parts.pop();
+          for (const part of parts) {
+            const riga = part.trim();
+            if (!riga.startsWith("data:")) continue;
+            let evt;
+            try { evt = JSON.parse(riga.slice(5).trim()); } catch { continue; }
+            if (evt.type === "delta") {
+              testoLive += evt.text;
+              mostraLive(testoLive);
+            } else if (evt.type === "report_start") {
+              mostraLive("📋 Sto preparando il referto…");
+            } else if (evt.type === "done") {
+              finalMessage = evt.message || "";
+              report = evt.report || null;
+            } else if (evt.type === "error") {
+              serverError = evt.error || "Errore del servizio.";
+            }
+          }
+        }
+        clearTimeout(timeoutId);
+        setStreaming(false);
+
+        if (serverError) throw new Error(serverError);
+
+        const testoFinale = (finalMessage || testoLive || "").trim();
+
+        // messagesRef è la fonte di verità (senza la bolla "in diretta")
+        let finali = messagesRef.current;
+        if (testoFinale && !testoFinale.includes("SKIP")) {
+          finali = [...messagesRef.current, { role: "assistant", content: testoFinale }];
+          messagesRef.current = finali;
+          leggiAd(testoFinale);
+        }
+        setMessages(finali); // rimuove la bolla live e mostra lo stato pulito
+
+        if (report) {
+          setReport(report);
           setTimeout(() => setPhase("report"), 1200);
         }
       } catch (err) {
@@ -316,14 +377,13 @@ useEffect(() => {
         } else if (err.message && /50\d|503|non disponibile|richiesto/i.test(err.message)) {
           errMsg = "⚠️ Servizio AI momentaneamente sovraccarico. Riprova tra qualche secondo.";
         }
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: errMsg },
-        ]);
+        // Rimuovi eventuale bolla "in diretta" e mostra l'errore
+        setMessages([...messagesRef.current, { role: "assistant", content: errMsg }]);
 
       } finally {
         setLoading(false);
         setAnalysisActive(false);
+        setStreaming(false);
       }
     },
     [loading, sessionId, appliance, brand, problem]
@@ -1000,7 +1060,7 @@ onClick={() => {
             {messages.map((msg, i) => (
               <ChatBubble key={i} message={msg} />
             ))}
-            {loading && (
+            {loading && !streaming && (
               <div className={`${styles.bubble} ${styles.assistant}`}>
                 <div className={styles.aiLabel}>Fixi</div>
                 <div className={styles.typingDots}>

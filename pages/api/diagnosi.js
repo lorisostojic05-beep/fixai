@@ -601,25 +601,27 @@ export default async function handler(req, res) {
     return res.status(402).json({ error: accesso.motivo });
   }
 
+  // ── Risposta in streaming (SSE): il testo arriva a pezzi ─────────
+  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no"); // evita il buffering dei proxy
+  if (res.flushHeaders) res.flushHeaders();
+
+  const invia = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
+
   try {
-    // Costruisci i messaggi per Claude
-    // Claude richiede alternanza user/assistant. Sanitizziamo la history.
     const claudeMessages = buildClaudeMessages(messages, frame, appliance, brand, initialProblem);
 
-    // System in due blocchi: il manuale (stabile, in cache: -90% costo e più
-    // veloce dal secondo messaggio) + il contesto variabile della sessione.
-    const response = await client.messages.create({
+    const stream = await client.messages.stream({
       model: "claude-opus-4-8",
-      max_tokens: 8000, // include anche i token di ragionamento
-      // Ragionamento adattivo: il modello decide quanto "pensare" in base
-      // alla difficoltà del caso. Migliora molto l'accuratezza diagnostica.
+      max_tokens: 8000,
+      // Ragionamento adattivo: il modello decide quanto "pensare" (poco sui
+      // messaggi semplici, tanto sui casi difficili). Migliora l'accuratezza.
       thinking: { type: "adaptive" },
       system: [
-        {
-          type: "text",
-          text: SYSTEM_PROMPT,
-          cache_control: { type: "ephemeral" },
-        },
+        // Il manuale è stabile → in cache (-90% costo dal 2° messaggio)
+        { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
         {
           type: "text",
           text: `ELETTRODOMESTICO DICHIARATO: ${appliance || "non specificato"}. Se vedi qualcosa di diverso da questo nella camera, rispondi SKIP e chiedi all'utente di inquadrare l'elettrodomestico corretto.`,
@@ -628,48 +630,63 @@ export default async function handler(req, res) {
       messages: claudeMessages,
     });
 
-    // Log costi/cache per monitoraggio (visibile nei log Vercel)
-    const u = response.usage;
+    let fullText = "";
+    let inReferto = false; // quando inizia il JSON del referto, non spediamo più testo grezzo
+    for await (const event of stream) {
+      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+        const chunk = event.delta.text;
+        fullText += chunk;
+        // Il referto è un blocco JSON: non mostrarlo grezzo, avvisa il client.
+        // Scatta su qualsiasi apertura di blocco codice (i messaggi normali non ne usano).
+        if (!inReferto && /```|generateReport/.test(fullText)) {
+          inReferto = true;
+          invia({ type: "report_start" });
+        }
+        if (!inReferto) invia({ type: "delta", text: chunk });
+      }
+    }
+
+    const finalMsg = await stream.finalMessage();
+    const u = finalMsg.usage;
     console.log(
       `Claude — input: ${u.input_tokens}, cache write: ${u.cache_creation_input_tokens}, cache read: ${u.cache_read_input_tokens}, output: ${u.output_tokens}`
     );
 
-    // Con il ragionamento attivo il primo blocco può essere "thinking":
-    // prendiamo solo i blocchi di testo.
-    const rawText = response.content
-      .filter((b) => b.type === "text")
-      .map((b) => b.text)
-      .join("")
-      .trim();
+    const rawText = (fullText || "").trim();
 
-    // Controlla se l'AI ha generato un referto JSON
-    const jsonMatch = rawText.match(/```json\n([\s\S]*?)\n```/);
-    if (jsonMatch) {
+    // Estrai il referto JSON (dal blocco ```json oppure oggetto grezzo)
+    let report = null;
+    let message = rawText;
+    let m = rawText.match(/```json\s*([\s\S]*?)```/);
+    if (!m) m = rawText.match(/(\{[\s\S]*"generateReport"[\s\S]*\})/);
+    if (m) {
       try {
-        const parsed = JSON.parse(jsonMatch[1]);
+        const parsed = JSON.parse(m[1].trim());
         if (parsed.generateReport && parsed.report) {
-          return res.status(200).json({
-            message: parsed.message || "Ecco il tuo referto completo!",
-            report: parsed.report,
-          });
+          report = parsed.report;
+          message = parsed.message || "Ecco il tuo referto completo!";
         }
       } catch (e) {
-        // JSON malformato — tratta come testo normale
+        // JSON malformato: gestito sotto
       }
     }
+    if (inReferto && !report) {
+      message = "Ho preparato la diagnosi ma c'è stato un intoppo nel formattare il referto. Riprova con 📋 Genera referto.";
+    }
 
-    // Risposta vuota (solo ragionamento, nessun testo): trattala come SKIP
-    // così il frontend non mostra una bolla vuota.
-    return res.status(200).json({ message: rawText || "SKIP" });
+    // Risposta vuota (solo ragionamento) → SKIP, così il client non mostra nulla
+    invia({ type: "done", message: message || "SKIP", report });
+    res.end();
   } catch (err) {
     console.error("Errore Anthropic API:", err);
     const overloaded = err.status === 529 || err.status === 429;
-    return res.status(overloaded ? 503 : 500).json({
+    invia({
+      type: "error",
       error: overloaded
         ? "Il servizio AI è molto richiesto in questo momento. Riprova tra qualche secondo."
-        : "Errore interno del server",
-      detail: err.message,
+        : "Errore interno del server. Riprova.",
     });
+    res.end();
   }
 }
 
