@@ -18,11 +18,21 @@ export default async function handler(req, res) {
   .select("*")
   .eq("approvato", false)
   .order("created_at", { ascending: false });
+    // Elenco mostrato in dashboard: le ultime 20, complete di referto e chat
     const { data: sessioni } = await supabase
       .from("sessioni")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(20);
+
+    // Statistiche su tutte le sessioni, non solo le ultime 20. Si prendono
+    // solo le colonne che servono per non trascinarsi dietro referti e chat.
+    const { data: perStatistiche } = await supabase
+      .from("sessioni")
+      .select("appliance, problem, feedback_voto, feedback_risolto, durata_secondi")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    const stat = perStatistiche || [];
 
     // Richieste di intervento, con il nome del tecnico assegnato
     const { data: richiesteRaw } = await supabase
@@ -43,26 +53,29 @@ export default async function handler(req, res) {
     }
 
     // Statistiche
-    const totale = sessioni?.length || 0;
+    const totale = stat.length;
 
-    const conFeedback = sessioni?.filter(s => s.feedback_voto) || [];
+    // Chi ha dato il voto: da quando la sessione si salva col referto, le due
+    // cose non coincidono più — la differenza dice quanti non hanno valutato.
+    const conFeedback = stat.filter(s => s.feedback_voto);
     const votoMedio = conFeedback.length > 0
       ? conFeedback.reduce((acc, s) => acc + s.feedback_voto, 0) / conFeedback.length
       : null;
 
-    const risolti = sessioni?.filter(s => s.feedback_risolto === true).length || 0;
-    const risoltiPercent = conFeedback.length > 0
-      ? Math.round((risolti / conFeedback.length) * 100)
+    const conEsito = stat.filter(s => typeof s.feedback_risolto === "boolean");
+    const risolti = conEsito.filter(s => s.feedback_risolto === true).length;
+    const risoltiPercent = conEsito.length > 0
+      ? Math.round((risolti / conEsito.length) * 100)
       : 0;
 
-    const conDurata = sessioni?.filter(s => s.durata_secondi) || [];
+    const conDurata = stat.filter(s => s.durata_secondi);
     const duratMedia = conDurata.length > 0
       ? conDurata.reduce((acc, s) => acc + s.durata_secondi, 0) / conDurata.length
       : null;
 
     // Problemi più comuni
     const problemiMap = {};
-    sessioni?.forEach(s => {
+    stat.forEach(s => {
       if (s.problem) {
         const key = s.problem.toLowerCase().trim();
         problemiMap[key] = (problemiMap[key] || 0) + 1;
@@ -75,7 +88,7 @@ export default async function handler(req, res) {
 
     // Per elettrodomestico
     const elettroMap = {};
-    sessioni?.forEach(s => {
+    stat.forEach(s => {
       if (s.appliance) {
         elettroMap[s.appliance] = (elettroMap[s.appliance] || 0) + 1;
       }
@@ -86,6 +99,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       totale,
+      votate: conFeedback.length,
       votoMedio,
       risoltiPercent,
       duratMedia,

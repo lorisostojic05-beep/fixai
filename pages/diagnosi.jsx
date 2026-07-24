@@ -104,6 +104,7 @@ export default function Diagnosi() {
   const [tecLoading, setTecLoading] = useState(false);
   const [tecEsito, setTecEsito] = useState(null); // { tecniciContattati } dopo l'invio
   const sessionStartRef = useRef(null);
+  const sessioneTokenRef = useRef(null); // token della riga salvata col referto: il voto aggiorna quella
   const [voceAttiva, setVoceAttiva] = useState(true);
   const voceAttivaRef = useRef(true);
   const [ascoltoAttivo, setAscoltoAttivo] = useState(false);
@@ -115,6 +116,36 @@ export default function Diagnosi() {
   const recognitionRef = useRef(null);
   const sessionTimeoutRef = useRef(null);
   const stripeSessionRef = useRef(null); // id sessione Stripe: il server lo verifica a ogni messaggio
+
+  // Da quanti secondi è in corso questa diagnosi
+  const durataSessione = () =>
+    sessionStartRef.current ? Math.round((Date.now() - sessionStartRef.current) / 1000) : null;
+
+  // Aggiunge il voto alla sessione salvata col referto. Manda comunque tutti i
+  // dati: se il salvataggio di prima non era riuscito, il server crea la riga ora.
+  const inviaFeedback = async (risolto) => {
+    try {
+      await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: sessioneTokenRef.current,
+          voto: feedback,
+          risolto,
+          appliance,
+          brand,
+          problem,
+          report,
+          messages: messagesRef.current,
+          email_utente: emailUtente || null,
+          durata_secondi: durataSessione(),
+        }),
+      });
+    } catch {
+      // Il voto è un di più: se non parte, la sessione resta comunque salvata
+    }
+    setFeedbackInviato(true);
+  };
 
   // Scroll automatico
 useEffect(() => {
@@ -365,6 +396,27 @@ useEffect(() => {
 
         if (report) {
           setReport(report);
+          // La sessione si salva qui, non quando arriva il voto: così restano
+          // tracciate anche le diagnosi che l'utente chiude senza valutarle.
+          fetch("/api/feedback", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              appliance,
+              brand,
+              problem,
+              report,
+              messages: messagesRef.current,
+              durata_secondi: durataSessione(),
+            }),
+          })
+            .then((r) => r.json())
+            .then((d) => {
+              if (d?.token) sessioneTokenRef.current = d.token;
+            })
+            .catch(() => {
+              // Se non riesce, ci penserà il voto a salvare la sessione
+            });
           setTimeout(() => setPhase("report"), 1200);
         }
       } catch (err) {
@@ -466,6 +518,7 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
       content: `Ciao! Sono Fixi. Vedo che hai un problema con la tua **${currentBrand ? currentBrand + " " : ""}${currentAppliance}**: *"${currentProblem}"*.\n\n⚠️ **Prima di tutto:** assicurati che l'elettrodomestico sia **spento e staccato dalla presa elettrica**. Se lavora con l'acqua, chiudi il rubinetto dell'acqua. Se è a **gas** (piano cottura o forno a gas) e senti **odore di gas**, chiudi subito il rubinetto del gas, non accendere nulla e apri le finestre.\n\nPer darti una diagnosi più precisa, cerca la **targhetta del modello** — di solito si trova:\n- Lavatrice/Lavastoviglie: **dentro lo sportello**, sul bordo\n- Frigorifero: **dentro il vano**, sulla parete laterale\n- Forno: **sul bordo della porta** aprendo lo sportello\n- Piano cottura: **sotto il piano** o sul **libretto di istruzioni**\n\nClicca **📷 Analizza** puntando sulla targhetta. Se non riesci a trovarla, scrivi pure e iniziamo lo stesso!\n\n*(You can also write in English, Spanish, French or German — I'll reply in your language)*`,
     };
     sessionStartRef.current = Date.now();
+    sessioneTokenRef.current = null;
     messagesRef.current = [welcomeMsg];
     setMessages([welcomeMsg]);
     leggiAd(welcomeMsg.content);
@@ -779,6 +832,12 @@ onClick={() => {
       setPhase("setup");
       setMessages([]);
       setReport(null);
+      // Senza questo la seconda diagnosi mostrerebbe già "Grazie per il feedback"
+      setFeedback(null);
+      setFeedbackInviato(false);
+      setEmailInviata(false);
+      setTecEsito(null);
+      sessioneTokenRef.current = null;
       stopCamera();
       // Una diagnosi = un pagamento: la nuova sessione richiede un nuovo checkout
       sessionStorage.removeItem("Fixi_stripe_session");
@@ -863,53 +922,13 @@ onClick={() => {
     </div>
     <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginBottom: "10px" }}>
       <button
-        onClick={async () => {
-          const durata = sessionStartRef.current 
-            ? Math.round((Date.now() - sessionStartRef.current) / 1000) 
-            : null;
-          await fetch("/api/feedback", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-              voto: feedback, 
-              risolto: true, 
-              appliance, 
-              brand, 
-              problem,
-              report,
-              messages: messagesRef.current,
-              email_utente: emailUtente || null,
-              durata_secondi: durata,
-            }),
-          });
-          setFeedbackInviato(true);
-        }}
+        onClick={() => inviaFeedback(true)}
         style={{ background: "#1D9E75", color: "white", border: "none", borderRadius: "8px", padding: "8px 16px", fontSize: "13px", cursor: "pointer" }}
       >
         ✅ Risolto da solo
       </button>
       <button
-        onClick={async () => {
-          const durata = sessionStartRef.current 
-            ? Math.round((Date.now() - sessionStartRef.current) / 1000) 
-            : null;
-          await fetch("/api/feedback", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-              voto: feedback, 
-              risolto: false, 
-              appliance, 
-              brand, 
-              problem,
-              report,
-              messages: messagesRef.current,
-              email_utente: emailUtente || null,
-              durata_secondi: durata,
-            }),
-          });
-          setFeedbackInviato(true);
-        }}
+        onClick={() => inviaFeedback(false)}
         style={{ background: "#f5f5f3", color: "#333", border: "1px solid #e0e0de", borderRadius: "8px", padding: "8px 16px", fontSize: "13px", cursor: "pointer" }}
       >
         ❌ Serve il tecnico

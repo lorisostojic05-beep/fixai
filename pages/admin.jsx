@@ -149,9 +149,10 @@ export default function Admin() {
         {dati && (
           <>
             {/* Statistiche principali */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "12px", marginBottom: "1.5rem" }}>
               {[
-                { label: "Sessioni totali", valore: dati.totale, colore: "#0F6E56" },
+                { label: "Diagnosi completate", valore: dati.totale, colore: "#0F6E56" },
+                { label: "Hanno votato", valore: `${dati.votate ?? 0} su ${dati.totale}`, colore: "#854F0B" },
                 { label: "Voto medio", valore: dati.votoMedio ? dati.votoMedio.toFixed(1) + " / 5" : "—", colore: "#185FA5" },
                 { label: "Risolti fai-da-te", valore: dati.risoltiPercent + "%", colore: "#1D9E75" },
                 { label: "Durata media", valore: dati.duratMedia ? Math.round(dati.duratMedia / 60) + " min" : "—", colore: "#854F0B" },
@@ -296,13 +297,20 @@ export default function Admin() {
                     </p>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    {s.feedback_voto && (
+                    {s.feedback_voto ? (
                       <span style={{
                         background: s.feedback_risolto ? "#e8f5f0" : "#faeeda",
                         color: s.feedback_risolto ? "#0F6E56" : "#854F0B",
                         padding: "2px 8px", borderRadius: "20px", fontSize: "11px"
                       }}>
                         {s.feedback_risolto ? "✅ Risolto" : "🔧 Tecnico"} · {s.feedback_voto}/5
+                      </span>
+                    ) : (
+                      <span style={{
+                        background: "#f0f0ee", color: "#999",
+                        padding: "2px 8px", borderRadius: "20px", fontSize: "11px"
+                      }}>
+                        Senza voto
                       </span>
                     )}
                     <p style={{ color: "#999", fontSize: "11px", marginTop: "4px" }}>
