@@ -853,7 +853,7 @@ export default function Home() {
             </p>
             <div className="hero-cta">
               <a href="/diagnosi" className="btn-primary">
-                Avvia diagnosi gratuita →
+                Avvia diagnosi →
               </a>
               <a href="#come-funziona" className="btn-ghost">
                 Come funziona ↓
