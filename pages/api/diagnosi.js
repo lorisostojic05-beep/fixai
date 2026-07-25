@@ -892,5 +892,29 @@ result.push({
     }
   }
 
-  return cleaned;
+  return marcaCacheStorico(cleaned);
+}
+
+// Secondo punto di cache: la conversazione fino all'ultimo turno completo.
+// Il marcatore va su un messaggio dell'ASSISTENTE e mai sull'ultimo messaggio
+// utente, perché quello porta l'immagine del frame: cambia a ogni richiesta e
+// invaliderebbe tutto ciò che viene prima. Così ogni richiesta rilegge dalla
+// cache la conversazione precedente (1/10 del prezzo) e riscrive solo il turno
+// appena aggiunto.
+function marcaCacheStorico(messaggi) {
+  for (let i = messaggi.length - 1; i >= 0; i--) {
+    const m = messaggi[i];
+    if (m.role !== "assistant") continue;
+    if (typeof m.content === "string" && !m.content.trim()) continue;
+    const blocchi =
+      typeof m.content === "string" ? [{ type: "text", text: m.content }] : m.content;
+    if (!blocchi.length) continue;
+    const ultimo = {
+      ...blocchi[blocchi.length - 1],
+      cache_control: { type: "ephemeral" },
+    };
+    messaggi[i] = { ...m, content: [...blocchi.slice(0, -1), ultimo] };
+    return messaggi;
+  }
+  return messaggi;
 }

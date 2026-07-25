@@ -8,6 +8,14 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
 // ─── Configurazione ────────────────────────────────────────────────
 const SCREENSHOT_INTERVAL_MS = 25000; // cattura frame ogni 25 secondi
 const MAX_HISTORY = 20;              // massimo messaggi nella history
+const TAGLIO_STORICO = 6;            // quanti se ne tolgono in una volta quando sfora
+
+// Quando la cronologia sfora si tagliano più messaggi in un colpo solo invece
+// di uno per volta: così l'inizio della conversazione resta identico per
+// diverse richieste di fila e la cache di Anthropic continua a valere
+// (rileggere dalla cache costa un decimo del prezzo pieno).
+const tagliaStorico = (arr) =>
+  arr.length > MAX_HISTORY ? arr.slice(arr.length - (MAX_HISTORY - TAGLIO_STORICO)) : arr;
 
 // Sceglie la voce più naturale tra quelle disponibili per la lingua richiesta.
 // Le voci "Google"/"Natural" suonano molto meglio della predefinita robotica.
@@ -278,7 +286,7 @@ useEffect(() => {
       setAnalysisActive(!!frameBase64);
 
       const newUserMsg = { role: "user", content: userMessage };
-      const updatedMessages = [...messagesRef.current, newUserMsg].slice(-MAX_HISTORY);
+      const updatedMessages = tagliaStorico([...messagesRef.current, newUserMsg]);
       
       if (userMessage !== "[FRAME_AUTO]") {
         messagesRef.current = updatedMessages;
