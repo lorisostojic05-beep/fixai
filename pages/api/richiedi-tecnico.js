@@ -24,6 +24,7 @@ const SPEC_PER_APPLIANCE = {
   Frigorifero: "Frigoriferi",
   Forno: "Forni",
   "Piano cottura": "Piani cottura",
+  Condizionatore: "Climatizzatori",
 };
 
 async function trovaTecnici(appliance, cap) {

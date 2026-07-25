@@ -515,7 +515,7 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
 
     const welcomeMsg = {
       role: "assistant",
-      content: `Ciao! Sono Fixi. Vedo che hai un problema con la tua **${currentBrand ? currentBrand + " " : ""}${currentAppliance}**: *"${currentProblem}"*.\n\n⚠️ **Prima di tutto:** assicurati che l'elettrodomestico sia **spento e staccato dalla presa elettrica**. Se lavora con l'acqua, chiudi il rubinetto dell'acqua. Se è a **gas** (piano cottura o forno a gas) e senti **odore di gas**, chiudi subito il rubinetto del gas, non accendere nulla e apri le finestre.\n\nPer darti una diagnosi più precisa, cerca la **targhetta del modello** — di solito si trova:\n- Lavatrice/Lavastoviglie: **dentro lo sportello**, sul bordo\n- Frigorifero: **dentro il vano**, sulla parete laterale\n- Forno: **sul bordo della porta** aprendo lo sportello\n- Piano cottura: **sotto il piano** o sul **libretto di istruzioni**\n\nClicca **📷 Analizza** puntando sulla targhetta. Se non riesci a trovarla, scrivi pure e iniziamo lo stesso!\n\n*(You can also write in English, Spanish, French or German — I'll reply in your language)*`,
+      content: `Ciao! Sono Fixi. Vedo che hai un problema con la tua **${currentBrand ? currentBrand + " " : ""}${currentAppliance}**: *"${currentProblem}"*.\n\n⚠️ **Prima di tutto:** assicurati che l'elettrodomestico sia **spento e staccato dalla presa elettrica**. Se lavora con l'acqua, chiudi il rubinetto dell'acqua. Se è a **gas** (piano cottura o forno a gas) e senti **odore di gas**, chiudi subito il rubinetto del gas, non accendere nulla e apri le finestre.\n\nPer darti una diagnosi più precisa, cerca la **targhetta del modello** — di solito si trova:\n- Lavatrice/Lavastoviglie: **dentro lo sportello**, sul bordo\n- Frigorifero: **dentro il vano**, sulla parete laterale\n- Forno: **sul bordo della porta** aprendo lo sportello\n- Piano cottura: **sotto il piano** o sul **libretto di istruzioni**\n- Condizionatore: **sollevando il pannello frontale** dell'unità interna, oppure sul **fianco dell'unità esterna**\n\nClicca **📷 Analizza** puntando sulla targhetta. Se non riesci a trovarla, scrivi pure e iniziamo lo stesso!\n\n*(You can also write in English, Spanish, French or German — I'll reply in your language)*`,
     };
     sessionStartRef.current = Date.now();
     sessioneTokenRef.current = null;
@@ -704,6 +704,7 @@ if (phase === "confermaPagamento") {
                 { nome: "Frigorifero", icona: "🧊" },
                 { nome: "Forno", icona: "🔥" },
                 { nome: "Piano cottura", icona: "🍳" },
+                { nome: "Condizionatore", icona: "❄️" },
               ].map(({ nome, icona }) => (
                 <button
                   key={nome}
