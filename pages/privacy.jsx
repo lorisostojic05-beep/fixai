@@ -73,6 +73,7 @@ export default function Privacy() {
 
           <Sezione titolo="7. I tuoi diritti">
             <p>Hai il diritto di accedere ai tuoi dati, correggerli, chiederne la cancellazione o limitarne l'uso, e di opporti al trattamento. Per esercitare questi diritti scrivici a <a href={`mailto:${EMAIL}`} style={linkStyle}>{EMAIL}</a>.</p>
+            <p>Per la sola cancellazione trovi i passaggi, l'elenco dei dati eliminati e i tempi nella pagina <a href="/cancellazione-dati" style={linkStyle}>richiesta di cancellazione dei dati</a>.</p>
           </Sezione>
 
           <Sezione titolo="8. Minori">
