@@ -35,4 +35,8 @@
     <!-- Camera: necessaria per la videodiagnosi -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- Microfono: serve al pulsante "tieni premuto per parlare". La WebView non
+         ha il riconoscimento vocale del browser, quindi si usa quello di Android. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 </manifest>

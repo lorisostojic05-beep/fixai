@@ -635,8 +635,56 @@ const leggiAd = (testo) => {
   window.speechSynthesis.speak(utterance);
 };
 
+// Nell'app Android il riconoscimento vocale del browser
+// (webkitSpeechRecognition) non esiste: la WebView non lo implementa. Lì si
+// usa il motore vocale nativo di Android tramite il plugin Capacitor.
+const dettaturaNativa = () =>
+  typeof window !== "undefined" && window.Capacitor?.isNativePlatform?.() === true;
+
+// Il plugin si carica solo quando serve: dal browser non viene nemmeno toccato.
+const pluginVocale = async () =>
+  (await import("@capacitor-community/speech-recognition")).SpeechRecognition;
+
 // Avvia riconoscimento vocale
-const avviaAscolto = () => {
+const avviaAscolto = async () => {
+  if (dettaturaNativa()) {
+    try {
+      const SR = await pluginVocale();
+      const { available } = await SR.available();
+      if (!available) {
+        alert("Il riconoscimento vocale non è disponibile su questo telefono. Puoi scrivere il messaggio.");
+        return;
+      }
+      let stato = await SR.checkPermissions();
+      if (stato.speechRecognition !== "granted") {
+        stato = await SR.requestPermissions();
+      }
+      if (stato.speechRecognition !== "granted") {
+        alert("Per dettare serve il permesso del microfono: puoi attivarlo dalle impostazioni del telefono.");
+        return;
+      }
+      setAscoltoAttivo(true);
+      const esito = await SR.start({
+        language: "it-IT",
+        maxResults: 1,
+        partialResults: false,
+        popup: false,
+      });
+      setAscoltoAttivo(false);
+      // Il testo arriva quando il riconoscimento finisce: si invia subito,
+      // senza passare dalla casella di testo e dalle attese a tempo.
+      const testo = (esito?.matches?.[0] || "").trim();
+      if (testo) {
+        setInputText("");
+        await callAI(testo, null);
+      }
+    } catch (err) {
+      setAscoltoAttivo(false);
+      console.error("Dettatura nativa non riuscita:", err);
+    }
+    return;
+  }
+
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
     alert("Il tuo browser non supporta il riconoscimento vocale. Usa Chrome.");
@@ -657,7 +705,16 @@ const avviaAscolto = () => {
   setAscoltoAttivo(true);
 };
 
-const fermaAscolto = () => {
+const fermaAscolto = async () => {
+  if (dettaturaNativa()) {
+    try {
+      const SR = await pluginVocale();
+      await SR.stop();
+    } catch {
+      // già fermo o mai partito: non c'è nulla da fare
+    }
+    return;
+  }
   if (recognitionRef.current) {
     recognitionRef.current.stop();
   }
