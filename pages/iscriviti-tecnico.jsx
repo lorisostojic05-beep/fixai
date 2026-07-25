@@ -213,9 +213,13 @@ export default function IscrivitiTecnico() {
                 <div style={{ background: "#EAF5EF", borderRadius: "12px", padding: "16px", marginBottom: "24px" }}>
                   <p style={{ fontSize: "13px", color: "#1A6B50", lineHeight: "1.6" }}>
                     ✓ Iscrizione gratuita<br />
-                    ✓ Commissione 12% solo sui lavori completati<br />
+                    ✓ Nessuna commissione sui lavori in questa fase di lancio<br />
                     ✓ Attivazione entro 48 ore dalla verifica<br />
                     ✓ Puoi disiscriverti in qualsiasi momento
+                  </p>
+                  <p style={{ fontSize: "12px", color: "#4A6B5E", lineHeight: "1.6", marginTop: "10px" }}>
+                    Se in futuro introdurremo una commissione sui lavori, te lo comunicheremo
+                    via email con anticipo: potrai decidere se continuare o disiscriverti.
                   </p>
                 </div>
 

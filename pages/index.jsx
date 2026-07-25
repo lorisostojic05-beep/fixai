@@ -1035,12 +1035,12 @@ export default function Home() {
           <div>
             <div className="section-tag">Per i professionisti</div>
             <h2 className="section-title">Sei un tecnico?<br /><em style={{ fontStyle: "italic", color: "#5DCAA5" }}>Unisciti a Fixi.</em></h2>
-            <p className="section-sub">Ricevi lavori qualificati con diagnosi già fatta. Zero rischio, zero crediti da acquistare. Paghi solo quando lavori.</p>
+            <p className="section-sub">Ricevi lavori qualificati con diagnosi già fatta. Nessun costo di iscrizione, nessun credito da acquistare: in questa fase di lancio i contatti non ti costano nulla.</p>
 
             <div className="tecnici-benefits">
               {[
                 { icon: "🎯", title: "Clienti già qualificati", desc: "Arrivano con diagnosi e referto — sai già cosa c'è da fare prima di uscire." },
-                { icon: "💸", title: "Zero costi fissi", desc: "Iscrizione gratuita. Commissione solo sui lavori completati." },
+                { icon: "💸", title: "Costo zero", desc: "Iscrizione gratuita e nessuna commissione: in fase di lancio i contatti sono gratis." },
                 { icon: "⭐", title: "Costruisci la tua reputazione", desc: "Recensioni verificate, badge qualità, più visibilità con il tempo." },
               ].map((b, i) => (
                 <div className="tecnici-benefit" key={i}>
@@ -1062,7 +1062,7 @@ export default function Home() {
           <div className="tecnici-stats">
             {[
               { num: "€0", label: "Costo iscrizione" },
-              { num: "12%", label: "Commissione sui lavori" },
+              { num: "0%", label: "Commissione sui lavori" },
               { num: "48h", label: "Tempo medio attivazione" },
               { num: "∞", label: "Lavori disponibili" },
             ].map((s, i) => (
