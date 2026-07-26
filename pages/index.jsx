@@ -70,6 +70,9 @@ export default function Home() {
           top: 0; left: 0; right: 0;
           z-index: 100;
           padding: 20px 48px;
+          /* La barra è fissata in cima, quindi non segue la spaziatura del
+             corpo pagina: lo spazio per la barra di stato va aggiunto qui. */
+          padding-top: calc(20px + var(--safe-top, 0px));
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -81,6 +84,7 @@ export default function Home() {
           backdrop-filter: blur(12px);
           border-bottom: 1px solid var(--bordo);
           padding: 14px 48px;
+          padding-top: calc(14px + var(--safe-top, 0px));
         }
 
         .nav-logo {

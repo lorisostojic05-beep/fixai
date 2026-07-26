@@ -13,8 +13,11 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
-        <!-- Android 15 impone il "bordo a bordo": senza questo, il contenuto
-             web finirebbe sotto la barra di stato. Ignorato su Android < 15. -->
+        <!-- Su Android 15 questo tiene il contenuto web fuori dalla barra di
+             stato. Su Android 16 viene IGNORATO (il bordo a bordo è ormai
+             obbligatorio): lì ci pensa il sito, che riserva lo spazio con
+             env(safe-area-inset-*) — vedi pages/_app.jsx. Lo lasciamo perché
+             sui telefoni con Android 15 continua a servire. -->
         <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 
