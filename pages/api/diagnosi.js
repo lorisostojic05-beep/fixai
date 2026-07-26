@@ -723,7 +723,9 @@ export default async function handler(req, res) {
     const claudeMessages = buildClaudeMessages(messages, frame, appliance, brand, initialProblem);
 
     const stream = await client.messages.stream({
-      model: "claude-opus-4-8",
+      // Opus 5 costa come il 4.8 ma vede meglio: legge le targhette e le
+      // etichette con piu' precisione, che qui e' il punto piu' delicato.
+      model: "claude-opus-5",
       max_tokens: 8000,
       // Ragionamento adattivo: il modello decide quanto "pensare" (poco sui
       // messaggi semplici, tanto sui casi difficili). Migliora l'accuratezza.
