@@ -40,7 +40,15 @@ public class MainActivity extends BridgeActivity {
             Insets barre = finestra.getInsets(
                     WindowInsetsCompat.Type.systemBars()
                             | WindowInsetsCompat.Type.displayCutout());
-            vista.setPadding(barre.left, barre.top, barre.right, barre.bottom);
+            Insets tastiera = finestra.getInsets(WindowInsetsCompat.Type.ime());
+
+            // Quando la tastiera è aperta lo spazio in basso dev'essere il suo,
+            // non quello della barra di navigazione (che la tastiera copre).
+            // Senza questo la pagina non si accorge della tastiera e il campo
+            // di testo resta nascosto sotto.
+            int bassoLibero = Math.max(barre.bottom, tastiera.bottom);
+
+            vista.setPadding(barre.left, barre.top, barre.right, bassoLibero);
             return WindowInsetsCompat.CONSUMED;
         });
 
