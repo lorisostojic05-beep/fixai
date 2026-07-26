@@ -91,6 +91,10 @@ export default function Diagnosi() {
   const chatEndRef = useRef(null);
   const canvasRef = useRef(null);
   const voicesRef = useRef([]);
+  // Lingua in cui sta andando avanti la conversazione. Serve in due punti:
+  // per leggere ad alta voce con la pronuncia giusta e per impostare il
+  // microfono, altrimenti l'utente risponde in inglese a un orecchio italiano.
+  const linguaConversazioneRef = useRef("it-IT");
 
   const [phase, setPhase] = useState("setup");       // setup | session | report
   const [cameraActive, setCameraActive] = useState(false);
@@ -594,25 +598,77 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
 
   // ── Rendering ──────────────────────────────────────────────────
 // Sintesi vocale — legge il messaggio AI
-const rilevaLingua = (testo) => {
-  // Parole esclusive di ogni lingua (non esistono in italiano)
-  const soloEN = /\b(the|this|that|your|you're|don't|can't|I'm|it's|there's|have|has)\b/gi;
-  const soloES = /\b(está|están|también|porque|aunque|después|siempre|nunca|mucho|poco)\b/gi;
-  const soloFR = /\b(est|sont|très|aussi|mais|donc|encore|toujours|jamais|beaucoup)\b/gi;
-  const soloDE = /\b(ist|sind|haben|nicht|auch|noch|aber|oder|wenn|dann|schon)\b/gi;
+// Prima qui si cercava solo "questo NON è italiano?", e servivano almeno due
+// parole tipo "the" o "your" per accorgersene. Le frasi di Fixi sono corte e
+// imperative ("Open the bottom panel") e spesso non ne contengono nessuna:
+// il testo finiva letto in inglese ma con la pronuncia italiana.
+// Adesso ogni lingua prende un punteggio e vince la più votata.
+const rilevaLingua = (testo, predefinita = "it-IT") => {
+  const lingue = [
+    // L'italiano è primo: a pari punteggio vince lui, che è la lingua di casa.
+    {
+      codice: "it-IT",
+      parole: /\b(che|non|per|con|una|sono|questo|questa|quello|della|dello|nella|sulla|anche|sotto|sopra|dietro|davanti|adesso|quindi|deve|devi|puoi|serve|controlla|apri|chiudi|stacca|prova|guarda|mostrami|premi|spegni|accendi|ruota|vediamo|proviamo)\b/gi,
+      forti: /(\bgli\b|\bè\b|\bc'è\b|\bperché\b|\bpiù\b|\bposso\b)/gi,
+    },
+    {
+      codice: "en-GB",
+      parole: /\b(check|open|close|unplug|try|look|show|turn|press|remove|make|sure|first|then|back|bottom|filter|water|power|button|door|need|will|should|from|into|about)\b/gi,
+      forti: /(th|n't\b|'s\b|'re\b|\byou\b)/gi,
+    },
+    {
+      codice: "es-ES",
+      parole: /\b(comprueba|abre|cierra|desenchufa|prueba|mira|gira|pulsa|quita|puerta|agua|botón|primero|luego|abajo|arriba|detrás|delante|tiene|puede|debe|vamos|está|están|también|porque|después|siempre|mucho)\b/gi,
+      forti: /[ñ¿¡]|\b(el|los|las|qué|muéstrame)\b/gi,
+    },
+    {
+      codice: "fr-FR",
+      parole: /\b(vérifie|ouvre|ferme|débranche|essaie|regarde|montre|tourne|appuie|retire|porte|eau|bouton|filtre|panneau|abord|ensuite|dessous|dessus|derrière|devant|peut|doit|nous)\b/gi,
+      forti: /[çœ]|\b(les|vous|c'est|très|aussi|donc|est)\b/gi,
+    },
+    {
+      codice: "de-DE",
+      parole: /\b(prüfe|öffne|schließe|ziehen|versuche|schau|zeige|drehe|drücke|entferne|tür|wasser|knopf|zuerst|dann|unten|oben|hinten|vorne|kann|muss|wir)\b/gi,
+      forti: /[ßäöü]|\b(der|die|das|nicht|und|ist|sind|ein|eine|mit|auf)\b/gi,
+    },
+    // Le tre qui sotto mancavano, ma il prompt di Fixi le dichiara: senza di
+    // loro il portoghese passava per spagnolo e l'arabo per italiano.
+    {
+      codice: "pt-PT",
+      parole: /\b(verifique|abra|feche|desligue|tente|olhe|mostre|gire|pressione|remova|porta|botão|primeiro|depois|embaixo|atrás|pode|deve|vamos|máquina|filtro)\b/gi,
+      forti: /[ãõ]|ção|\b(não|você|vocês|então|também|é)\b/gi,
+    },
+    {
+      codice: "ro-RO",
+      // ă, ș, ț non esistono in nessun'altra lingua dell'elenco: bastano da sole.
+      parole: /\b(verifică|deschide|închide|scoate|încearcă|arată|rotește|apasă|ușa|apă|buton|întâi|apoi|spate|poate|trebuie|mașina)\b/gi,
+      forti: /[ășțşţ]|\b(și|este|să|dacă|pentru|nu)\b/gi,
+    },
+    {
+      codice: "ar-SA",
+      // L'arabo si riconosce dalla scrittura, non dalle parole: se compaiono
+      // quei caratteri non può essere nient'altro.
+      parole: /[؀-ۿ]/g,
+      forti: /[؀-ۿ]{3,}/g,
+    },
+  ];
 
-  const countEN = (testo.match(soloEN) || []).length;
-  const countES = (testo.match(soloES) || []).length;
-  const countFR = (testo.match(soloFR) || []).length;
-  const countDE = (testo.match(soloDE) || []).length;
+  let vincitrice = null;
+  let migliore = 0;
+  for (const l of lingue) {
+    // I segni "forti" sono quelli che praticamente solo quella lingua usa
+    // (la ñ spagnola, la ß tedesca, il "th" inglese): pesano il triplo.
+    const punti =
+      (testo.match(l.parole) || []).length + 3 * (testo.match(l.forti) || []).length;
+    if (punti > migliore) {
+      migliore = punti;
+      vincitrice = l.codice;
+    }
+  }
 
-  const max = Math.max(countEN, countES, countFR, countDE);
-  if (max < 2) return "it-IT"; // Default italiano
-  if (max === countEN) return "en-GB";
-  if (max === countES) return "es-ES";
-  if (max === countFR) return "fr-FR";
-  if (max === countDE) return "de-DE";
-  return "it-IT";
+  // Sotto i 2 punti il messaggio è troppo corto o neutro ("Ok!", "Perfetto"):
+  // in quel caso si tira dritto con la lingua in cui si stava già parlando.
+  return migliore >= 2 ? vincitrice : predefinita;
 };
 
 const leggiAd = (testo) => {
@@ -626,10 +682,23 @@ const leggiAd = (testo) => {
     .replace(/[\u2600-\u27FF]/g, "")
     .replace(/⚠️|✅|🔧|📋|⏱️|💰|🔍/g, "");
   const utterance = new SpeechSynthesisUtterance(pulito);
-  utterance.lang = rilevaLingua(pulito);
+  // La lingua trovata resta in memoria: serve al microfono per la risposta
+  // e fa da rete di sicurezza sul messaggio corto che viene dopo.
+  const lingua = rilevaLingua(pulito, linguaConversazioneRef.current);
+  linguaConversazioneRef.current = lingua;
+  utterance.lang = lingua;
   const voci = voicesRef.current.length ? voicesRef.current : window.speechSynthesis.getVoices();
   const voce = scegliVoceNaturale(voci, utterance.lang);
-  if (voce) utterance.voice = voce;
+  // Se sul telefono manca la voce di quella lingua si lascia scegliere al
+  // motore di Android partendo da utterance.lang, invece di imporgli quella
+  // italiana: sarebbe di nuovo il testo straniero letto con l'accento nostro.
+  if (voce) {
+    utterance.voice = voce;
+  } else if (lingua !== "it-IT") {
+    // Se compare questo, il codice ha fatto la sua parte: al telefono mancano
+    // i dati vocali di quella lingua (si scaricano dalle impostazioni Android).
+    console.warn(`Nessuna voce installata per ${lingua}: la pronuncia sarà quella predefinita.`);
+  }
   utterance.rate = 1.0;
   utterance.pitch = 1.05;
   window.speechSynthesis.speak(utterance);
@@ -665,7 +734,10 @@ const avviaAscolto = async () => {
       }
       setAscoltoAttivo(true);
       const esito = await SR.start({
-        language: "it-IT",
+        // Si ascolta nella stessa lingua in cui Fixi ha appena parlato:
+        // con l'orecchio fisso sull'italiano una risposta in inglese
+        // tornava indietro storpiata.
+        language: linguaConversazioneRef.current,
         maxResults: 1,
         partialResults: false,
         popup: false,
@@ -691,7 +763,7 @@ const avviaAscolto = async () => {
     return;
   }
   const recognition = new SpeechRecognition();
-  recognition.lang = "it-IT";
+  recognition.lang = linguaConversazioneRef.current;
   recognition.continuous = false;
   recognition.interimResults = false;
   recognition.onresult = (e) => {
