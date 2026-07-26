@@ -20,27 +20,32 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Da Android 16 il disegno "bordo a bordo" è obbligatorio: la WebView
+        // Da Android 16 il disegno "bordo a bordo" è obbligatorio: la finestra
         // occupa tutto lo schermo, barra di stato e barra di navigazione
         // comprese, e windowOptOutEdgeToEdgeEnforcement viene ignorato.
         //
         // Nella WebView di Android le variabili CSS env(safe-area-inset-*) NON
         // riportano l'altezza di quelle barre — coprono solo le tacche dello
-        // schermo — quindi la soluzione lato CSS da sola non basta: lo spazio
-        // va riservato qui.
+        // schermo — quindi lo spazio va riservato qui, lato nativo.
         //
-        // Chiediamo al sistema quanto misurano le barre e lo trasformiamo in
-        // spaziatura della WebView. Vale per tutte le versioni di Android: dove
-        // le barre non si sovrappongono, i valori arrivano a zero.
-        View webView = getBridge().getWebView();
-        webView.setBackgroundColor(SFONDO);
+        // ATTENZIONE al punto in cui si aggancia l'ascoltatore: Capacitor mette
+        // la WebView dentro un CoordinatorLayout, che NON gira ai figli le
+        // informazioni sulle barre. Agganciarlo alla WebView non funziona (già
+        // provato). Va messo sul contenitore di primo livello dell'activity,
+        // che le riceve sempre.
+        View contenuto = findViewById(android.R.id.content);
+        contenuto.setBackgroundColor(SFONDO);
 
-        ViewCompat.setOnApplyWindowInsetsListener(webView, (vista, finestra) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(contenuto, (vista, finestra) -> {
             Insets barre = finestra.getInsets(
                     WindowInsetsCompat.Type.systemBars()
                             | WindowInsetsCompat.Type.displayCutout());
             vista.setPadding(barre.left, barre.top, barre.right, barre.bottom);
             return WindowInsetsCompat.CONSUMED;
         });
+
+        // Se la finestra è già disegnata, chiediamo di riapplicare subito le
+        // misure invece di aspettare il prossimo cambio di configurazione.
+        ViewCompat.requestApplyInsets(contenuto);
     }
 }
