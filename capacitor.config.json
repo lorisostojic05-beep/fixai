@@ -6,6 +6,7 @@
     "url": "https://fixai-svq7.vercel.app",
     "cleartext": false,
     "androidScheme": "https",
+    "errorPath": "index.html",
     "allowNavigation": [
       "checkout.stripe.com",
       "*.stripe.com"
