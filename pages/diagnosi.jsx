@@ -159,6 +159,31 @@ export default function Diagnosi() {
     setFeedbackInviato(true);
   };
 
+  // Dentro l'app il PDF si scrive davvero sul telefono e si passa al menù di
+  // condivisione di Android: da lì si salva nei File, si manda su WhatsApp o
+  // per email. I plugin si importano solo qui, così dal browser non vengono
+  // nemmeno scaricati.
+  const salvaNativo = async (blob, nomeFile) => {
+    const [{ Filesystem, Directory }, { Share }] = await Promise.all([
+      import("@capacitor/filesystem"),
+      import("@capacitor/share"),
+    ]);
+    const base64 = await new Promise((risolvi, rifiuta) => {
+      const lettore = new FileReader();
+      lettore.onerror = () => rifiuta(lettore.error);
+      // readAsDataURL restituisce "data:application/pdf;base64,XXXX":
+      // al plugin serve solo quello che viene dopo la virgola.
+      lettore.onload = () => risolvi(String(lettore.result).split(",")[1]);
+      lettore.readAsDataURL(blob);
+    });
+    const scritto = await Filesystem.writeFile({
+      path: nomeFile,
+      data: base64,
+      directory: Directory.Cache, // file temporaneo: lo tiene l'app che lo riceve
+    });
+    await Share.share({ title: "Referto Fixi", files: [scritto.uri] });
+  };
+
   // Il referto si consegna in modi diversi a seconda di dove gira l'app.
   // Dentro l'app Android il download del browser NON esiste: doc.save() non
   // dà errore, semplicemente non fa niente — ed è per questo che una diagnosi
@@ -179,6 +204,20 @@ export default function Diagnosi() {
       return;
     }
 
+    const nellApp = typeof window !== "undefined" && window.Capacitor?.isNativePlatform?.() === true;
+    if (nellApp) {
+      try {
+        await salvaNativo(blob, nomeFile);
+      } catch (e) {
+        // Chiudere il menù di condivisione senza scegliere non è un errore
+        if (/cancel|abort|dismiss/i.test(e?.message || "")) return;
+        console.error("Salvataggio nativo non riuscito:", e);
+        alert("Non sono riuscito a salvare il PDF sul telefono. Fattelo mandare per email qui sotto: il referto è identico.");
+      }
+      return;
+    }
+
+    // Browser del telefono: qui il foglio di condivisione esiste davvero
     try {
       const file = new File([blob], nomeFile, { type: "application/pdf" });
       if (navigator.canShare?.({ files: [file] })) {
@@ -186,15 +225,8 @@ export default function Diagnosi() {
         return;
       }
     } catch (e) {
-      // Se l'utente chiude il foglio di condivisione non è un errore
       if (e?.name === "AbortError") return;
       console.warn("Condivisione non riuscita, ripiego sul download:", e);
-    }
-
-    const nellApp = typeof window !== "undefined" && window.Capacitor?.isNativePlatform?.() === true;
-    if (nellApp) {
-      alert("Da dentro l'app il salvataggio diretto non è disponibile. Scrivi la tua email qui sotto e ti mando subito il referto: è lo stesso PDF.");
-      return;
     }
 
     const url = URL.createObjectURL(blob);
