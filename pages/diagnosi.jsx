@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import styles from "../styles/diagnosi.module.css";
 import { loadStripe } from "@stripe/stripe-js";
-import { generaRefertoPDF } from "../lib/generaPDF";
+import { refertoPDF } from "../lib/generaPDF";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
@@ -157,6 +157,52 @@ export default function Diagnosi() {
       // Il voto è un di più: se non parte, la sessione resta comunque salvata
     }
     setFeedbackInviato(true);
+  };
+
+  // Il referto si consegna in modi diversi a seconda di dove gira l'app.
+  // Dentro l'app Android il download del browser NON esiste: doc.save() non
+  // dà errore, semplicemente non fa niente — ed è per questo che una diagnosi
+  // finita bene sembrava rotta. Qui si prova prima la condivisione di sistema
+  // (sul telefono è pure più comoda: salva o inoltra in un passaggio) e, se
+  // non c'è, si dice all'utente cosa fare invece di lasciarlo in silenzio.
+  const scaricaReferto = async () => {
+    const a = sessionStorage.getItem("Fixi_report_appliance") || appliance;
+    const b = sessionStorage.getItem("Fixi_report_brand") || brand;
+    const p = sessionStorage.getItem("Fixi_report_problem") || problem;
+
+    let blob, nomeFile;
+    try {
+      ({ blob, nomeFile } = refertoPDF(report, a, b, p));
+    } catch (e) {
+      console.error("Referto PDF non generato:", e);
+      alert("Non sono riuscito a preparare il PDF. Fattelo mandare per email qui sotto: il referto è identico.");
+      return;
+    }
+
+    try {
+      const file = new File([blob], nomeFile, { type: "application/pdf" });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Referto Fixi" });
+        return;
+      }
+    } catch (e) {
+      // Se l'utente chiude il foglio di condivisione non è un errore
+      if (e?.name === "AbortError") return;
+      console.warn("Condivisione non riuscita, ripiego sul download:", e);
+    }
+
+    const nellApp = typeof window !== "undefined" && window.Capacitor?.isNativePlatform?.() === true;
+    if (nellApp) {
+      alert("Da dentro l'app il salvataggio diretto non è disponibile. Scrivi la tua email qui sotto e ti mando subito il referto: è lo stesso PDF.");
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = nomeFile;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   // Scroll automatico
@@ -956,12 +1002,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
           <div className={styles.reportActions}>
   <button
     className={styles.downloadBtn}
-onClick={() => {
-  const a = sessionStorage.getItem("Fixi_report_appliance") || appliance;
-  const b = sessionStorage.getItem("Fixi_report_brand") || brand;
-  const p = sessionStorage.getItem("Fixi_report_problem") || problem;
-  generaRefertoPDF(report, a, b, p);
-}}  >
+onClick={scaricaReferto}  >
     📄 Scarica PDF
   </button>
   <button
