@@ -1035,7 +1035,10 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
   <button
     className={styles.downloadBtn}
 onClick={scaricaReferto}  >
-    📄 Scarica PDF
+    {/* "Salva" è vero in tutti e due i casi: nel browser scarica, nell'app
+        apre la condivisione di Android, da cui si salva nei File. "Scarica"
+        invece prometteva un file nei Download, che nell'app non arriva. */}
+    📄 Salva il referto
   </button>
   <button
     className={styles.restartBtn}
