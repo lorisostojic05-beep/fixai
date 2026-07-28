@@ -4,7 +4,7 @@
 //                             All'accettazione partono le email con i contatti.
 
 import { Resend } from "resend";
-import { MITTENTE, RISPOSTA_A } from "../../lib/email-mittente";
+import { MITTENTE, RISPOSTA_A, riferimento } from "../../lib/email-mittente";
 import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -116,7 +116,7 @@ export default async function handler(req, res) {
           from: MITTENTE,
           replyTo: RISPOSTA_A,
           to: tecnico.email,
-          subject: `Lavoro confermato — contatti del cliente (${assegnata.brand || ""} ${assegnata.appliance || ""})`,
+          subject: `Lavoro #${riferimento(token)} confermato — contatti del cliente (${assegnata.brand || ""} ${assegnata.appliance || ""})`,
           html: emailContatti({
             titolo: "Lavoro confermato ✅",
             sottotitolo: `Il lavoro è tuo, ${esc(tecnico.nome)}! Ecco i contatti del cliente:`,
@@ -141,7 +141,7 @@ export default async function handler(req, res) {
             from: MITTENTE,
             replyTo: RISPOSTA_A,
             to: assegnata.email,
-            subject: "Abbiamo trovato il tuo tecnico! 🔧",
+            subject: `Abbiamo trovato il tuo tecnico! 🔧 (richiesta #${riferimento(token)})`,
             html: emailContatti({
               titolo: "Tecnico trovato ✅",
               sottotitolo: `Ciao ${esc(assegnata.nome)}, un tecnico ha accettato la tua richiesta e ti contatterà a breve. Ecco i suoi riferimenti:`,

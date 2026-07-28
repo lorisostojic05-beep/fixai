@@ -7,7 +7,7 @@
 
 import crypto from "crypto";
 import { Resend } from "resend";
-import { MITTENTE, RISPOSTA_A } from "../../lib/email-mittente";
+import { MITTENTE, RISPOSTA_A, riferimento } from "../../lib/email-mittente";
 import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -130,7 +130,7 @@ export default async function handler(req, res) {
             from: MITTENTE,
             replyTo: RISPOSTA_A,
             to: lavoro.email,
-            subject: "Com'è andata la riparazione? Lascia una recensione",
+            subject: `Com'è andata la riparazione? Lascia una recensione (#${riferimento(lavoro.token)})`,
             html: emailRecensioneHtml(
               lavoro.nome,
               `${tecnico.nome} ${tecnico.cognome}`,

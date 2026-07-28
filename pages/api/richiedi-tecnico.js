@@ -5,7 +5,7 @@
 
 import crypto from "crypto";
 import { Resend } from "resend";
-import { MITTENTE, RISPOSTA_A } from "../../lib/email-mittente";
+import { MITTENTE, RISPOSTA_A, riferimento } from "../../lib/email-mittente";
 import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -138,7 +138,11 @@ export default async function handler(req, res) {
             from: MITTENTE,
             replyTo: RISPOSTA_A,
             to: t.email,
-            subject: `Nuovo lavoro Fixi — ${brand ? brand + " " : ""}${appliance || "elettrodomestico"} a ${citta || "CAP " + capPulito}`,
+            // Il codice serve a distinguere una richiesta dall'altra: due
+            // lavori uguali (stessa marca, stessa città) avevano lo stesso
+            // oggetto e finivano raggruppati, col rischio che il tecnico non
+            // vedesse il secondo.
+            subject: `Nuovo lavoro Fixi #${riferimento(token)} — ${brand ? brand + " " : ""}${appliance || "elettrodomestico"} a ${citta || "CAP " + capPulito}`,
             html: emailTecnicoHtml({
               tecnico: t,
               richiesta,

@@ -116,7 +116,10 @@ ${report.urgency ? `
       from: MITTENTE,
       replyTo: RISPOSTA_A,
       to: email,
-      subject: `Il tuo referto Fixi — ${brand ? brand + " " : ""}${appliance}`,
+      // Il numero nell'oggetto è lo stesso stampato dentro il referto, e serve
+      // anche a non far raggruppare due referti dello stesso elettrodomestico
+      // in un'unica conversazione.
+      subject: `Il tuo referto Fixi ${refNum} — ${brand ? brand + " " : ""}${appliance}`,
       html,
     });
     return res.status(200).json({ inviata: true });
