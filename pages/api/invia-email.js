@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { MITTENTE, RISPOSTA_A } from "../../lib/email-mittente";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -112,7 +113,8 @@ ${report.urgency ? `
 
   try {
     await resend.emails.send({
-      from: "Fixi <onboarding@resend.dev>",
+      from: MITTENTE,
+      replyTo: RISPOSTA_A,
       to: email,
       subject: `Il tuo referto Fixi — ${brand ? brand + " " : ""}${appliance}`,
       html,

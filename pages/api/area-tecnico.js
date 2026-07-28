@@ -7,6 +7,7 @@
 
 import crypto from "crypto";
 import { Resend } from "resend";
+import { MITTENTE, RISPOSTA_A } from "../../lib/email-mittente";
 import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -126,7 +127,8 @@ export default async function handler(req, res) {
         const baseUrl = req.headers.origin || `https://${req.headers.host}`;
         try {
           const esito = await resend.emails.send({
-            from: "Fixi <onboarding@resend.dev>",
+            from: MITTENTE,
+            replyTo: RISPOSTA_A,
             to: lavoro.email,
             subject: "Com'è andata la riparazione? Lascia una recensione",
             html: emailRecensioneHtml(

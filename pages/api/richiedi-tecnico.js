@@ -5,6 +5,7 @@
 
 import crypto from "crypto";
 import { Resend } from "resend";
+import { MITTENTE, RISPOSTA_A } from "../../lib/email-mittente";
 import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -134,7 +135,8 @@ export default async function handler(req, res) {
       const invii = await Promise.allSettled(
         tecnici.map((t) =>
           resend.emails.send({
-            from: "Fixi <onboarding@resend.dev>",
+            from: MITTENTE,
+            replyTo: RISPOSTA_A,
             to: t.email,
             subject: `Nuovo lavoro Fixi — ${brand ? brand + " " : ""}${appliance || "elettrodomestico"} a ${citta || "CAP " + capPulito}`,
             html: emailTecnicoHtml({
