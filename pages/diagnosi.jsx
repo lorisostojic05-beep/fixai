@@ -810,12 +810,24 @@ const avviaAscolto = async () => {
         alert("Per dettare serve il permesso del microfono: puoi attivarlo dalle impostazioni del telefono.");
         return;
       }
+      // Si ascolta nella lingua in cui Fixi ha appena parlato, ma solo se il
+      // telefono la conosce davvero: chiederne una non installata fa fallire
+      // start(). Nel dubbio si torna all'italiano, che è sempre meglio di un
+      // pulsante che non fa niente.
+      let lingua = linguaConversazioneRef.current;
+      try {
+        const { languages } = await SR.getSupportedLanguages();
+        if (Array.isArray(languages) && languages.length > 0 && !languages.includes(lingua)) {
+          const base = lingua.split("-")[0];
+          lingua = languages.find((l) => String(l).startsWith(base)) || "it-IT";
+        }
+      } catch {
+        // Telefono che non sa elencare le sue lingue: si prova lo stesso
+      }
+
       setAscoltoAttivo(true);
       const esito = await SR.start({
-        // Si ascolta nella stessa lingua in cui Fixi ha appena parlato:
-        // con l'orecchio fisso sull'italiano una risposta in inglese
-        // tornava indietro storpiata.
-        language: linguaConversazioneRef.current,
+        language: lingua,
         maxResults: 1,
         partialResults: false,
         popup: false,
@@ -831,6 +843,13 @@ const avviaAscolto = async () => {
     } catch (err) {
       setAscoltoAttivo(false);
       console.error("Dettatura nativa non riuscita:", err);
+      // Prima qui c'era solo il console.error: per chi usa l'app il pulsante
+      // sembrava rotto e non c'era modo di capire perché. Il messaggio tecnico
+      // si porta dietro il motivo vero, che è quello che serve per aggiustare.
+      alert(
+        "Non sono riuscito ad avviare la dettatura. Puoi scrivere il messaggio nella casella.\n\n" +
+          `Dettaglio: ${err?.message || err}`
+      );
     }
     return;
   }
@@ -849,7 +868,17 @@ const avviaAscolto = async () => {
     setInputText(testo);
   };
   recognition.onend = () => setAscoltoAttivo(false);
-  recognition.onerror = () => setAscoltoAttivo(false);
+  recognition.onerror = (e) => {
+    setAscoltoAttivo(false);
+    // "no-speech" e "aborted" capitano di continuo (l'utente non parla o
+    // annulla): avvisare lì sarebbe solo fastidioso. Gli altri no.
+    if (e?.error === "no-speech" || e?.error === "aborted") return;
+    const spiegazione =
+      e?.error === "not-allowed"
+        ? "Il permesso del microfono è stato negato: puoi darlo dalle impostazioni del browser."
+        : `Dettatura non riuscita (${e?.error || "motivo sconosciuto"}). Puoi scrivere il messaggio.`;
+    alert(spiegazione);
+  };
   recognitionRef.current = recognition;
   recognition.start();
   setAscoltoAttivo(true);
