@@ -864,8 +864,13 @@ const avviaAscolto = async () => {
   recognition.continuous = false;
   recognition.interimResults = false;
   recognition.onresult = (e) => {
-    const testo = e.results[0][0].transcript;
-    setInputText(testo);
+    // Come nel percorso nativo: il testo riconosciuto parte subito, senza
+    // passare dalla casella e da attese a tempo.
+    const testo = (e.results[0][0].transcript || "").trim();
+    if (testo) {
+      setInputText("");
+      callAI(testo, null);
+    }
   };
   recognition.onend = () => setAscoltoAttivo(false);
   recognition.onerror = (e) => {
@@ -1334,14 +1339,16 @@ onClick={scaricaReferto}  >
           </div>
 
           <div className={styles.inputRow}>
+  {/* Prima era "tieni premuto", ma l'unico posto dove c'era scritto era il
+      title, che su un telefono non compare mai: chi toccava avviava e fermava
+      l'ascolto nello stesso istante, senza registrare niente e senza vedere un
+      messaggio. Ora si tocca per parlare e si tocca per smettere — e comunque
+      il riconoscimento si ferma da solo quando finisci di parlare. */}
   <button
     className={`${styles.micBtn} ${ascoltoAttivo ? styles.micAttivo : ""}`}
-    onMouseDown={avviaAscolto}
-    onMouseUp={() => { fermaAscolto(); setTimeout(handleSend, 600); }}
-    onTouchStart={avviaAscolto}
-    onTouchEnd={() => { fermaAscolto(); setTimeout(handleSend, 600); }}
+    onClick={() => (ascoltoAttivo ? fermaAscolto() : avviaAscolto())}
     disabled={loading}
-    title="Tieni premuto per parlare"
+    title={ascoltoAttivo ? "Tocca per smettere" : "Tocca e parla"}
   >
     {ascoltoAttivo ? "🔴" : "🎤"}
   </button>
