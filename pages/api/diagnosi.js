@@ -775,6 +775,26 @@ export default async function handler(req, res) {
       `Claude — input: ${u.input_tokens}, cache write: ${u.cache_creation_input_tokens}, cache read: ${u.cache_read_input_tokens}, output: ${u.output_tokens}`
     );
 
+    // Somma il consumo alla riga del pagamento: è l'unico punto in cui
+    // sappiamo insieme quanto è costata la risposta E a quale diagnosi
+    // appartiene. Se il salvataggio fallisce non si interrompe niente:
+    // questa è contabilità, non servizio, e l'utente ha pagato per la
+    // diagnosi — non deve perderla per un problema di Supabase.
+    if (stripeSessionId) {
+      try {
+        const { error } = await supabaseAdmin.rpc("somma_consumo", {
+          p_stripe_session_id: stripeSessionId,
+          p_input: u.input_tokens || 0,
+          p_cache_write: u.cache_creation_input_tokens || 0,
+          p_cache_read: u.cache_read_input_tokens || 0,
+          p_output: u.output_tokens || 0,
+        });
+        if (error) console.warn("Consumo non registrato:", error.message);
+      } catch (e) {
+        console.warn("Consumo non registrato:", e.message);
+      }
+    }
+
     const rawText = (fullText || "").trim();
 
     // Estrai il referto JSON (dal blocco ```json oppure oggetto grezzo)

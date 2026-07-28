@@ -156,6 +156,9 @@ export default function Admin() {
                 { label: "Voto medio", valore: dati.votoMedio ? dati.votoMedio.toFixed(1) + " / 5" : "—", colore: "#185FA5" },
                 { label: "Risolti fai-da-te", valore: dati.risoltiPercent + "%", colore: "#1D9E75" },
                 { label: "Durata media", valore: dati.duratMedia ? Math.round(dati.duratMedia / 60) + " min" : "—", colore: "#854F0B" },
+                { label: "Costo AI medio", valore: dati.consumoStat?.medio != null ? "$" + dati.consumoStat.medio.toFixed(2) : "—", colore: "#185FA5" },
+                // Il caso peggiore conta più della media: è quello che dice se €9,90 reggono sempre
+                { label: "Costo AI peggiore", valore: dati.consumoStat?.massimo != null ? "$" + dati.consumoStat.massimo.toFixed(2) : "—", colore: "#A01E1E" },
               ].map((s, i) => (
                 <div key={i} style={{
                   background: "white", borderRadius: "12px", padding: "1rem",
@@ -187,6 +190,37 @@ export default function Admin() {
                   <span style={{ color: "#666" }}>{e.count} sessioni</span>
                 </div>
               ))}
+            </div>
+
+            {/* Quanto costa in AI ogni diagnosi */}
+            <div style={{ background: "white", borderRadius: "12px", padding: "1.25rem", marginBottom: "1.5rem", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+              <h2 style={{ fontSize: "15px", fontWeight: "600", marginBottom: "1rem" }}>Costo AI per diagnosi</h2>
+              {!dati.consumi || dati.consumi.length === 0 ? (
+                <p style={{ fontSize: "13px", color: "#666" }}>
+                  Ancora nessun dato. Il conteggio parte dalle diagnosi fatte da adesso in poi:
+                  quelle vecchie non erano tracciate.
+                </p>
+              ) : (
+                <>
+                  {dati.consumi.map((c, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #f0f0ee", fontSize: "13px" }}>
+                      <span>
+                        {new Date(c.data).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}
+                        <span style={{ color: "#999" }}>
+                          {" · "}{c.messaggi} messaggi · {Math.round(c.token / 1000)}k token
+                        </span>
+                      </span>
+                      {/* In rosso sopra i 2 dollari: è circa un quinto dell'incasso */}
+                      <span style={{ fontWeight: "600", color: c.costo > 2 ? "#A01E1E" : "#666" }}>
+                        ${c.costo.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                  <p style={{ fontSize: "12px", color: "#999", marginTop: "10px" }}>
+                    Tariffe Claude Opus 5, in dollari. Ogni diagnosi incassa €9,90.
+                  </p>
+                </>
+              )}
             </div>
 
             {/* Tecnici in attesa di approvazione */}
