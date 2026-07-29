@@ -660,21 +660,20 @@ Consiglia di valutare la sostituzione dell'elettrodomestico quando:
 - **Condizionatore portatile**: monoblocco su ruote appoggiato a terra, con un tubo flessibile largo che va verso la finestra
 - **Climatizzatore canalizzato/a cassetta**: griglia quadrata o rettangolare incassata nel controsoffitto — spesso scambiato per una presa d'aria
 
-Se quello che vedi non corrisponde chiaramente a nessuna di queste descrizioni, rispondi SKIP.
+Se quello che vedi non corrisponde chiaramente a nessuna di queste descrizioni, rispondi SKIP — ma **solo sui frame automatici**. Se è stato l'utente a chiedere l'analisi, vedi la regola nel FORMATO RISPOSTE: lì il silenzio non è mai ammesso.
 
 ## FORMATO RISPOSTE
 
 Per messaggi normali: testo diretto, max 3-4 frasi, usa **grassetto** per parti importanti.
 
-Per frame ([FRAME_AUTO] o immagini allegate): Guarda il frame con occhio critico. Rispondi SKIP se:
-- Non vedi chiaramente uno degli elettrodomestici descritti sopra
-- Vedi qualsiasi altro oggetto (termosifoni, mobili, piante, persone, pareti, ecc.)
-- L'immagine è sfocata o troppo buia
-- Non sei assolutamente certo di star guardando l'elettrodomestico dichiarato
+Per i frame della camera **distingui due casi opposti**.
 
-Rispondi SKIP anche se c'è il minimo dubbio. È meglio non dire nulla che dire qualcosa di sbagliato.
+**1. Frame automatico** ([FRAME_AUTO], scattato in sottofondo senza che l'utente chieda niente): qui il silenzio è corretto. Rispondi SKIP se non vedi nulla di nuovo e rilevante, se vedi altri oggetti (mobili, pareti, persone), se l'immagine è sfocata o buia, o se hai il minimo dubbio. Meglio tacere che dire una cosa sbagliata.
 
-Rispondi solo se vedi CHIARAMENTE l'elettrodomestico corretto con dettagli utili (codici errore, componenti visibili, perdite d'acqua, danni evidenti).
+**2. Frame chiesto dall'utente** (ha premuto lui il pulsante 📷 Analizza): **NON usare MAI SKIP qui.** Ti ha fatto una domanda e aspetta una risposta.
+- Un **primo piano di un componente** che gli hai chiesto tu — guarnizione, filtro, targhetta, display, tubo di scarico — è la risposta GIUSTA, non un errore. Non pretendere di riconoscere l'elettrodomestico intero dentro un dettaglio ravvicinato: se hai chiesto la guarnizione, quello che devi valutare è la guarnizione.
+- Se davvero non capisci cosa stai guardando, **dillo e spiega come rifare la foto**: "è troppo scura, accendi la luce", "avvicinati di più", "inquadra un po' più largo così capisco dove siamo".
+- Non lasciarlo mai senza risposta. Ha premuto un pulsante e ha visto scritto "l'AI sta analizzando": se poi non compare niente, pensa che l'app sia rotta.
 
 ## QUANDO GENERARE IL REFERTO
 Genera il referto quando:
@@ -854,10 +853,14 @@ result.push({
     const msg = messages[i];
 
     if (msg.role === "user") {
-      // Messaggio automatico da analisi periodica
-      if (msg.content === "[FRAME_AUTO]") {
+      // Due tipi di frame, con istruzioni opposte: quello automatico nasce
+      // da solo in sottofondo e il silenzio va bene; quello dell'utente nasce
+      // da un pulsante che ha premuto lui, e restare zitti è un difetto.
+      const frameAuto = msg.content === "[FRAME_AUTO]";
+      const frameUtente = msg.content === "[FRAME_UTENTE]";
+      if (frameAuto || frameUtente) {
         if (currentFrame && i === messages.length - 1) {
-          // Solo l'ultimo frame automatico include l'immagine
+          // Solo l'ultimo frame include l'immagine
           result.push({
             role: "user",
             content: [
@@ -871,12 +874,14 @@ result.push({
               },
               {
                 type: "text",
-                text: "Guarda questo frame in silenzio. Rispondi SOLO se vedi qualcosa di nuovo e importante (codice errore, perdita d'acqua, componente danneggiato). Se non vedi nulla di nuovo o di rilevante, rispondi SOLO con la parola: SKIP (senza parentesi quadre)",
+                text: frameAuto
+                  ? "Guarda questo frame in silenzio. Rispondi SOLO se vedi qualcosa di nuovo e importante (codice errore, perdita d'acqua, componente danneggiato). Se non vedi nulla di nuovo o di rilevante, rispondi SOLO con la parola: SKIP (senza parentesi quadre)"
+                  : "L'utente ha appena premuto 📷 Analizza per mostrarti questo: è una domanda diretta e va sempre risposta. NON usare SKIP. Descrivi cosa vedi e cosa significa per la diagnosi. Se è il primo piano di un componente che gli hai chiesto tu (guarnizione, filtro, targhetta, display), è esattamente quello che serve: valuta quel componente, non cercare l'elettrodomestico intero. Se l'immagine non è leggibile, dillo e spiegagli come rifarla.",
               },
             ],
           });
         }
-        // Frame automatici precedenti: skip per non sovraccaricare il context
+        // Frame precedenti: saltati per non sovraccaricare il contesto
         continue;
       }
 

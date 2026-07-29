@@ -376,7 +376,12 @@ useEffect(() => {
       }
 
       try {
-        const isFrame = userMessage === "[FRAME_AUTO]";
+        const isFrame = userMessage === "[FRAME_AUTO]" || userMessage === "[FRAME_UTENTE]";
+        // La bolla "in diretta" si nasconde solo per l'analisi automatica, che
+        // può legittimamente finire in silenzio. Se il frame l'ha chiesto
+        // l'utente la risposta arriva di sicuro, quindi tanto vale mostrarla
+        // mentre si scrive invece di lasciarlo davanti a "sto analizzando".
+        const isFrameSilenzioso = userMessage === "[FRAME_AUTO]";
 
         // Timeout d'inattività: annulla solo se non arriva nulla per 60s
         const controller = new AbortController();
@@ -427,7 +432,7 @@ useEffect(() => {
         // Bolla "in diretta": base pulita + testo che cresce. Per i frame non
         // mostriamo nulla finché non sappiamo se è un'osservazione utile o SKIP.
         const mostraLive = (contenuto) => {
-          if (isFrame) return;
+          if (isFrameSilenzioso) return;
           setStreaming(true);
           setMessages([
             ...messagesRef.current,
@@ -477,7 +482,11 @@ useEffect(() => {
 
         // messagesRef è la fonte di verità (senza la bolla "in diretta")
         let finali = messagesRef.current;
-        if (testoFinale && !testoFinale.includes("SKIP")) {
+        // Solo un "SKIP" secco vale come silenzio. Prima bastava che la parola
+        // comparisse da qualche parte per buttare via TUTTA la risposta,
+        // spiegazione compresa: l'utente restava senza niente sullo schermo.
+        const soloSkip = testoFinale.trim().toUpperCase() === "SKIP";
+        if (testoFinale && !soloSkip) {
           finali = [...messagesRef.current, { role: "assistant", content: testoFinale }];
           messagesRef.current = finali;
           leggiAd(testoFinale);
@@ -1302,7 +1311,9 @@ onClick={scaricaReferto}  >
                 alert("Camera non attiva.");
                 return;
               }
-              await callAI("[FRAME_AUTO]", frame);
+              // Marcatore diverso da quello dell'analisi automatica: qui
+              // l'utente ha premuto lui, e il server deve rispondere sempre.
+              await callAI("[FRAME_UTENTE]", frame);
             }}
             disabled={loading}
             title="Analizza quello che inquadri ora"
