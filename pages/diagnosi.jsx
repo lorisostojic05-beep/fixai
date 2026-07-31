@@ -109,6 +109,9 @@ export default function Diagnosi() {
   const [report, setReport] = useState(null);
   const [emailUtente, setEmailUtente] = useState("");
   const [emailInviata, setEmailInviata] = useState(false);
+  // Serve solo a sapere se il referto è già al sicuro da qualche parte, prima
+  // di lasciare uscire l'utente dalla pagina.
+  const [refertoSalvato, setRefertoSalvato] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [feedbackInviato, setFeedbackInviato] = useState(false);
   // Richiesta tecnico dal referto
@@ -208,6 +211,7 @@ export default function Diagnosi() {
     if (nellApp) {
       try {
         await salvaNativo(blob, nomeFile);
+        setRefertoSalvato(true);
       } catch (e) {
         // Chiudere il menù di condivisione senza scegliere non è un errore
         if (/cancel|abort|dismiss/i.test(e?.message || "")) return;
@@ -222,6 +226,7 @@ export default function Diagnosi() {
       const file = new File([blob], nomeFile, { type: "application/pdf" });
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: "Referto Fixi" });
+        setRefertoSalvato(true);
         return;
       }
     } catch (e) {
@@ -235,6 +240,21 @@ export default function Diagnosi() {
     link.download = nomeFile;
     link.click();
     URL.revokeObjectURL(url);
+    setRefertoSalvato(true);
+  };
+
+  // Uscita dalla pagina del referto. Prima non c'era: si poteva solo ripartire
+  // con "Nuova diagnosi", che non è la stessa cosa che andarsene.
+  // Il referto vive solo qui: chi esce senza averlo salvato né mandato per
+  // email lo perde, e ha pagato per averlo. Per questo l'avviso.
+  const tornaAllaHome = () => {
+    if (!refertoSalvato && !emailInviata) {
+      const esciComunque = window.confirm(
+        "Non hai ancora salvato il referto né te lo sei fatto mandare per email: uscendo da qui lo perdi.\n\nVuoi uscire lo stesso?"
+      );
+      if (!esciComunque) return;
+    }
+    window.location.href = "/";
   };
 
   // Scroll automatico
@@ -1093,6 +1113,7 @@ onClick={scaricaReferto}  >
       setFeedback(null);
       setFeedbackInviato(false);
       setEmailInviata(false);
+      setRefertoSalvato(false); // il referto nuovo non è ancora al sicuro
       setTecEsito(null);
       sessioneTokenRef.current = null;
       stopCamera();
@@ -1264,6 +1285,20 @@ onClick={scaricaReferto}  >
     </>
   )}
 </div>
+
+{/* Via d'uscita, segnalata da un tester: da questa pagina si poteva solo
+    ripartire da capo. Sta in fondo e in tono minore di proposito, così la
+    strada che si incontra prima resta salvare il referto o farselo mandare. */}
+<button
+  onClick={tornaAllaHome}
+  style={{
+    display: "block", margin: "18px auto 4px", background: "none",
+    border: "none", color: "#8A8A85", fontSize: "14px",
+    textDecoration: "underline", cursor: "pointer", padding: "8px",
+  }}
+>
+  ← Torna alla home
+</button>
         </div>
       </div>
     );
