@@ -26,6 +26,10 @@ export default async function handler(req, res) {
         },
       ],
       mode: "payment",
+      // Mostra il campo "codice promozionale" sulla pagina di pagamento.
+      // Senza questo, un coupon creato sul pannello Stripe non sarebbe
+      // utilizzabile da nessuno: il campo dove scriverlo non esiste proprio.
+      allow_promotion_codes: true,
       success_url: `${req.headers.origin}/diagnosi?pagamento=ok&session_id={CHECKOUT_SESSION_ID}&appliance=${encodeURIComponent(appliance || "")}&brand=${encodeURIComponent(brand || "")}&problem=${encodeURIComponent(problem || "")}`,
       cancel_url: `${req.headers.origin}/diagnosi?pagamento=annullato`,
     });

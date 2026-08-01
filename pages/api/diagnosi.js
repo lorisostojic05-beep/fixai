@@ -55,7 +55,16 @@ async function verificaAccesso(stripeSessionId) {
     } catch {
       return { ok: false, motivo: "Pagamento non riconosciuto. Riprova dal pulsante di pagamento." };
     }
-    if (session.payment_status !== "paid") {
+    // Su una sessione a costo zero completata Stripe restituisce "paid"
+    // (verificato in modalità test), quindi il caso normale passa comunque.
+    // "no_payment_required" è però uno stato legittimo che Stripe usa quando
+    // non serve alcun addebito: accettarlo evita che un accesso gratuito
+    // regolare venga respinto con il messaggio più fuorviante possibile
+    // ("il pagamento non risulta completato").
+    // Non è un varco: l'importo lo decide il server, e l'unica strada per
+    // arrivare a zero è un coupon creato apposta sul pannello Stripe.
+    const statiValidi = ["paid", "no_payment_required"];
+    if (!statiValidi.includes(session.payment_status)) {
       return { ok: false, motivo: "Il pagamento non risulta completato." };
     }
     if (tabellaDisponibile) {
