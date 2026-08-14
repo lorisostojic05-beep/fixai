@@ -18,6 +18,11 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // I plugin nostri vanno registrati PRIMA di super.onCreate: è lì dentro
+        // che Capacitor costruisce il ponte con la pagina web, e quello che non
+        // è registrato a quel momento la pagina non lo vede.
+        registerPlugin(SalvaFilePlugin.class);
+
         super.onCreate(savedInstanceState);
 
         // Da Android 16 il disegno "bordo a bordo" è obbligatorio: la finestra

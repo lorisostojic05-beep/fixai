@@ -162,61 +162,103 @@ export default function Diagnosi() {
     setFeedbackInviato(true);
   };
 
-  // Dentro l'app il PDF si scrive davvero sul telefono e si passa al menù di
-  // condivisione di Android: da lì si salva nei File, si manda su WhatsApp o
-  // per email. I plugin si importano solo qui, così dal browser non vengono
-  // nemmeno scaricati.
-  const salvaNativo = async (blob, nomeFile) => {
-    const [{ Filesystem, Directory }, { Share }] = await Promise.all([
-      import("@capacitor/filesystem"),
-      import("@capacitor/share"),
-    ]);
-    const base64 = await new Promise((risolvi, rifiuta) => {
-      const lettore = new FileReader();
-      lettore.onerror = () => rifiuta(lettore.error);
-      // readAsDataURL restituisce "data:application/pdf;base64,XXXX":
-      // al plugin serve solo quello che viene dopo la virgola.
-      lettore.onload = () => risolvi(String(lettore.result).split(",")[1]);
-      lettore.readAsDataURL(blob);
-    });
-    const scritto = await Filesystem.writeFile({
-      path: nomeFile,
-      data: base64,
-      directory: Directory.Cache, // file temporaneo: lo tiene l'app che lo riceve
-    });
-    await Share.share({ title: "Referto Fixi", files: [scritto.uri] });
-  };
-
-  // Il referto si consegna in modi diversi a seconda di dove gira l'app.
-  // Dentro l'app Android il download del browser NON esiste: doc.save() non
-  // dà errore, semplicemente non fa niente — ed è per questo che una diagnosi
-  // finita bene sembrava rotta. Qui si prova prima la condivisione di sistema
-  // (sul telefono è pure più comoda: salva o inoltra in un passaggio) e, se
-  // non c'è, si dice all'utente cosa fare invece di lasciarlo in silenzio.
-  const scaricaReferto = async () => {
+  // Costruisce il PDF una volta sola per tutti e due i pulsanti. Restituisce
+  // null se non ci riesce, dopo aver già avvisato l'utente.
+  const preparaPDF = () => {
     const a = sessionStorage.getItem("Fixi_report_appliance") || appliance;
     const b = sessionStorage.getItem("Fixi_report_brand") || brand;
     const p = sessionStorage.getItem("Fixi_report_problem") || problem;
-
-    let blob, nomeFile;
     try {
-      ({ blob, nomeFile } = refertoPDF(report, a, b, p));
+      return refertoPDF(report, a, b, p);
     } catch (e) {
       console.error("Referto PDF non generato:", e);
       alert("Non sono riuscito a preparare il PDF. Fattelo mandare per email qui sotto: il referto è identico.");
+      return null;
+    }
+  };
+
+  // readAsDataURL restituisce "data:application/pdf;base64,XXXX":
+  // ai plugin serve solo quello che viene dopo la virgola.
+  const blobInBase64 = (blob) =>
+    new Promise((risolvi, rifiuta) => {
+      const lettore = new FileReader();
+      lettore.onerror = () => rifiuta(lettore.error);
+      lettore.onload = () => risolvi(String(lettore.result).split(",")[1]);
+      lettore.readAsDataURL(blob);
+    });
+
+  // ── Scarica: il file finisce nei Download del telefono ──────────
+  // Dentro l'app il download del browser NON esiste: doc.save() non dà errore,
+  // semplicemente non fa niente. E nemmeno @capacitor/filesystem può aiutare,
+  // perché da Android 10 le app non scrivono più nelle cartelle pubbliche.
+  // Ci pensa SalvaFilePlugin, scritto apposta, che passa da MediaStore.
+  const scaricaReferto = async () => {
+    const pdf = preparaPDF();
+    if (!pdf) return;
+    const { blob, nomeFile } = pdf;
+
+    if (dentroApp()) {
+      try {
+        const SalvaFile = await pluginSalvaFile();
+        await SalvaFile.nelleDownload({
+          nomeFile,
+          dati: await blobInBase64(blob),
+          tipo: "application/pdf",
+        });
+        setRefertoSalvato(true);
+        alert(`✅ Salvato nei Download del telefono come ${nomeFile}`);
+      } catch (e) {
+        // Android troppo vecchio per MediaStore, o scrittura negata: il menù
+        // di condivisione funziona ovunque, quindi si ripiega lì invece di
+        // lasciare l'utente con un pulsante che non fa niente. Va però detto
+        // prima: vedersi comparire la condivisione dopo aver premuto "Scarica"
+        // è la stessa confusione che ci ha segnalato un tester.
+        console.warn("Download diretto non riuscito, ripiego sulla condivisione:", e);
+        alert("Questo telefono non permette il salvataggio diretto nei Download. Apro la condivisione: scegli «Salva su file».");
+        await condividiReferto();
+      }
       return;
     }
 
-    const nellApp = typeof window !== "undefined" && window.Capacitor?.isNativePlatform?.() === true;
-    if (nellApp) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = nomeFile;
+    link.click();
+    URL.revokeObjectURL(url);
+    setRefertoSalvato(true);
+  };
+
+  // ── Condividi: WhatsApp, email, Drive… e "Salva su file" ────────
+  // Serve davvero: il modo più naturale di usare il referto è mandarlo al
+  // tecnico prima che venga a casa.
+  //
+  // NB: le due funzioni si chiamano a vicenda come ripiego, ma non si avvitano:
+  // scaricaReferto ripiega qui solo dentro l'app, condividiReferto ripiega là
+  // solo nel browser. Se un giorno si tocca questa simmetria, controllare.
+  const condividiReferto = async () => {
+    const pdf = preparaPDF();
+    if (!pdf) return;
+    const { blob, nomeFile } = pdf;
+
+    if (dentroApp()) {
       try {
-        await salvaNativo(blob, nomeFile);
+        const [{ Filesystem, Directory }, { Share }] = await Promise.all([
+          import("@capacitor/filesystem"),
+          import("@capacitor/share"),
+        ]);
+        const scritto = await Filesystem.writeFile({
+          path: nomeFile,
+          data: await blobInBase64(blob),
+          directory: Directory.Cache, // temporaneo: il file lo tiene l'app che lo riceve
+        });
+        await Share.share({ title: "Referto Fixi", files: [scritto.uri] });
         setRefertoSalvato(true);
       } catch (e) {
-        // Chiudere il menù di condivisione senza scegliere non è un errore
+        // Chiudere il menù senza scegliere non è un errore
         if (/cancel|abort|dismiss/i.test(e?.message || "")) return;
-        console.error("Salvataggio nativo non riuscito:", e);
-        alert("Non sono riuscito a salvare il PDF sul telefono. Fattelo mandare per email qui sotto: il referto è identico.");
+        console.error("Condivisione non riuscita:", e);
+        alert("Non sono riuscito a condividere il PDF. Fattelo mandare per email qui sotto: il referto è identico.");
       }
       return;
     }
@@ -233,14 +275,7 @@ export default function Diagnosi() {
       if (e?.name === "AbortError") return;
       console.warn("Condivisione non riuscita, ripiego sul download:", e);
     }
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = nomeFile;
-    link.click();
-    URL.revokeObjectURL(url);
-    setRefertoSalvato(true);
+    await scaricaReferto();
   };
 
   // Uscita dalla pagina del referto. Prima non c'era: si poteva solo ripartire
@@ -811,15 +846,31 @@ const leggiAd = (testo) => {
   window.speechSynthesis.speak(utterance);
 };
 
+// Siamo dentro l'app Android invece che nel browser? Cambia parecchie cose
+// (dettatura, salvataggio del referto), quindi la domanda si fa una volta sola.
+const dentroApp = () =>
+  typeof window !== "undefined" && window.Capacitor?.isNativePlatform?.() === true;
+
 // Nell'app Android il riconoscimento vocale del browser
 // (webkitSpeechRecognition) non esiste: la WebView non lo implementa. Lì si
 // usa il motore vocale nativo di Android tramite il plugin Capacitor.
-const dettaturaNativa = () =>
-  typeof window !== "undefined" && window.Capacitor?.isNativePlatform?.() === true;
+const dettaturaNativa = dentroApp;
 
 // Il plugin si carica solo quando serve: dal browser non viene nemmeno toccato.
 const pluginVocale = async () =>
   (await import("@capacitor-community/speech-recognition")).SpeechRecognition;
+
+// Plugin scritto da noi (android/app/src/main/java/casa/fixi/app/SalvaFilePlugin.java):
+// scrive un file nella cartella Download vera del telefono passando da MediaStore,
+// cosa che nessun plugin ufficiale sa fare. Si registra una volta sola.
+let salvaFileRegistrato = null;
+const pluginSalvaFile = async () => {
+  if (!salvaFileRegistrato) {
+    const { registerPlugin } = await import("@capacitor/core");
+    salvaFileRegistrato = registerPlugin("SalvaFile");
+  }
+  return salvaFileRegistrato;
+};
 
 // Avvia riconoscimento vocale
 const avviaAscolto = async () => {
@@ -1095,37 +1146,43 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
           )}
 
           <div className={styles.reportActions}>
-  <button
-    className={styles.downloadBtn}
-onClick={scaricaReferto}  >
-    {/* "Salva" è vero in tutti e due i casi: nel browser scarica, nell'app
-        apre la condivisione di Android, da cui si salva nei File. "Scarica"
-        invece prometteva un file nei Download, che nell'app non arriva. */}
-    📄 Salva il referto
-  </button>
-  <button
-    className={styles.restartBtn}
-    onClick={() => {
-      setPhase("setup");
-      setMessages([]);
-      setReport(null);
-      // Senza questo la seconda diagnosi mostrerebbe già "Grazie per il feedback"
-      setFeedback(null);
-      setFeedbackInviato(false);
-      setEmailInviata(false);
-      setRefertoSalvato(false); // il referto nuovo non è ancora al sicuro
-      setTecEsito(null);
-      sessioneTokenRef.current = null;
-      stopCamera();
-      // Una diagnosi = un pagamento: la nuova sessione richiede un nuovo checkout
-      sessionStorage.removeItem("Fixi_stripe_session");
-      stripeSessionRef.current = null;
-      setPagamentoVerificato(false);
-    }}
-  >
-    🔄 Nuova diagnosi
-  </button>
-</div>
+            {/* Due strade separate perché servono a due cose diverse: "Scarica"
+                tiene il referto per sé, "Condividi" lo manda al tecnico. Prima
+                c'era solo un pulsante che apriva la condivisione, e un tester ha
+                segnalato che lui voleva semplicemente il file. */}
+            <button className={styles.downloadBtn} onClick={scaricaReferto}>
+              📥 Scarica
+            </button>
+            <button className={styles.shareBtn} onClick={condividiReferto}>
+              📤 Condividi
+            </button>
+          </div>
+
+          <div className={styles.reportActions}>
+            <button
+              className={styles.restartBtn}
+              onClick={() => {
+                setPhase("setup");
+                setMessages([]);
+                setReport(null);
+                // Senza questo la seconda diagnosi mostrerebbe già "Grazie per il feedback"
+                setFeedback(null);
+                setFeedbackInviato(false);
+                setEmailInviata(false);
+                setRefertoSalvato(false); // il referto nuovo non è ancora al sicuro
+                setTecEsito(null);
+                sessioneTokenRef.current = null;
+                stopCamera();
+                // Una diagnosi = un pagamento: la nuova sessione richiede un nuovo checkout
+                sessionStorage.removeItem("Fixi_stripe_session");
+                stripeSessionRef.current = null;
+                setPagamentoVerificato(false);
+              }}
+            >
+              🔄 Nuova diagnosi
+            </button>
+          </div>
+
 
 {!emailInviata ? (
   <div className={styles.emailRow}>

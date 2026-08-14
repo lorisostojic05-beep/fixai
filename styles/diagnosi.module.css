@@ -425,8 +425,10 @@
   gap: 8px;
   margin-top: 1.25rem;
 }
+/* La seconda riga (Nuova diagnosi) sta attaccata alla prima */
+.reportActions + .reportActions { margin-top: 8px; }
 
-.downloadBtn, .restartBtn {
+.downloadBtn, .shareBtn, .restartBtn {
   flex: 1;
   padding: 11px;
   border-radius: 10px;
@@ -443,6 +445,15 @@
   color: white;
 }
 .downloadBtn:hover { background: #0F6E56; }
+
+/* Condividi è l'azione secondaria: stesso peso visivo di "Nuova diagnosi",
+   così l'occhio va prima su Scarica. */
+.shareBtn {
+  background: #E8F5F0;
+  color: #0F6E56;
+  border: 1px solid #C5E5DA;
+}
+.shareBtn:hover { background: #D6EDE4; }
 
 .restartBtn {
   background: #f5f5f3;

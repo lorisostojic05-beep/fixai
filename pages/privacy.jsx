@@ -1,13 +1,18 @@
 import Head from "next/head";
 
 // Privacy policy pubblica — richiesta da Google Play e dalle normative privacy.
-// Titolare: Loris Ostojic (persona fisica). Quando aprirai la P.IVA, aggiungere
-// ragione sociale/P.IVA/indirizzo nella sezione 1. È una base solida e onesta;
-// per un'attività che incassa pagamenti conviene farla rivedere da un consulente
-// privacy prima del lancio pubblico.
+// È una base solida e onesta; per un'attività che incassa pagamenti conviene
+// farla rivedere da un consulente privacy.
 
 const AGGIORNAMENTO = "23 luglio 2026";
 const EMAIL = "lorisostojic05@gmail.com";
+
+// P.IVA e sede compaiono nell'informativa SOLO se compilate qui: finché sono
+// vuote la pagina resta identica a prima. Serve a non pubblicare per sbaglio
+// un numero di partita IVA finto, che sarebbe peggio di non averlo scritto.
+// Compilandole, aggiorna anche AGGIORNAMENTO con la data di oggi.
+const PIVA = ""; // es. "01234567890"
+const SEDE = ""; // es. "Via Roma 1, 20158 Milano (MI)"
 
 export default function Privacy() {
   return (
@@ -24,7 +29,12 @@ export default function Privacy() {
 
           <Sezione titolo="1. Chi siamo (Titolare del trattamento)">
             <p>Fixi è un servizio di diagnosi di elettrodomestici tramite videochiamata con intelligenza artificiale, che mette inoltre in contatto gli utenti con tecnici riparatori.</p>
-            <p>Titolare del trattamento: <strong>Loris Ostojic</strong>. Per qualsiasi domanda sulla privacy puoi scriverci a <a href={`mailto:${EMAIL}`} style={linkStyle}>{EMAIL}</a>.</p>
+            <p>
+              Titolare del trattamento: <strong>Loris Ostojic</strong>
+              {PIVA ? <> — P.IVA {PIVA}</> : null}
+              {SEDE ? <>, con sede in {SEDE}</> : null}
+              . Per qualsiasi domanda sulla privacy puoi scriverci a <a href={`mailto:${EMAIL}`} style={linkStyle}>{EMAIL}</a>.
+            </p>
           </Sezione>
 
           <Sezione titolo="2. Quali dati raccogliamo">
