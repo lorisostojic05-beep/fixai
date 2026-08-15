@@ -384,17 +384,73 @@ useEffect(() => {
     }
   };
 
-  const stopCamera = () => {
+  // Spegne solo il flusso video. Separata da stopCamera perché spegnere la
+  // camera e chiudere la sessione non sono la stessa cosa: chi mette in pausa
+  // la camera, o esce un attimo dall'app, deve ritrovare la sessione viva.
+  const spegniFlusso = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
     setCameraActive(false);
+  };
+
+  const stopCamera = () => {
+    spegniFlusso();
     if (sessionTimeoutRef.current) {
       clearTimeout(sessionTimeoutRef.current);
       sessionTimeoutRef.current = null;
     }
   };
+
+  // Android si riprende la camera quando l'app va in secondo piano. Al ritorno
+  // il flusso è morto ma il <video> resta lì con l'ultimo fotogramma: sembra
+  // che la camera si sia bloccata. Rimettere srcObject non basta, il flusso va
+  // richiesto di nuovo.
+  // Alzato mentre si riapre la camera. Senza, visibilitychange e focus (che
+  // arrivano quasi insieme) farebbero partire due getUserMedia in parallelo:
+  // la seconda sovrascrive streamRef e la prima resta accesa senza che nessuno
+  // possa più spegnerla.
+  const riavvioInCorso = useRef(false);
+
+  const riprendiCamera = async () => {
+    if (document.visibilityState !== "visible") return;
+    // Se l'utente ha spento lui la camera col pulsante, non gliela riaccendiamo
+    if (!cameraActive || riavvioInCorso.current) return;
+    const traccia = streamRef.current?.getVideoTracks?.()[0];
+    if (traccia && traccia.readyState === "live" && !traccia.muted) {
+      // Il flusso è ancora buono: può essersi fermata solo la riproduzione
+      videoRef.current?.play?.().catch(() => {});
+      return;
+    }
+    riavvioInCorso.current = true;
+    try {
+      spegniFlusso();
+      await startCamera();
+    } finally {
+      riavvioInCorso.current = false;
+    }
+  };
+
+  // Gli ascoltatori si registrano una volta sola, ma devono chiamare sempre la
+  // versione aggiornata della funzione: senza il ref leggerebbero per sempre il
+  // cameraActive del primo render.
+  const riprendiRef = useRef(riprendiCamera);
+  riprendiRef.current = riprendiCamera;
+
+  useEffect(() => {
+    if (phase !== "session") return undefined;
+    const alRitorno = () => riprendiRef.current();
+    // Due segnali perché nella WebView non sempre arrivano entrambi; la
+    // funzione controlla da sé se c'è qualcosa da fare, quindi chiamarla due
+    // volte non fa danno.
+    document.addEventListener("visibilitychange", alRitorno);
+    window.addEventListener("focus", alRitorno);
+    return () => {
+      document.removeEventListener("visibilitychange", alRitorno);
+      window.removeEventListener("focus", alRitorno);
+    };
+  }, [phase]);
 
   // ── Cattura screenshot dal video ────────────────────────────────
   const captureFrame = useCallback(() => {
@@ -1383,18 +1439,17 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
             {voceAttiva ? "🔊" : "🔇"}
           </button>
           <button
-  className={styles.endBtn}
-  onClick={() => {
-    if (cameraActive) {
-      stopCamera();
-    } else {
-      startCamera();
-    }
-  }}
-  title={cameraActive ? "Disattiva camera" : "Attiva camera"}
->
-  {cameraActive ? "📷" : "📷 Off"}
-</button>
+            className={styles.endBtn}
+            onClick={() => {
+              // spegniFlusso e non stopCamera: mettere in pausa la camera non
+              // deve annullare il timeout dei 30 minuti della sessione.
+              if (cameraActive) spegniFlusso();
+              else startCamera();
+            }}
+            title={cameraActive ? "Disattiva camera" : "Attiva camera"}
+          >
+            {cameraActive ? "📷" : "📷 Off"}
+          </button>
           <button
             className={styles.endBtn}
             onClick={async () => {
