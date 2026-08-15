@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import styles from "../styles/diagnosi.module.css";
 import { loadStripe } from "@stripe/stripe-js";
 import { refertoPDF } from "../lib/generaPDF";
+import { salvaSessione, leggiSessioneSalvata, dimenticaSessione } from "../lib/sessione-salvata";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
@@ -118,6 +119,7 @@ export default function Diagnosi() {
   const [tecForm, setTecForm] = useState({ nome: "", telefono: "", email: "", citta: "", cap: "" });
   const [tecLoading, setTecLoading] = useState(false);
   const [tecEsito, setTecEsito] = useState(null); // { tecniciContattati } dopo l'invio
+  const [sessioneRecuperabile, setSessioneRecuperabile] = useState(null); // diagnosi lasciata a metà
   const sessionStartRef = useRef(null);
   const sessioneTokenRef = useRef(null); // token della riga salvata col referto: il voto aggiorna quella
   const [voceAttiva, setVoceAttiva] = useState(true);
@@ -129,7 +131,6 @@ export default function Diagnosi() {
   const [verificandoPagamento, setVerificandoPagamento] = useState(false);
   const messagesRef = useRef([]);
   const recognitionRef = useRef(null);
-  const sessionTimeoutRef = useRef(null);
   const stripeSessionRef = useRef(null); // id sessione Stripe: il server lo verifica a ogni messaggio
 
   // Da quanti secondi è in corso questa diagnosi
@@ -282,6 +283,45 @@ export default function Diagnosi() {
   // con "Nuova diagnosi", che non è la stessa cosa che andarsene.
   // Il referto vive solo qui: chi esce senza averlo salvato né mandato per
   // email lo perde, e ha pagato per averlo. Per questo l'avviso.
+  // Rimette in piedi la diagnosi interrotta esattamente dov'era.
+  const riprendiSessione = async () => {
+    const s = sessioneRecuperabile;
+    if (!s) return;
+    setSessioneRecuperabile(null);
+
+    if (s.stripeSessionId) {
+      stripeSessionRef.current = s.stripeSessionId;
+      setPagamentoVerificato(true);
+      sessionStorage.setItem("Fixi_stripe_session", s.stripeSessionId);
+    }
+    setAppliance(s.appliance || "");
+    setBrand(s.brand || "");
+    setProblem(s.problem || "");
+    // Il referto legge da qui: senza, uscirebbe un PDF senza marca né modello
+    sessionStorage.setItem("Fixi_report_appliance", s.appliance || "");
+    sessionStorage.setItem("Fixi_report_brand", s.brand || "");
+    sessionStorage.setItem("Fixi_report_problem", s.problem || "");
+
+    sessionStartRef.current = s.iniziata || Date.now();
+    sessioneTokenRef.current = s.token || null;
+    messagesRef.current = s.messages;
+    setMessages(s.messages);
+
+    if (s.report) {
+      // Il referto c'era già: non serve riaccendere la camera
+      setReport(s.report);
+      setPhase("report");
+      return;
+    }
+    await startCamera();
+    setPhase("session");
+  };
+
+  const scartaSessione = () => {
+    setSessioneRecuperabile(null);
+    dimenticaSessione();
+  };
+
   const tornaAllaHome = () => {
     if (!refertoSalvato && !emailInviata) {
       const esciComunque = window.confirm(
@@ -317,6 +357,30 @@ useEffect(() => {
     setPagamentoVerificato(true);
   }
 }, []);
+
+// C'è una diagnosi lasciata a metà da riprendere?
+useEffect(() => {
+  // Non proporla se stiamo tornando da Stripe: quello è un pagamento nuovo,
+  // la diagnosi vecchia non c'entra e la proposta confonderebbe.
+  if (new URLSearchParams(window.location.search).get("pagamento")) return;
+  setSessioneRecuperabile(leggiSessioneSalvata());
+}, []);
+
+// Salva a ogni messaggio. Costa niente e vale una diagnosi intera.
+useEffect(() => {
+  if (phase !== "session" && phase !== "report") return;
+  if (!messages.length) return;
+  salvaSessione({
+    iniziata: sessionStartRef.current || Date.now(),
+    stripeSessionId: stripeSessionRef.current,
+    appliance,
+    brand,
+    problem,
+    messages,
+    report,
+    token: sessioneTokenRef.current,
+  });
+}, [messages, report, phase, appliance, brand, problem]);
 
 // Verifica pagamento al ritorno da Stripe
 useEffect(() => {
@@ -384,23 +448,15 @@ useEffect(() => {
     }
   };
 
-  // Spegne solo il flusso video. Separata da stopCamera perché spegnere la
-  // camera e chiudere la sessione non sono la stessa cosa: chi mette in pausa
-  // la camera, o esce un attimo dall'app, deve ritrovare la sessione viva.
+  // Spegne il flusso video. Prima esisteva anche stopCamera, che spegneva la
+  // camera E annullava il timeout dei 30 minuti: tolto quel timeout, faceva la
+  // stessa identica cosa, e tenere due nomi per un solo gesto confonde.
   const spegniFlusso = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
     setCameraActive(false);
-  };
-
-  const stopCamera = () => {
-    spegniFlusso();
-    if (sessionTimeoutRef.current) {
-      clearTimeout(sessionTimeoutRef.current);
-      sessionTimeoutRef.current = null;
-    }
   };
 
   // Android si riprende la camera quando l'app va in secondo piano. Al ritorno
@@ -687,7 +743,7 @@ setMessages((prev) => prev.filter(m => m.content !== "📷 Sto analizzando quell
 
   useEffect(() => {
     return () => {
-      stopCamera();
+      spegniFlusso();
       stopPeriodicAnalysis();
     };
   }, []);
@@ -736,15 +792,10 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
     // Analisi automatica disabilitata — usa il pulsante "Analizza ora"
     // setTimeout(startPeriodicAnalysis, 30000);
 
-    // Timeout automatico dopo 30 minuti
-    sessionTimeoutRef.current = setTimeout(() => {
-      stopCamera();
-      stopPeriodicAnalysis();
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "⏱️ La sessione è scaduta dopo 30 minuti. Clicca **Genera referto** per ricevere la diagnosi con le informazioni raccolte finora." },
-      ]);
-    }, 30 * 60 * 1000);
+    // Il timeout di 30 minuti che stava qui è stato tolto. Serviva a limitare i
+    // costi, ma il costo dipende dai messaggi, non dai minuti: a quello pensa
+    // già il tetto di 80 richieste lato server. In compenso troncava le
+    // diagnosi lunghe, che sono proprio quelle difficili.
   };
 
   // ── Richiesta tecnico dal referto ───────────────────────────────
@@ -1079,6 +1130,30 @@ if (phase === "confermaPagamento") {
             Risparmia fino a €70 sulla visita del tecnico. La nostra AI diagnostica il problema via videochiamata.
           </p>
 
+          {/* Un riquadro e non una finestrella di sistema: aprire l'app e
+              trovarsi subito un "OK / Annulla" è sgradevole, e chi sbaglia
+              tasto perde la diagnosi che stiamo cercando di salvargli. */}
+          {sessioneRecuperabile && (
+            <div className={styles.ripresaBox}>
+              <p className={styles.ripresaTitolo}>Hai una diagnosi lasciata a metà</p>
+              <p className={styles.ripresaTesto}>
+                {[sessioneRecuperabile.brand, sessioneRecuperabile.appliance].filter(Boolean).join(" ") ||
+                  "Diagnosi in corso"}
+                {sessioneRecuperabile.problem ? ` — "${sessioneRecuperabile.problem}"` : ""}
+                <br />
+                Puoi riprenderla da dove eri, senza pagare di nuovo.
+              </p>
+              <div className={styles.ripresaAzioni}>
+                <button className={styles.ripresaSi} onClick={riprendiSessione}>
+                  Riprendi la diagnosi
+                </button>
+                <button className={styles.ripresaNo} onClick={scartaSessione}>
+                  Ricomincia
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className={styles.formGroup}>
             <label>Che elettrodomestico?</label>
             <div className={styles.applianceGrid}>
@@ -1228,7 +1303,9 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
                 setRefertoSalvato(false); // il referto nuovo non è ancora al sicuro
                 setTecEsito(null);
                 sessioneTokenRef.current = null;
-                stopCamera();
+                spegniFlusso();
+                // La diagnosi vecchia è finita: non va più riproposta al rientro
+                dimenticaSessione();
                 // Una diagnosi = un pagamento: la nuova sessione richiede un nuovo checkout
                 sessionStorage.removeItem("Fixi_stripe_session");
                 stripeSessionRef.current = null;
@@ -1441,8 +1518,6 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
           <button
             className={styles.endBtn}
             onClick={() => {
-              // spegniFlusso e non stopCamera: mettere in pausa la camera non
-              // deve annullare il timeout dei 30 minuti della sessione.
               if (cameraActive) spegniFlusso();
               else startCamera();
             }}

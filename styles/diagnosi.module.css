@@ -462,6 +462,42 @@
 }
 .restartBtn:hover { background: #e8e8e6; }
 
+/* Proposta di riprendere una diagnosi interrotta */
+.ripresaBox {
+  background: #E8F5F0;
+  border: 1px solid #C5E5DA;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+.ripresaTitolo {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0F6E56;
+}
+.ripresaTesto {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4a5a55;
+}
+.ripresaAzioni { display: flex; gap: 8px; }
+.ripresaSi, .ripresaNo {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ripresaSi { background: #1D9E75; color: white; border: none; }
+.ripresaSi:hover { background: #0F6E56; }
+.ripresaNo { background: white; color: #55655f; border: 1px solid #C5E5DA; }
+.ripresaNo:hover { background: #f5faf8; }
+
 /* Riga invio email nel referto */
 .emailRow {
   display: flex;

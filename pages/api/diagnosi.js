@@ -14,9 +14,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // Vercel: dai tempo alle diagnosi complesse (Opus 4.8 con ragionamento + visione)
 export const config = { maxDuration: 60 };
 
-// Finestra di validità di un pagamento: la sessione client dura 30 min,
-// lasciamo margine per ricaricamenti pagina e generazione referto.
-const FINESTRA_PAGAMENTO_MS = 60 * 60 * 1000;
+// Finestra di validità di un pagamento. Portata da 1 a 2 ore perché adesso una
+// diagnosi interrotta si può riprendere (DURATA_SESSIONE_MS in pages/diagnosi.jsx,
+// che va tenuta allineata a questa): chi chiude l'app, risponde al telefono e
+// torna dopo un'ora deve ritrovare la sua diagnosi, non un errore di pagamento.
+// Il costo non lo tiene a bada il tempo ma il numero di messaggi, sotto.
+const FINESTRA_PAGAMENTO_MS = 2 * 60 * 60 * 1000;
 const MAX_RICHIESTE_PER_PAGAMENTO = 80;
 
 /**
