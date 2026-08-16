@@ -25,6 +25,7 @@ public class MainActivity extends BridgeActivity {
         // è registrato a quel momento la pagina non lo vede.
         registerPlugin(SalvaFilePlugin.class);
         registerPlugin(TastiVolumePlugin.class);
+        registerPlugin(VersioneAppPlugin.class);
 
         super.onCreate(savedInstanceState);
 

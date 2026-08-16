@@ -447,7 +447,14 @@ useEffect(() => {
   // È esattamente il comportamento chiesto — un avviso a ogni apertura — senza
   // però ripresentarsi dieci volte nella stessa sessione.
   if (sessionStorage.getItem("Fixi_avviso_rimandato")) return;
-  setAvvisoVersione(avvisoAggiornamento());
+  let vivo = true;
+  // Asincrona perché chiedere la versione all'app è una chiamata al plugin
+  avvisoAggiornamento().then((a) => {
+    if (vivo) setAvvisoVersione(a);
+  });
+  return () => {
+    vivo = false;
+  };
 }, []);
 
 // Salva a ogni messaggio. Costa niente e vale una diagnosi intera.
