@@ -2,6 +2,7 @@ package casa.fixi.app;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 
 import androidx.core.graphics.Insets;
@@ -9,6 +10,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.PluginHandle;
 
 public class MainActivity extends BridgeActivity {
 
@@ -22,6 +24,7 @@ public class MainActivity extends BridgeActivity {
         // che Capacitor costruisce il ponte con la pagina web, e quello che non
         // è registrato a quel momento la pagina non lo vede.
         registerPlugin(SalvaFilePlugin.class);
+        registerPlugin(TastiVolumePlugin.class);
 
         super.onCreate(savedInstanceState);
 
@@ -60,5 +63,45 @@ public class MainActivity extends BridgeActivity {
         // Se la finestra è già disegnata, chiediamo di riapplicare subito le
         // misure invece di aspettare il prossimo cambio di configurazione.
         ViewCompat.requestApplyInsets(contenuto);
+    }
+
+    private TastiVolumePlugin tastiVolume() {
+        if (getBridge() == null) return null;
+        PluginHandle h = getBridge().getPlugin("TastiVolume");
+        return h == null ? null : (TastiVolumePlugin) h.getInstance();
+    }
+
+    private static boolean eVolume(int keyCode) {
+        return keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN;
+    }
+
+    // Durante la videodiagnosi i tasti del volume scattano la foto da
+    // analizzare, come sulla fotocamera del telefono: con il telefono infilato
+    // dietro un forno il pulsante a schermo non si raggiunge.
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (eVolume(keyCode)) {
+            TastiVolumePlugin p = tastiVolume();
+            if (p != null && p.staAscoltando()) {
+                // Analizza solo la PRIMA pressione: tenendo premuto, Android
+                // manda una raffica di ripetizioni. Le ripetizioni però vanno
+                // consumate lo stesso (return true fuori dall'if), altrimenti
+                // finiscono al sistema e il volume cambia comunque.
+                if (event.getRepeatCount() == 0) p.notificaPressione();
+                return true;
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    // Va consumato anche il rilascio: se passa al sistema, il volume cambia
+    // lo stesso e compare la sua barretta, vanificando l'intercettazione.
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (eVolume(keyCode)) {
+            TastiVolumePlugin p = tastiVolume();
+            if (p != null && p.staAscoltando()) return true;
+        }
+        return super.onKeyUp(keyCode, event);
     }
 }
