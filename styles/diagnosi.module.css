@@ -462,27 +462,63 @@
 }
 .restartBtn:hover { background: #e8e8e6; }
 
-/* Avviso: l'app installata e' piu' vecchia del sito */
-.aggiornaBox {
-  background: #FFF6E5;
-  border: 1px solid #F0DCB4;
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
+/* Messaggio all'apertura: l'app installata e' piu' vecchia del sito */
+.modaleSfondo {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(20, 28, 25, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
 }
-.aggiornaTesto {
+.modale {
+  background: #FFFFFF;
+  border-radius: 18px;
+  padding: 28px 24px 20px;
+  max-width: 340px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+}
+.modaleIcona { font-size: 34px; line-height: 1; margin-bottom: 10px; }
+.modaleTitolo {
   margin: 0 0 8px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: #6B5426;
+  font-size: 19px;
+  font-weight: 700;
+  color: #1C1C1A;
 }
-.aggiornaLink {
-  display: inline-block;
-  font-size: 13px;
+.modaleTesto {
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #55655f;
+}
+.modaleAzione {
+  display: block;
+  background: #1D9E75;
+  color: white;
+  text-decoration: none;
+  padding: 13px;
+  border-radius: 10px;
+  font-size: 15px;
   font-weight: 600;
-  color: #0F6E56;
-  text-decoration: underline;
 }
+.modaleAzione:hover { background: #0F6E56; }
+.modaleDopo {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 11px;
+  background: none;
+  border: none;
+  color: #8a9691;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.modaleDopo:hover { color: #55655f; }
 
 /* Proposta di riprendere una diagnosi interrotta */
 .ripresaBox {

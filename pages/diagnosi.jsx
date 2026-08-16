@@ -382,6 +382,13 @@ export default function Diagnosi() {
     };
   }, [phase]);
 
+  const rimandaAvviso = () => {
+    setAvvisoVersione(null);
+    try {
+      sessionStorage.setItem("Fixi_avviso_rimandato", "1");
+    } catch {}
+  };
+
   const scartaSessione = () => {
     setSessioneRecuperabile(null);
     dimenticaSessione();
@@ -435,6 +442,11 @@ useEffect(() => {
 // render: window.Capacitor non esiste sul server, e i due risultati diversi
 // romperebbero l'idratazione della pagina.
 useEffect(() => {
+  // "Più tardi" vale per questa apertura dell'app, non per sempre: sessionStorage
+  // muore con la WebView, quindi al lancio successivo il messaggio ritorna.
+  // È esattamente il comportamento chiesto — un avviso a ogni apertura — senza
+  // però ripresentarsi dieci volte nella stessa sessione.
+  if (sessionStorage.getItem("Fixi_avviso_rimandato")) return;
   setAvvisoVersione(avvisoAggiornamento());
 }, []);
 
@@ -1195,26 +1207,38 @@ if (phase === "confermaPagamento") {
   if (phase === "setup") {
     return (
       <div className={styles.container}>
+        {/* Messaggio all'apertura dell'app, non una striscia fra i contenuti:
+            deve fermare chi sta per usare una funzione che non ha ancora.
+            Si chiude però con "Più tardi": bloccare l'app di chi ha già pagato
+            e vuole solo la sua diagnosi sarebbe peggio del problema. */}
+        {avvisoVersione && (
+          <div className={styles.modaleSfondo} role="dialog" aria-modal="true">
+            <div className={styles.modale}>
+              <div className={styles.modaleIcona}>⬆️</div>
+              <h2 className={styles.modaleTitolo}>Aggiorna Fixi</h2>
+              <p className={styles.modaleTesto}>{avvisoVersione}</p>
+              <a
+                className={styles.modaleAzione}
+                href={LINK_PLAY_STORE}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => rimandaAvviso()}
+              >
+                Apri il Play Store
+              </a>
+              <button className={styles.modaleDopo} onClick={rimandaAvviso}>
+                Più tardi
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className={styles.setupCard}>
           <div className={styles.logo}>Fixi</div>
           <h1>Diagnosi elettrodomestico</h1>
           <p className={styles.subtitle}>
             Risparmia fino a €70 sulla visita del tecnico. La nostra AI diagnostica il problema via videochiamata.
           </p>
-
-          {avvisoVersione && (
-            <div className={styles.aggiornaBox}>
-              <p className={styles.aggiornaTesto}>⬆️ {avvisoVersione}</p>
-              <a
-                className={styles.aggiornaLink}
-                href={LINK_PLAY_STORE}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Apri il Play Store
-              </a>
-            </div>
-          )}
 
           {/* Un riquadro e non una finestrella di sistema: aprire l'app e
               trovarsi subito un "OK / Annulla" è sgradevole, e chi sbaglia
