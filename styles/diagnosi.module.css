@@ -462,6 +462,28 @@
 }
 .restartBtn:hover { background: #e8e8e6; }
 
+/* Avviso: l'app installata e' piu' vecchia del sito */
+.aggiornaBox {
+  background: #FFF6E5;
+  border: 1px solid #F0DCB4;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.aggiornaTesto {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #6B5426;
+}
+.aggiornaLink {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F6E56;
+  text-decoration: underline;
+}
+
 /* Proposta di riprendere una diagnosi interrotta */
 .ripresaBox {
   background: #E8F5F0;

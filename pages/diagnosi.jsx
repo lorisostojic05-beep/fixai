@@ -3,6 +3,7 @@ import styles from "../styles/diagnosi.module.css";
 import { loadStripe } from "@stripe/stripe-js";
 import { refertoPDF } from "../lib/generaPDF";
 import { salvaSessione, leggiSessioneSalvata, dimenticaSessione } from "../lib/sessione-salvata";
+import { avvisoAggiornamento, LINK_PLAY_STORE } from "../lib/versione-app";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
@@ -120,6 +121,7 @@ export default function Diagnosi() {
   const [tecLoading, setTecLoading] = useState(false);
   const [tecEsito, setTecEsito] = useState(null); // { tecniciContattati } dopo l'invio
   const [sessioneRecuperabile, setSessioneRecuperabile] = useState(null); // diagnosi lasciata a metà
+  const [avvisoVersione, setAvvisoVersione] = useState(null); // app più vecchia del sito
   const sessionStartRef = useRef(null);
   const sessioneTokenRef = useRef(null); // token della riga salvata col referto: il voto aggiorna quella
   const [voceAttiva, setVoceAttiva] = useState(true);
@@ -209,13 +211,22 @@ export default function Diagnosi() {
         setRefertoSalvato(true);
         alert(`✅ Salvato nei Download del telefono come ${nomeFile}`);
       } catch (e) {
-        // Android troppo vecchio per MediaStore, o scrittura negata: il menù
-        // di condivisione funziona ovunque, quindi si ripiega lì invece di
-        // lasciare l'utente con un pulsante che non fa niente. Va però detto
+        // Si ripiega sulla condivisione, che funziona ovunque — ma dicendolo
         // prima: vedersi comparire la condivisione dopo aver premuto "Scarica"
         // è la stessa confusione che ci ha segnalato un tester.
+        //
+        // E il motivo va detto giusto. Due cause diverse, che prima
+        // confondevo in un unico messaggio che dava la colpa al telefono:
+        //  - il plugin risponde NON_SUPPORTATO -> Android sotto il 10;
+        //  - il plugin non risponde affatto -> app installata più vecchia
+        //    del sito, e allora la soluzione è aggiornare dal Play Store.
         console.warn("Download diretto non riuscito, ripiego sulla condivisione:", e);
-        alert("Questo telefono non permette il salvataggio diretto nei Download. Apro la condivisione: scegli «Salva su file».");
+        const androidVecchio = e?.code === "NON_SUPPORTATO";
+        alert(
+          androidVecchio
+            ? "Questo telefono ha una versione di Android che non permette il salvataggio diretto nei Download. Apro la condivisione: scegli «Salva su file»."
+            : "Per salvare direttamente nei Download serve l'ultima versione di Fixi: aggiornala dal Play Store. Intanto apro la condivisione: scegli «Salva su file»."
+        );
         await condividiReferto();
       }
       return;
@@ -418,6 +429,13 @@ useEffect(() => {
   // la diagnosi vecchia non c'entra e la proposta confonderebbe.
   if (new URLSearchParams(window.location.search).get("pagamento")) return;
   setSessioneRecuperabile(leggiSessioneSalvata());
+}, []);
+
+// L'app installata è più vecchia del sito? Va calcolato qui e non durante il
+// render: window.Capacitor non esiste sul server, e i due risultati diversi
+// romperebbero l'idratazione della pagina.
+useEffect(() => {
+  setAvvisoVersione(avvisoAggiornamento());
 }, []);
 
 // Salva a ogni messaggio. Costa niente e vale una diagnosi intera.
@@ -1183,6 +1201,20 @@ if (phase === "confermaPagamento") {
           <p className={styles.subtitle}>
             Risparmia fino a €70 sulla visita del tecnico. La nostra AI diagnostica il problema via videochiamata.
           </p>
+
+          {avvisoVersione && (
+            <div className={styles.aggiornaBox}>
+              <p className={styles.aggiornaTesto}>⬆️ {avvisoVersione}</p>
+              <a
+                className={styles.aggiornaLink}
+                href={LINK_PLAY_STORE}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Apri il Play Store
+              </a>
+            </div>
+          )}
 
           {/* Un riquadro e non una finestrella di sistema: aprire l'app e
               trovarsi subito un "OK / Annulla" è sgradevole, e chi sbaglia
