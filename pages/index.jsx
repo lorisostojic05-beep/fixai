@@ -1095,6 +1095,9 @@ export default function Home() {
         <div>Diagnosi elettrodomestici via AI · fixi.casa</div>
         <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
           <a href="/privacy" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>Privacy</a>
+          {/* Anche qui e non solo dentro /diagnosi: l'app si apre su questa
+              pagina, ed e' la prima che guarda chi deve segnalare un problema. */}
+          <a href="/stato" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>Stato tecnico</a>
           <span>© 2026 Fixi</span>
         </div>
       </footer>
