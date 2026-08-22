@@ -1358,6 +1358,11 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
 
           <p className={styles.disclaimer}>
             La camera viene usata solo durante la sessione. Nessun video viene salvato.
+            {" "}
+            {/* Unico modo per aprire la diagnostica dentro l'app, che non ha
+                barra degli indirizzi. Volutamente poco appariscente: serve a
+                chi segnala un problema, non all'utente normale. */}
+            <a href="/stato" className={styles.linkStato}>Stato tecnico</a>
           </p>
         </div>
       </div>

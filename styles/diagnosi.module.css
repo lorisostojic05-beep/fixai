@@ -462,6 +462,10 @@
 }
 .restartBtn:hover { background: #e8e8e6; }
 
+/* Accesso discreto alla pagina di diagnostica */
+.linkStato { color: #b3b0a8; text-decoration: underline; }
+.linkStato:hover { color: #8a9691; }
+
 /* Messaggio all'apertura: l'app installata e' piu' vecchia del sito */
 .modaleSfondo {
   position: fixed;
