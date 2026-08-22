@@ -132,13 +132,23 @@ export default function IscrivitiTecnico() {
                   <input style={styles.input} type="tel" value={form.telefono} onChange={(e) => update("telefono", e.target.value)} placeholder="+39 333 1234567" />
                 </div>
 
-                <button
-                  style={styles.btnPrimary}
-                  onClick={() => setStep(2)}
-                  disabled={!form.nome || !form.cognome || !form.email || !form.telefono}
-                >
-                  Continua →
-                </button>
+                {/* Al passo 1 "Indietro" esce dal modulo. Prima non c'era, e chi
+                    cambiava idea qui restava intrappolato: l'unica uscita era la
+                    scritta "Fixi" in alto, che nessuno legge come un pulsante.
+                    Segnalato da un tester. Stessa forma e stessa posizione degli
+                    altri passi, se no non lo si riconosce come la via d'uscita. */}
+                <div style={styles.btnRow}>
+                  <Link href="/" style={{ ...styles.btnGhost, textAlign: "center", textDecoration: "none" }}>
+                    ← Indietro
+                  </Link>
+                  <button
+                    style={styles.btnPrimary}
+                    onClick={() => setStep(2)}
+                    disabled={!form.nome || !form.cognome || !form.email || !form.telefono}
+                  >
+                    Continua →
+                  </button>
+                </div>
               </div>
             )}
 
