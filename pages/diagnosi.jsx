@@ -4,6 +4,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { refertoPDF } from "../lib/generaPDF";
 import { salvaSessione, leggiSessioneSalvata, dimenticaSessione } from "../lib/sessione-salvata";
 import { avvisoAggiornamento, pluginDisponibile, LINK_PLAY_STORE } from "../lib/versione-app";
+import { registra } from "../lib/registro";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
@@ -196,9 +197,14 @@ export default function Diagnosi() {
   // perché da Android 10 le app non scrivono più nelle cartelle pubbliche.
   // Ci pensa SalvaFilePlugin, scritto apposta, che passa da MediaStore.
   const scaricaReferto = async () => {
+    registra("Scarica: premuto");
     const pdf = preparaPDF();
-    if (!pdf) return;
+    if (!pdf) {
+      registra("Scarica: PDF non generato, mi fermo");
+      return;
+    }
     const { blob, nomeFile } = pdf;
+    registra("Scarica: PDF pronto", `${nomeFile} ${blob?.size} byte, nell'app: ${dentroApp()}`);
 
     if (dentroApp()) {
       try {
@@ -209,8 +215,10 @@ export default function Diagnosi() {
           tipo: "application/pdf",
         });
         setRefertoSalvato(true);
+        registra("Scarica: riuscito");
         alert(`✅ Salvato nei Download del telefono come ${nomeFile}`);
       } catch (e) {
+        registra("Scarica: fallito", e);
         // Si ripiega sulla condivisione, che funziona ovunque — ma dicendolo
         // prima: vedersi comparire la condivisione dopo aver premuto "Scarica"
         // è la stessa confusione che ci ha segnalato un tester.
@@ -1079,10 +1087,12 @@ const pluginSalvaFile = async () => {
 
 // Avvia riconoscimento vocale
 const avviaAscolto = async () => {
+  registra("Microfono: premuto", `nell'app: ${dettaturaNativa()}`);
   if (dettaturaNativa()) {
     try {
       const SR = await pluginVocale();
       const { available } = await SR.available();
+      registra("Microfono: disponibile?", available);
       if (!available) {
         alert("Il riconoscimento vocale non è disponibile su questo telefono. Puoi scrivere il messaggio.");
         return;
@@ -1111,6 +1121,7 @@ const avviaAscolto = async () => {
       }
 
       setAscoltoAttivo(true);
+      registra("Microfono: avvio ascolto", lingua);
       const esito = await SR.start({
         language: lingua,
         maxResults: 1,
@@ -1118,6 +1129,7 @@ const avviaAscolto = async () => {
         popup: false,
       });
       setAscoltoAttivo(false);
+      registra("Microfono: ascolto finito", esito);
       // Il testo arriva quando il riconoscimento finisce: si invia subito,
       // senza passare dalla casella di testo e dalle attese a tempo.
       const testo = (esito?.matches?.[0] || "").trim();
@@ -1132,6 +1144,7 @@ const avviaAscolto = async () => {
       alert("Non ho capito quello che hai detto. Riprova parlando vicino al telefono, oppure scrivi il messaggio nella casella.");
     } catch (err) {
       setAscoltoAttivo(false);
+      registra("Microfono: errore", err);
       console.error("Dettatura nativa non riuscita:", err);
       // Prima qui c'era solo il console.error: per chi usa l'app il pulsante
       // sembrava rotto e non c'era modo di capire perché. Il messaggio tecnico
@@ -1415,10 +1428,22 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
                 tiene il referto per sé, "Condividi" lo manda al tecnico. Prima
                 c'era solo un pulsante che apriva la condivisione, e un tester ha
                 segnalato che lui voleva semplicemente il file. */}
-            <button className={styles.downloadBtn} onClick={scaricaReferto}>
+            <button
+              className={styles.downloadBtn}
+              onClick={() => {
+                registra("Tocco su Scarica");
+                return scaricaReferto();
+              }}
+            >
               📥 Scarica
             </button>
-            <button className={styles.shareBtn} onClick={condividiReferto}>
+            <button
+              className={styles.shareBtn}
+              onClick={() => {
+                registra("Tocco su Condividi");
+                return condividiReferto();
+              }}
+            >
               📤 Condividi
             </button>
           </div>
@@ -1704,7 +1729,12 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
       il riconoscimento si ferma da solo quando finisci di parlare. */}
   <button
     className={`${styles.micBtn} ${ascoltoAttivo ? styles.micAttivo : ""}`}
-    onClick={() => (ascoltoAttivo ? fermaAscolto() : avviaAscolto())}
+    onClick={() => {
+      // Registrato qui e non dentro le funzioni: se il tocco non arriva
+      // nemmeno a questa riga, il problema e' il pulsante, non la dettatura.
+      registra("Tocco sul microfono", `ascoltoAttivo: ${ascoltoAttivo}, loading: ${loading}`);
+      return ascoltoAttivo ? fermaAscolto() : avviaAscolto();
+    }}
     disabled={loading}
     title={ascoltoAttivo ? "Tocca per smettere" : "Tocca e parla"}
   >

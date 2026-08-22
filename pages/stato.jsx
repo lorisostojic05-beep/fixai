@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { leggiRegistro, svuotaRegistro } from "../lib/registro";
 
 // Pagina di diagnostica, da aprire DENTRO l'app quando qualcosa "non va".
 //
@@ -21,9 +22,11 @@ export default function Stato() {
   const [esiti, setEsiti] = useState({});
 
   const [guasto, setGuasto] = useState(null);
+  const [registro, setRegistro] = useState([]);
 
   useEffect(() => {
     try {
+      setRegistro(leggiRegistro());
       raccogli();
     } catch (e) {
       // Se anche la raccolta fallisce, la pagina deve dirlo invece di restare
@@ -198,6 +201,30 @@ export default function Stato() {
             <button style={s.bottone} onClick={provaCatena}>5. Referto + salvataggio, tutto insieme</button>
             <p style={s.esito}>{esiti.catena || "—"}</p>
 
+            {/* Il pezzo piu' utile: cosa e' successo davvero premendo i
+                pulsanti veri, dentro la diagnosi. Le righe le scrive l'app
+                mentre la usi e restano qui anche cambiando schermata. */}
+            <h2 style={s.sezione}>Diario di bordo</h2>
+            <p style={s.sotto}>
+              Cosa è successo premendo i pulsanti veri. Se qui non compare niente dopo
+              aver premuto il microfono o Scarica, vuol dire che il tocco non arriva
+              nemmeno al codice.
+            </p>
+            {registro.length === 0 ? (
+              <p style={s.esito}>Nessuna riga. Usa l'app, poi torna qui.</p>
+            ) : (
+              <pre style={s.diario}>{registro.join("\n")}</pre>
+            )}
+            <button
+              style={s.bottone}
+              onClick={() => {
+                svuotaRegistro();
+                setRegistro([]);
+              }}
+            >
+              Svuota il diario
+            </button>
+
             <h2 style={s.sezione}>Dettagli</h2>
             <p style={s.piccolo}>{info.userAgent}</p>
           </>
@@ -221,5 +248,6 @@ const s = {
   esito: { fontSize: 12, lineHeight: 1.5, color: "#333", background: "#fff", border: "1px solid #E8E4DC", borderRadius: 8, padding: "8px 10px", margin: "6px 0 0", wordBreak: "break-word" },
   avviso: { fontSize: 13, color: "#B3261E", margin: "0 0 8px" },
   piccolo: { fontSize: 11, color: "#8a9691", wordBreak: "break-all", lineHeight: 1.5 },
+  diario: { fontSize: 11, lineHeight: 1.6, background: "#fff", border: "1px solid #E8E4DC", borderRadius: 8, padding: "10px 12px", margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "ui-monospace, monospace" },
   indietro: { display: "inline-block", marginTop: 28, fontSize: 14, color: "#0F6E56" },
 };
