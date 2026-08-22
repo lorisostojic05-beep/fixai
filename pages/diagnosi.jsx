@@ -3,7 +3,7 @@ import styles from "../styles/diagnosi.module.css";
 import { loadStripe } from "@stripe/stripe-js";
 import { refertoPDF } from "../lib/generaPDF";
 import { salvaSessione, leggiSessioneSalvata, dimenticaSessione } from "../lib/sessione-salvata";
-import { avvisoAggiornamento, LINK_PLAY_STORE } from "../lib/versione-app";
+import { avvisoAggiornamento, pluginDisponibile, LINK_PLAY_STORE } from "../lib/versione-app";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
@@ -215,17 +215,24 @@ export default function Diagnosi() {
         // prima: vedersi comparire la condivisione dopo aver premuto "Scarica"
         // è la stessa confusione che ci ha segnalato un tester.
         //
-        // E il motivo va detto giusto. Due cause diverse, che prima
-        // confondevo in un unico messaggio che dava la colpa al telefono:
-        //  - il plugin risponde NON_SUPPORTATO -> Android sotto il 10;
-        //  - il plugin non risponde affatto -> app installata più vecchia
-        //    del sito, e allora la soluzione è aggiornare dal Play Store.
+        // E il motivo va detto giusto, perché le cause sono TRE e prima ne
+        // distinguevo due, mandando tutti gli errori veri nel messaggio
+        // "aggiorna l'app" — che a chi ha già l'ultima versione fa perdere
+        // tempo e a noi nasconde il guasto:
+        //  1. il plugin non c'è proprio      -> app più vecchia del sito;
+        //  2. risponde NON_SUPPORTATO        -> Android sotto il 10;
+        //  3. risponde un errore qualsiasi   -> guasto vero, e va mostrato:
+        //     il tester può fotografarlo e mandarcelo, se no resta nella
+        //     console dove non lo legge nessuno.
         console.warn("Download diretto non riuscito, ripiego sulla condivisione:", e);
+        const senzaPlugin = pluginDisponibile("SalvaFile") === false;
         const androidVecchio = e?.code === "NON_SUPPORTATO";
         alert(
-          androidVecchio
+          senzaPlugin
+            ? "Per salvare direttamente nei Download serve l'ultima versione di Fixi: aggiornala dal Play Store. Intanto apro la condivisione: scegli «Salva su file»."
+            : androidVecchio
             ? "Questo telefono ha una versione di Android che non permette il salvataggio diretto nei Download. Apro la condivisione: scegli «Salva su file»."
-            : "Per salvare direttamente nei Download serve l'ultima versione di Fixi: aggiornala dal Play Store. Intanto apro la condivisione: scegli «Salva su file»."
+            : `Salvataggio nei Download non riuscito. Apro la condivisione: scegli «Salva su file».\n\nSe puoi, manda questo dettaglio a chi ha fatto l'app: ${e?.code || "-"} ${e?.message || e}`
         );
         await condividiReferto();
       }
@@ -1117,7 +1124,12 @@ const avviaAscolto = async () => {
       if (testo) {
         setInputText("");
         await callAI(testo, null);
+        return;
       }
+      // Riconoscimento finito senza capire niente. Prima qui non succedeva
+      // nulla: il pallino rosso tornava microfono e basta, e chi provava
+      // vedeva un pulsante che "non fa niente" per quanto lo premesse.
+      alert("Non ho capito quello che hai detto. Riprova parlando vicino al telefono, oppure scrivi il messaggio nella casella.");
     } catch (err) {
       setAscoltoAttivo(false);
       console.error("Dettatura nativa non riuscita:", err);
