@@ -84,6 +84,53 @@ export default function Stato() {
     }
   };
 
+  // Il pulsante "Scarica" non chiama subito il plugin: prima costruisce il PDF.
+  // Se jsPDF fallisce dentro la WebView, il salvataggio non parte nemmeno — e
+  // l'unico avviso e' un alert(), che qui sospettiamo non venga mostrato.
+  const provaPDF = async () => {
+    segna("pdf", "in corso...");
+    try {
+      const { refertoPDF } = await import("../lib/generaPDF");
+      const finto = {
+        diagnosis: "Prova di generazione del referto.",
+        urgency: "media",
+        diyPossible: true,
+        diyInstructions: ["Primo passo di prova", "Secondo passo di prova"],
+        sparePart: { name: "Pezzo di prova", code: "XX-000", price: "€10" },
+        technicianCost: "€50–80",
+      };
+      const { blob, nomeFile } = refertoPDF(finto, "Lavatrice", "Bosch", "Prova");
+      segna("pdf", `RIUSCITO → ${nomeFile}, ${blob?.size ?? "?"} byte`);
+    } catch (e) {
+      segna("pdf", `FALLITO → ${e?.name || ""} ${e?.message || e}`);
+    }
+  };
+
+  // Ripete la catena completa del pulsante "Scarica": PDF + scrittura nei
+  // Download. Se le due prove separate riescono e questa no, il guasto sta
+  // nel punto in cui si passano i dati da una all'altra.
+  const provaCatena = async () => {
+    segna("catena", "in corso...");
+    try {
+      const { refertoPDF } = await import("../lib/generaPDF");
+      const { blob, nomeFile } = refertoPDF(
+        { diagnosis: "Prova catena completa.", urgency: "bassa", diyPossible: false, sparePart: null, technicianCost: "€50" },
+        "Lavatrice", "Bosch", "Prova"
+      );
+      const base64 = await new Promise((ris, rif) => {
+        const l = new FileReader();
+        l.onerror = () => rif(l.error);
+        l.onload = () => ris(String(l.result).split(",")[1]);
+        l.readAsDataURL(blob);
+      });
+      const { registerPlugin } = await import("@capacitor/core");
+      const r = await registerPlugin("SalvaFile").nelleDownload({ nomeFile, dati: base64, tipo: "application/pdf" });
+      segna("catena", `RIUSCITO → ${r?.uri || "(nessun percorso)"}`);
+    } catch (e) {
+      segna("catena", `FALLITO → ${e?.name || ""} ${e?.code || ""} ${e?.message || e}`);
+    }
+  };
+
   const provaDettatura = async () => {
     segna("voce", "in corso...");
     try {
@@ -144,6 +191,12 @@ export default function Stato() {
 
             <button style={s.bottone} onClick={provaDettatura}>3. Controlla il microfono</button>
             <p style={s.esito}>{esiti.voce || "—"}</p>
+
+            <button style={s.bottone} onClick={provaPDF}>4. Genera il PDF del referto</button>
+            <p style={s.esito}>{esiti.pdf || "—"}</p>
+
+            <button style={s.bottone} onClick={provaCatena}>5. Referto + salvataggio, tutto insieme</button>
+            <p style={s.esito}>{esiti.catena || "—"}</p>
 
             <h2 style={s.sezione}>Dettagli</h2>
             <p style={s.piccolo}>{info.userAgent}</p>
