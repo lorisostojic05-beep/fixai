@@ -1434,6 +1434,21 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
   </>
 )}
 
+          {/* Terza schermata senza uscita segnalata da chi prova l'app (dopo il
+              referto e il modulo tecnico). Qui non serve nessun avviso: non c'è
+              ancora niente da perdere, non si è nemmeno pagato. Stesso aspetto e
+              stessa posizione della via d'uscita del referto, se no non la si
+              riconosce come tale. */}
+          <a
+            href="/"
+            style={{
+              display: "block", textAlign: "center", margin: "18px auto 4px",
+              color: "#8A8A85", fontSize: "14px", textDecoration: "underline",
+            }}
+          >
+            ← Torna alla home
+          </a>
+
           <p className={styles.disclaimer}>
             La camera viene usata solo durante la sessione. Nessun video viene salvato.
             {" "}

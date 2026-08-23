@@ -141,6 +141,15 @@ export default function Recensione() {
             </>
           )}
         </div>
+        <a
+          href="/"
+          style={{
+            display: "block", textAlign: "center", margin: "18px auto 0",
+            color: "#8A8A85", fontSize: "14px", textDecoration: "underline",
+          }}
+        >
+          ← Torna alla home
+        </a>
       </div>
     </>
   );
