@@ -192,6 +192,48 @@ export default function Admin() {
               ))}
             </div>
 
+            {/* Richieste di rimborso. In alto e ben visibili: dietro ognuna
+                c'è qualcuno che aspetta i suoi soldi, e farlo aspettare porta
+                allo storno bancario — che costa €15 di penale e sporca il
+                conto Stripe, molto peggio dei €9,90 in gioco. */}
+            <div style={{ background: "white", borderRadius: "12px", padding: "1.25rem", marginBottom: "1.5rem", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+              <h2 style={{ fontSize: "15px", fontWeight: "600", marginBottom: "1rem" }}>
+                Rimborsi richiesti
+                {dati.rimborsiDaDecidere > 0 && (
+                  <span style={{ marginLeft: "8px", background: "#B3261E", color: "white", borderRadius: "100px", padding: "2px 9px", fontSize: "12px" }}>
+                    {dati.rimborsiDaDecidere} da decidere
+                  </span>
+                )}
+              </h2>
+              {!dati.rimborsi || dati.rimborsi.length === 0 ? (
+                <p style={{ fontSize: "13px", color: "#666" }}>Nessuna richiesta.</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {dati.rimborsi.map((r) => (
+                    <div key={r.id} style={{ border: "1px solid #eee", borderRadius: "10px", padding: "10px 12px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", flexWrap: "wrap" }}>
+                        <strong style={{ fontSize: "13px" }}>{r.email}</strong>
+                        <span style={{ fontSize: "12px", color: r.stato === "richiesto" ? "#B3261E" : "#666" }}>
+                          {r.stato}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "12px", color: "#666", margin: "3px 0 6px" }}>
+                        {[r.brand, r.appliance].filter(Boolean).join(" ")} · {new Date(r.created_at).toLocaleDateString("it-IT")}
+                      </div>
+                      <p style={{ fontSize: "13px", margin: "0 0 6px", whiteSpace: "pre-wrap" }}>{r.motivo}</p>
+                      {r.stripe_session_id && (
+                        <code style={{ fontSize: "11px", color: "#888", wordBreak: "break-all" }}>{r.stripe_session_id}</code>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p style={{ fontSize: "12px", color: "#888", marginTop: "10px", lineHeight: 1.5 }}>
+                Per rimborsare: pannello Stripe → Pagamenti → cerca il codice della sessione → Rimborsa.
+                Poi cambia lo stato della riga in Supabase (<code>rimborsato</code> o <code>rifiutato</code>).
+              </p>
+            </div>
+
             {/* Quanto costa in AI ogni diagnosi */}
             <div style={{ background: "white", borderRadius: "12px", padding: "1.25rem", marginBottom: "1.5rem", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
               <h2 style={{ fontSize: "15px", fontWeight: "600", marginBottom: "1rem" }}>Costo AI per diagnosi</h2>

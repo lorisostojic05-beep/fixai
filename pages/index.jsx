@@ -1087,6 +1087,13 @@ export default function Home() {
         <a href="/diagnosi" className="btn-primary" style={{ fontSize: "16px", padding: "18px 36px" }}>
           Avvia diagnosi →
         </a>
+        {/* La garanzia sta qui, sotto il pulsante, perché è qui che uno decide
+            se fidarsi di un servizio che non conosce — ed è la fiducia
+            l'ostacolo, non i €9,90. */}
+        <p style={{ margin: "18px auto 0", fontSize: "14px", color: "var(--grigio)", maxWidth: "460px", lineHeight: 1.6 }}>
+          <strong style={{ color: "var(--verde)" }}>Soddisfatto o rimborsato.</strong> Se la diagnosi non ti è
+          stata utile ti restituiamo i €9,90, entro 14 giorni e senza discussioni.
+        </p>
       </div>
 
       {/* FOOTER */}

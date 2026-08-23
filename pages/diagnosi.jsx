@@ -124,6 +124,11 @@ export default function Diagnosi() {
   const [tecEsito, setTecEsito] = useState(null); // { tecniciContattati } dopo l'invio
   const [sessioneRecuperabile, setSessioneRecuperabile] = useState(null); // diagnosi lasciata a metà
   const [avvisoVersione, setAvvisoVersione] = useState(null); // app più vecchia del sito
+  const [mostraRimborso, setMostraRimborso] = useState(false);
+  const [rimborsoEmail, setRimborsoEmail] = useState("");
+  const [rimborsoMotivo, setRimborsoMotivo] = useState("");
+  const [rimborsoLoading, setRimborsoLoading] = useState(false);
+  const [rimborsoInviato, setRimborsoInviato] = useState(false);
   const sessionStartRef = useRef(null);
   const sessioneTokenRef = useRef(null); // token della riga salvata col referto: il voto aggiorna quella
   const [voceAttiva, setVoceAttiva] = useState(true);
@@ -963,6 +968,48 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
     // diagnosi lunghe, che sono proprio quelle difficili.
   };
 
+  // ── Richiesta di rimborso dal referto ───────────────────────────
+  // Non rimborsa: registra la richiesta e avvisa Loris, che decide e rimborsa
+  // da Stripe. I controlli veri (14 giorni, un rimborso a persona) stanno sul
+  // server, dove non si possono aggirare dal browser.
+  const richiediRimborso = async () => {
+    const email = (rimborsoEmail || emailUtente || "").trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert("Inserisci l'indirizzo email che hai usato per il pagamento.");
+      return;
+    }
+    if (rimborsoMotivo.trim().length < 10) {
+      alert("Scrivi in due righe cosa non ha funzionato: serve a noi per decidere, e per non ripetere l'errore.");
+      return;
+    }
+    setRimborsoLoading(true);
+    try {
+      const res = await fetch("/api/richiedi-rimborso", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          motivo: rimborsoMotivo,
+          stripeSessionId: stripeSessionRef.current,
+          sessioneToken: sessioneTokenRef.current,
+          appliance: sessionStorage.getItem("Fixi_report_appliance") || appliance,
+          brand: sessionStorage.getItem("Fixi_report_brand") || brand,
+        }),
+      });
+      const dati = await res.json().catch(() => ({}));
+      if (dati.ok) {
+        setRimborsoInviato(true);
+        setMostraRimborso(false);
+      } else {
+        alert(dati.error || "Non sono riuscito a inviare la richiesta. Riprova.");
+      }
+    } catch {
+      alert("⚠️ Problema di rete. Riprova.");
+    } finally {
+      setRimborsoLoading(false);
+    }
+  };
+
   // ── Richiesta tecnico dal referto ───────────────────────────────
   const richiediTecnico = async () => {
     if (!tecForm.nome.trim() || !tecForm.telefono.trim()) {
@@ -1541,6 +1588,10 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
                 setEmailInviata(false);
                 setRefertoSalvato(false); // il referto nuovo non è ancora al sicuro
                 setTecEsito(null);
+                // La diagnosi nuova non eredita la richiesta di rimborso di quella vecchia
+                setMostraRimborso(false);
+                setRimborsoMotivo("");
+                setRimborsoInviato(false);
                 sessioneTokenRef.current = null;
                 spegniFlusso();
                 // La diagnosi vecchia è finita: non va più riproposta al rientro
@@ -1714,6 +1765,79 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
     </>
   )}
 </div>
+
+{/* Garanzia. In tono minore e con un modulo, non con un pulsante "rimborsami"
+    a portata di dito: quello lo premerebbero anche per curiosità. Il motivo è
+    obbligatorio — filtra le richieste pigre e ci dice PERCHÉ non è servita,
+    che è il dato più prezioso che possiamo raccogliere.
+    Volutamente separato dal voto qui sopra: se dare 2 stelle facesse partire
+    un rimborso, i voti smetterebbero di essere sinceri. */}
+{rimborsoInviato ? (
+  <p style={{ margin: "20px 0 0", fontSize: "13px", color: "#0F6E56", textAlign: "center", lineHeight: 1.6 }}>
+    ✅ Richiesta ricevuta. Ti rispondiamo per email entro pochi giorni.
+  </p>
+) : mostraRimborso ? (
+  <div style={{ marginTop: "20px", background: "#FAF8F3", border: "1px solid #E8E4DC", borderRadius: "12px", padding: "14px 16px" }}>
+    <p style={{ margin: "0 0 10px", fontSize: "13px", color: "#55655f", lineHeight: 1.5 }}>
+      Raccontaci cosa non ha funzionato. Se la diagnosi non ti è stata utile ti restituiamo i €9,90.
+    </p>
+    <input
+      type="email"
+      placeholder="Email usata per il pagamento"
+      value={rimborsoEmail}
+      onChange={(e) => setRimborsoEmail(e.target.value)}
+      className={styles.input}
+      style={{ width: "100%", marginBottom: "8px" }}
+    />
+    <textarea
+      placeholder="Perché non ti è servita?"
+      value={rimborsoMotivo}
+      onChange={(e) => setRimborsoMotivo(e.target.value)}
+      rows={3}
+      className={styles.input}
+      style={{ width: "100%", marginBottom: "10px", resize: "vertical" }}
+    />
+    <div style={{ display: "flex", gap: "8px" }}>
+      <button
+        onClick={richiediRimborso}
+        disabled={rimborsoLoading}
+        style={{
+          flex: 1, background: "#1D9E75", color: "white", border: "none",
+          borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 600,
+          fontFamily: "inherit", cursor: "pointer", opacity: rimborsoLoading ? 0.7 : 1,
+        }}
+      >
+        {rimborsoLoading ? "⏳ Invio..." : "Invia la richiesta"}
+      </button>
+      <button
+        onClick={() => setMostraRimborso(false)}
+        style={{
+          background: "none", border: "1px solid #E8E4DC", borderRadius: "8px",
+          padding: "11px 14px", fontSize: "14px", color: "#8A8A85",
+          fontFamily: "inherit", cursor: "pointer",
+        }}
+      >
+        Annulla
+      </button>
+    </div>
+  </div>
+) : (
+  <button
+    onClick={() => {
+      // Se si è già fatto mandare il referto, l'indirizzo ce l'abbiamo:
+      // rifarglielo scrivere è un attrito inutile proprio a chi è scontento.
+      if (!rimborsoEmail && emailUtente) setRimborsoEmail(emailUtente);
+      setMostraRimborso(true);
+    }}
+    style={{
+      display: "block", margin: "20px auto 0", background: "none", border: "none",
+      color: "#8A8A85", fontSize: "13px", textDecoration: "underline",
+      cursor: "pointer", padding: "6px",
+    }}
+  >
+    La diagnosi non ti è stata utile? Chiedi il rimborso
+  </button>
+)}
 
 {/* Via d'uscita, segnalata da un tester: da questa pagina si poteva solo
     ripartire da capo. Sta in fondo e in tono minore di proposito, così la

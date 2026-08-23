@@ -138,7 +138,20 @@ export default async function handler(req, res) {
       .sort((a, b) => b[1] - a[1])
       .map(([appliance, count]) => ({ appliance, count }));
 
+    // Richieste di rimborso. Le più recenti in cima, e quelle ancora da
+    // decidere vanno viste subito: dietro ognuna c'è qualcuno che aspetta
+    // i suoi soldi, e farlo aspettare porta a uno storno bancario — che
+    // costa più dei €9,90 e sporca il conto Stripe.
+    const { data: rimborsiRaw } = await supabase
+      .from("rimborsi")
+      .select("id, created_at, email, motivo, stripe_session_id, appliance, brand, stato")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    const rimborsi = rimborsiRaw || [];
+
     return res.status(200).json({
+      rimborsi,
+      rimborsiDaDecidere: rimborsi.filter((r) => r.stato === "richiesto").length,
       totale,
       votate: conFeedback.length,
       votoMedio,
