@@ -5,6 +5,7 @@ import { refertoPDF } from "../lib/generaPDF";
 import { salvaSessione, leggiSessioneSalvata, dimenticaSessione } from "../lib/sessione-salvata";
 import { avvisoAggiornamento, pluginDisponibile, LINK_PLAY_STORE } from "../lib/versione-app";
 import { registra } from "../lib/registro";
+import { prendiPlugin, prendiPluginSubito } from "../lib/plugin-nativo";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
@@ -415,8 +416,9 @@ export default function Diagnosi() {
 
     (async () => {
       try {
-        const { registerPlugin } = await import("@capacitor/core");
-        plugin = registerPlugin("TastiVolume");
+        // Dal ponte nativo, non dalla rete: vedi lib/plugin-nativo.js
+        plugin = prendiPluginSubito("TastiVolume");
+        if (!plugin) return; // versione dell'app senza questo plugin
         const h = await plugin.addListener("premuto", () => analizzaRef.current(false));
         if (!vivo) {
           h.remove();
@@ -1115,15 +1117,12 @@ const pluginVocale = async () =>
 
 // Plugin scritto da noi (android/app/src/main/java/casa/fixi/app/SalvaFilePlugin.java):
 // scrive un file nella cartella Download vera del telefono passando da MediaStore,
-// cosa che nessun plugin ufficiale sa fare. Si registra una volta sola.
-let salvaFileRegistrato = null;
-const pluginSalvaFile = async () => {
-  if (!salvaFileRegistrato) {
-    const { registerPlugin } = await import("@capacitor/core");
-    salvaFileRegistrato = registerPlugin("SalvaFile");
-  }
-  return salvaFileRegistrato;
-};
+// cosa che nessun plugin ufficiale sa fare.
+//
+// Si prende dal ponte nativo, che e' gia' in memoria: prima passava da
+// import("@capacitor/core"), che scarica un file dal server, e il 23/08/2026
+// quel file non e' mai arrivato — pulsante Scarica muto per sempre.
+const pluginSalvaFile = async () => prendiPlugin("SalvaFile");
 
 // Avvia riconoscimento vocale
 const avviaAscolto = async () => {

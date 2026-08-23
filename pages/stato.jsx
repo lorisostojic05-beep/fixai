@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { leggiRegistro, svuotaRegistro } from "../lib/registro";
+import { prendiPluginSubito } from "../lib/plugin-nativo";
 
 // Pagina di diagnostica, da aprire DENTRO l'app quando qualcosa "non va".
 //
@@ -52,8 +53,7 @@ export default function Stato() {
     setInfo(base);
 
     if (base.plugin.VersioneApp) {
-      import("@capacitor/core")
-        .then(({ registerPlugin }) => registerPlugin("VersioneApp").leggi())
+      Promise.resolve(prendiPluginSubito("VersioneApp")?.leggi())
         .then((v) => setInfo((p) => ({ ...p, versione: `${v?.nome} (codice ${v?.codice})` })))
         .catch((e) => setInfo((p) => ({ ...p, versione: `errore: ${e?.message || e}` })));
     }
@@ -74,9 +74,8 @@ export default function Stato() {
   const provaDownload = async () => {
     segna("download", "in corso...");
     try {
-      const { registerPlugin } = await import("@capacitor/core");
       const dati = btoa("Prova Fixi");
-      const r = await registerPlugin("SalvaFile").nelleDownload({
+      const r = await prendiPluginSubito("SalvaFile").nelleDownload({
         nomeFile: `Fixi_prova_${Date.now()}.txt`,
         dati,
         tipo: "text/plain",
@@ -126,8 +125,7 @@ export default function Stato() {
         l.onload = () => ris(String(l.result).split(",")[1]);
         l.readAsDataURL(blob);
       });
-      const { registerPlugin } = await import("@capacitor/core");
-      const r = await registerPlugin("SalvaFile").nelleDownload({ nomeFile, dati: base64, tipo: "application/pdf" });
+      const r = await prendiPluginSubito("SalvaFile").nelleDownload({ nomeFile, dati: base64, tipo: "application/pdf" });
       segna("catena", `RIUSCITO → ${r?.uri || "(nessun percorso)"}`);
     } catch (e) {
       segna("catena", `FALLITO → ${e?.name || ""} ${e?.code || ""} ${e?.message || e}`);
