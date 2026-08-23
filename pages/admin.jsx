@@ -7,6 +7,76 @@ export default function Admin() {
   const [dati, setDati] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Conversazione aperta in lettura. Si carica su richiesta e non insieme al
+  // resto: le chat sono lunghe e spedirle tutte a ogni caricamento sarebbe
+  // spreco. `chatToken` serve anche a sapere quale pulsante sta caricando.
+  const [chat, setChat] = useState(null);
+  const [chatToken, setChatToken] = useState(null);
+  const [chatErrore, setChatErrore] = useState(null);
+
+  const apriChat = async (token) => {
+    if (chatToken === token) {
+      setChatToken(null);
+      setChat(null);
+      return;
+    }
+    setChatToken(token);
+    setChat(null);
+    setChatErrore(null);
+    try {
+      const t = sessionStorage.getItem("Fixi_admin_token");
+      const res = await fetch(`/api/admin-conversazione?token=${encodeURIComponent(token)}`, {
+        headers: { Authorization: `Bearer ${t}` },
+      });
+      const d = await res.json();
+      if (d.error) setChatErrore(d.error);
+      else setChat(d);
+    } catch (e) {
+      setChatErrore("Problema di rete.");
+    }
+  };
+
+  const RiquadroChat = () => {
+    if (chatErrore) return <p style={{ fontSize: "12px", color: "#B3261E", margin: "8px 0 0" }}>{chatErrore}</p>;
+    if (!chat) return <p style={{ fontSize: "12px", color: "#888", margin: "8px 0 0" }}>Carico la conversazione…</p>;
+    return (
+      <div style={{ marginTop: "10px", background: "#FAF8F3", border: "1px solid #E8E4DC", borderRadius: "10px", padding: "10px 12px", maxHeight: "420px", overflowY: "auto" }}>
+        <div style={{ fontSize: "11px", color: "#888", marginBottom: "8px" }}>
+          {[chat.brand, chat.appliance].filter(Boolean).join(" ")} · &quot;{chat.problem}&quot;
+          {chat.durataMin != null && ` · ${chat.durataMin} min`}
+          {chat.voto != null && ` · voto ${chat.voto}/5`}
+        </div>
+        {chat.messaggi.length === 0 && (
+          <p style={{ fontSize: "12px", color: "#888" }}>Nessun messaggio salvato per questa sessione.</p>
+        )}
+        {chat.messaggi.map((m, i) => (
+          <div
+            key={i}
+            style={{
+              marginBottom: "8px", padding: "7px 10px", borderRadius: "8px", fontSize: "12px", lineHeight: 1.55,
+              whiteSpace: "pre-wrap", wordBreak: "break-word",
+              background: m.chi === "utente" ? "#E8F5F0" : "white",
+              border: "1px solid " + (m.chi === "utente" ? "#C5E5DA" : "#E8E4DC"),
+              marginLeft: m.chi === "utente" ? "28px" : 0,
+              marginRight: m.chi === "utente" ? 0 : "28px",
+            }}
+          >
+            <strong style={{ fontSize: "10px", textTransform: "uppercase", color: m.chi === "utente" ? "#0F6E56" : "#888", display: "block", marginBottom: "2px" }}>
+              {m.chi === "utente" ? "Utente" : "Fixi"}
+            </strong>
+            {m.testo}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const bottoneChat = {
+    background: "none", border: "1px solid #C5E5DA", borderRadius: "8px",
+    padding: "6px 10px", fontSize: "12px", color: "#0F6E56",
+    fontFamily: "inherit", cursor: "pointer", marginTop: "8px",
+  };
+
   // Riprende la sessione se il token è ancora valido
   useEffect(() => {
     const token = sessionStorage.getItem("Fixi_admin_token");
@@ -258,6 +328,17 @@ export default function Admin() {
                       {r.stripe_session_id && (
                         <code style={{ fontSize: "11px", color: "#888", wordBreak: "break-all" }}>{r.stripe_session_id}</code>
                       )}
+
+                      {/* La prova che conta davvero: cosa Fixi ha risposto per
+                          davvero. Le altre sono indizi, questa è il merito. */}
+                      {r.sessione_token && (
+                        <div>
+                          <button style={bottoneChat} onClick={() => apriChat(r.sessione_token)}>
+                            {chatToken === r.sessione_token ? "Chiudi la conversazione" : "💬 Leggi la conversazione"}
+                          </button>
+                          {chatToken === r.sessione_token && <RiquadroChat />}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -390,8 +471,8 @@ export default function Admin() {
             <div style={{ background: "white", borderRadius: "12px", padding: "1.25rem", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
               <h2 style={{ fontSize: "15px", fontWeight: "600", marginBottom: "1rem" }}>Sessioni recenti</h2>
               {dati.sessioni.map((s, i) => (
-                <div key={i} style={{
-                  padding: "12px 0", borderBottom: "1px solid #f0f0ee",
+                <div key={i} style={{ padding: "12px 0", borderBottom: "1px solid #f0f0ee" }}>
+                <div style={{
                   display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: "8px", fontSize: "13px"
                 }}>
                   <div>
@@ -427,6 +508,18 @@ export default function Admin() {
                       {new Date(s.created_at).toLocaleDateString("it-IT")}
                     </p>
                   </div>
+                </div>
+                {/* Anche qui e non solo sui rimborsi: leggere le conversazioni
+                    riuscite è il modo migliore per capire dove l'AI annaspa,
+                    prima che qualcuno se ne lamenti. */}
+                {s.token && (
+                  <>
+                    <button style={{ ...bottoneChat, marginTop: "6px" }} onClick={() => apriChat(s.token)}>
+                      {chatToken === s.token ? "Chiudi la conversazione" : "💬 Leggi la conversazione"}
+                    </button>
+                    {chatToken === s.token && <RiquadroChat />}
+                  </>
+                )}
                 </div>
               ))}
             </div>
