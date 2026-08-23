@@ -181,6 +181,27 @@ export default function Diagnosi() {
     }
   };
 
+  // Un'attesa verso il codice nativo non deve poter durare per sempre: se il
+  // ponte con Android non risponde, senza questo il pulsante resta muto e
+  // l'utente non ha modo di sapere che sta aspettando qualcosa che non arriva.
+  const conScadenza = (promessa, ms, cosa) =>
+    new Promise((risolvi, rifiuta) => {
+      const timer = setTimeout(
+        () => rifiuta(Object.assign(new Error(`Nessuna risposta entro ${ms / 1000}s: ${cosa}`), { code: "SCADUTO" })),
+        ms
+      );
+      Promise.resolve(promessa).then(
+        (v) => {
+          clearTimeout(timer);
+          risolvi(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          rifiuta(e);
+        }
+      );
+    });
+
   // readAsDataURL restituisce "data:application/pdf;base64,XXXX":
   // ai plugin serve solo quello che viene dopo la virgola.
   const blobInBase64 = (blob) =>
@@ -208,12 +229,20 @@ export default function Diagnosi() {
 
     if (dentroApp()) {
       try {
-        const SalvaFile = await pluginSalvaFile();
-        await SalvaFile.nelleDownload({
-          nomeFile,
-          dati: await blobInBase64(blob),
-          tipo: "application/pdf",
-        });
+        // Ogni passo è registrato a parte: il diario diceva "PDF pronto" e poi
+        // più niente, e con tre attese di fila non si capiva quale non tornasse.
+        registra("Scarica: chiedo il plugin");
+        const SalvaFile = await conScadenza(pluginSalvaFile(), 15000, "caricamento del plugin");
+        registra("Scarica: plugin ottenuto");
+
+        const dati = await conScadenza(blobInBase64(blob), 15000, "conversione del PDF");
+        registra("Scarica: PDF convertito", `${dati?.length} caratteri`);
+
+        await conScadenza(
+          SalvaFile.nelleDownload({ nomeFile, dati, tipo: "application/pdf" }),
+          20000,
+          "scrittura nei Download"
+        );
         setRefertoSalvato(true);
         registra("Scarica: riuscito");
         alert(`✅ Salvato nei Download del telefono come ${nomeFile}`);
@@ -270,18 +299,29 @@ export default function Diagnosi() {
 
     if (dentroApp()) {
       try {
-        const [{ Filesystem, Directory }, { Share }] = await Promise.all([
-          import("@capacitor/filesystem"),
-          import("@capacitor/share"),
-        ]);
-        const scritto = await Filesystem.writeFile({
-          path: nomeFile,
-          data: await blobInBase64(blob),
-          directory: Directory.Cache, // temporaneo: il file lo tiene l'app che lo riceve
-        });
+        registra("Condividi: carico i plugin");
+        const [{ Filesystem, Directory }, { Share }] = await conScadenza(
+          Promise.all([import("@capacitor/filesystem"), import("@capacitor/share")]),
+          15000,
+          "caricamento dei plugin di condivisione"
+        );
+        const scritto = await conScadenza(
+          Filesystem.writeFile({
+            path: nomeFile,
+            data: await blobInBase64(blob),
+            directory: Directory.Cache, // temporaneo: il file lo tiene l'app che lo riceve
+          }),
+          15000,
+          "scrittura del file temporaneo"
+        );
+        registra("Condividi: file scritto", scritto?.uri);
+        // Share.share NON ha scadenza: resta in attesa finché l'utente sceglie
+        // un'app, e potrebbe metterci quanto vuole.
         await Share.share({ title: "Referto Fixi", files: [scritto.uri] });
+        registra("Condividi: menù chiuso");
         setRefertoSalvato(true);
       } catch (e) {
+        registra("Condividi: fallito", e);
         // Chiudere il menù senza scegliere non è un errore
         if (/cancel|abort|dismiss/i.test(e?.message || "")) return;
         console.error("Condivisione non riuscita:", e);
