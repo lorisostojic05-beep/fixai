@@ -458,6 +458,23 @@ export default function Diagnosi() {
       );
       if (!esciComunque) return;
     }
+    // Uscita voluta: la diagnosi è finita e non va più riproposta. Il recupero
+    // esiste per chi esce SENZA volerlo (Android che chiude l'app in secondo
+    // piano); continuare a offrirla a chi ha premuto "torna alla home" dopo
+    // aver salvato il referto è solo confusione — e gli fa ritrovare davanti
+    // una diagnosi che per lui era chiusa.
+    //
+    // Coerente anche con l'avviso qui sopra: gli abbiamo appena detto che
+    // uscendo il referto lo perde.
+    dimenticaSessione();
+    // E il pagamento è speso. Senza questa riga, rientrando in /diagnosi il
+    // pulsante diventava "Avvia videodiagnosi" invece di "Paga €9,90": si
+    // poteva fare una diagnosi nuova, su un altro elettrodomestico, gratis.
+    // "Nuova diagnosi" lo cancellava già — un pagamento, una diagnosi — ma
+    // uscendo da qui restava valido.
+    sessionStorage.removeItem("Fixi_stripe_session");
+    stripeSessionRef.current = null;
+    setPagamentoVerificato(false);
     window.location.href = "/";
   };
 
@@ -1314,19 +1331,28 @@ if (phase === "confermaPagamento") {
           {/* Un riquadro e non una finestrella di sistema: aprire l'app e
               trovarsi subito un "OK / Annulla" è sgradevole, e chi sbaglia
               tasto perde la diagnosi che stiamo cercando di salvargli. */}
+          {/* Il testo cambia se il referto c'era già: "lasciata a metà" sarebbe
+              falso, e chi ha perso l'app proprio sul referto deve capire che
+              quello che sta per riaprire è il documento che ha pagato. */}
           {sessioneRecuperabile && (
             <div className={styles.ripresaBox}>
-              <p className={styles.ripresaTitolo}>Hai una diagnosi lasciata a metà</p>
+              <p className={styles.ripresaTitolo}>
+                {sessioneRecuperabile.report
+                  ? "Hai un referto non ancora salvato"
+                  : "Hai una diagnosi lasciata a metà"}
+              </p>
               <p className={styles.ripresaTesto}>
                 {[sessioneRecuperabile.brand, sessioneRecuperabile.appliance].filter(Boolean).join(" ") ||
                   "Diagnosi in corso"}
                 {sessioneRecuperabile.problem ? ` — "${sessioneRecuperabile.problem}"` : ""}
                 <br />
-                Puoi riprenderla da dove eri, senza pagare di nuovo.
+                {sessioneRecuperabile.report
+                  ? "Puoi riaprirlo e salvarlo, senza pagare di nuovo."
+                  : "Puoi riprenderla da dove eri, senza pagare di nuovo."}
               </p>
               <div className={styles.ripresaAzioni}>
                 <button className={styles.ripresaSi} onClick={riprendiSessione}>
-                  Riprendi la diagnosi
+                  {sessioneRecuperabile.report ? "Riapri il referto" : "Riprendi la diagnosi"}
                 </button>
                 <button className={styles.ripresaNo} onClick={scartaSessione}>
                   Ricomincia
