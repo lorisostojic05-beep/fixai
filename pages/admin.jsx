@@ -221,6 +221,40 @@ export default function Admin() {
                         {[r.brand, r.appliance].filter(Boolean).join(" ")} · {new Date(r.created_at).toLocaleDateString("it-IT")}
                       </div>
                       <p style={{ fontSize: "13px", margin: "0 0 6px", whiteSpace: "pre-wrap" }}>{r.motivo}</p>
+
+                      {/* Le prove. Non servono a smascherare: servono a rendere
+                          ovvi i casi ovvi, e a lasciare il dubbio solo dove il
+                          dubbio c'è davvero. */}
+                      {r.prove && (
+                        <div style={{ background: "#FAF8F3", borderRadius: "8px", padding: "8px 10px", margin: "8px 0", fontSize: "12px", lineHeight: 1.7 }}>
+                          {r.prove.voto != null && (
+                            <div style={{ color: r.prove.voto >= 4 ? "#B3261E" : "#333", fontWeight: r.prove.voto >= 4 ? 600 : 400 }}>
+                              Voto lasciato: <strong>{r.prove.voto}/5</strong>
+                              {r.prove.risolto === true && " · ha dichiarato «risolto da solo»"}
+                              {r.prove.risolto === false && " · ha dichiarato «serve il tecnico»"}
+                              {r.prove.voto >= 4 && "  ← si contraddice"}
+                            </div>
+                          )}
+                          {r.prove.haChiestoTecnico && (
+                            <div style={{ color: "#B3261E", fontWeight: 600 }}>
+                              Ha usato il referto per chiedere un tecnico  ← gli è servito
+                            </div>
+                          )}
+                          <div style={{ color: "#666" }}>
+                            {r.prove.durataMin != null && `Durata ${r.prove.durataMin} min · `}
+                            {r.prove.richiesteAI != null && `${r.prove.richiesteAI} scambi con l'AI · `}
+                            {r.prove.refertoPerEmail && "si è fatto mandare il referto · "}
+                            {r.prove.giorniDopo != null && `richiesta dopo ${r.prove.giorniDopo} giorni`}
+                          </div>
+                          {r.prove.diagnosi && (
+                            <div style={{ color: "#333", marginTop: "4px" }}>
+                              <strong>Cosa gli ha detto Fixi:</strong> {r.prove.diagnosi}
+                              {r.prove.pezzo && ` (pezzo: ${r.prove.pezzo})`}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {r.stripe_session_id && (
                         <code style={{ fontSize: "11px", color: "#888", wordBreak: "break-all" }}>{r.stripe_session_id}</code>
                       )}

@@ -144,10 +144,59 @@ export default async function handler(req, res) {
     // costa più dei €9,90 e sporca il conto Stripe.
     const { data: rimborsiRaw } = await supabase
       .from("rimborsi")
-      .select("id, created_at, email, motivo, stripe_session_id, appliance, brand, stato")
+      .select("id, created_at, email, motivo, stripe_session_id, sessione_token, appliance, brand, stato")
       .order("created_at", { ascending: false })
       .limit(50);
-    const rimborsi = rimborsiRaw || [];
+
+    // Ogni richiesta arriva con le PROVE accanto, se no la si giudica a naso.
+    // Non servono a smascherare nessuno: servono a rendere ovvi i casi ovvi.
+    // La più forte è la contraddizione col voto: chi ha appena messo 5 stelle
+    // e "risolto da solo", e due minuti dopo scrive che non gli è servita, si
+    // è contraddetto per iscritto — e quel voto lo aveva dato prima di sapere
+    // che esisteva un rimborso, perché il link sta sotto.
+    const rimborsi = await Promise.all(
+      (rimborsiRaw || []).map(async (r) => {
+        const prove = {};
+        if (r.sessione_token) {
+          const { data: s } = await supabase
+            .from("sessioni")
+            .select("created_at, feedback_voto, feedback_risolto, durata_secondi, email_utente, report, messages")
+            .eq("token", r.sessione_token)
+            .maybeSingle();
+          if (s) {
+            prove.voto = s.feedback_voto;
+            prove.risolto = s.feedback_risolto;
+            prove.durataMin = s.durata_secondi ? Math.round(s.durata_secondi / 60) : null;
+            prove.refertoPerEmail = !!s.email_utente;
+            prove.diagnosi = s.report?.diagnosis || null;
+            prove.pezzo = s.report?.sparePart?.name || null;
+            prove.messaggiScambiati = Array.isArray(s.messages) ? s.messages.length : null;
+            prove.giorniDopo = s.created_at
+              ? Math.round((new Date(r.created_at) - new Date(s.created_at)) / 86400000)
+              : null;
+          }
+        }
+        if (r.stripe_session_id) {
+          const { data: pag } = await supabase
+            .from("pagamenti")
+            .select("richieste")
+            .eq("stripe_session_id", r.stripe_session_id)
+            .maybeSingle();
+          prove.richiesteAI = pag?.richieste ?? null;
+        }
+        // Ha usato il referto per farsi mandare un tecnico? Allora gli è
+        // servito. Si collega per email: le due tabelle non hanno altro in
+        // comune, quindi vale solo se ha usato lo stesso indirizzo.
+        const { data: interventi } = await supabase
+          .from("richieste_intervento")
+          .select("id")
+          .eq("email", r.email)
+          .limit(1);
+        prove.haChiestoTecnico = (interventi?.length || 0) > 0;
+
+        return { ...r, prove };
+      })
+    );
 
     return res.status(200).json({
       rimborsi,
