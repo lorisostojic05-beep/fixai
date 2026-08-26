@@ -135,7 +135,10 @@ export default function Stato() {
   const provaDettatura = async () => {
     segna("voce", "in corso...");
     try {
-      const { SpeechRecognition } = await import("@capacitor-community/speech-recognition");
+      // Dal ponte, come fa il codice vero: se la prova usasse una strada
+      // diversa direbbe che funziona una cosa che nell'app non funziona.
+      const SpeechRecognition = prendiPluginSubito("SpeechRecognition");
+      if (!SpeechRecognition) throw new Error("Plugin non raggiungibile dal ponte nativo");
       const disp = await SpeechRecognition.available();
       let perm = await SpeechRecognition.checkPermissions();
       if (perm.speechRecognition !== "granted") perm = await SpeechRecognition.requestPermissions();

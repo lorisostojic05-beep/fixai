@@ -306,17 +306,21 @@ export default function Diagnosi() {
 
     if (dentroApp()) {
       try {
-        registra("Condividi: carico i plugin");
-        const [{ Filesystem, Directory }, { Share }] = await conScadenza(
-          Promise.all([import("@capacitor/filesystem"), import("@capacitor/share")]),
-          15000,
-          "caricamento dei plugin di condivisione"
-        );
+        // Dal ponte nativo e non da import(): quest'ultimo scarica un file dal
+        // server e il 23/08/2026 ha tenuto appeso per sempre il pulsante
+        // Scarica. Qui non era ancora successo, ma il meccanismo è identico.
+        const Filesystem = prendiPluginSubito("Filesystem");
+        const Share = prendiPluginSubito("Share");
+        if (!Filesystem || !Share) throw new Error("Plugin di condivisione non raggiungibili");
+        registra("Condividi: plugin pronti");
+
         const scritto = await conScadenza(
           Filesystem.writeFile({
             path: nomeFile,
             data: await blobInBase64(blob),
-            directory: Directory.Cache, // temporaneo: il file lo tiene l'app che lo riceve
+            // "CACHE" è il valore di Directory.Cache: si passa la stringa per
+            // non dover caricare il pacchetto solo per leggere una costante.
+            directory: "CACHE", // temporaneo: il file lo tiene l'app che lo riceve
           }),
           15000,
           "scrittura del file temporaneo"
@@ -1177,9 +1181,16 @@ const dentroApp = () =>
 // usa il motore vocale nativo di Android tramite il plugin Capacitor.
 const dettaturaNativa = dentroApp;
 
-// Il plugin si carica solo quando serve: dal browser non viene nemmeno toccato.
-const pluginVocale = async () =>
-  (await import("@capacitor-community/speech-recognition")).SpeechRecognition;
+// Dal ponte nativo, che è già in memoria. Prima era
+// `import("@capacitor-community/speech-recognition")`, cioè un file scaricato
+// dal server: è lo stesso meccanismo che il 23/08/2026 ha tenuto appeso per
+// sempre il pulsante Scarica, senza nemmeno un messaggio d'errore. Ed è un
+// candidato molto probabile per il microfono "che non va".
+const pluginVocale = async () => {
+  const p = prendiPluginSubito("SpeechRecognition");
+  if (!p) throw new Error("Riconoscimento vocale non disponibile in questa versione dell'app");
+  return p;
+};
 
 // Plugin scritto da noi (android/app/src/main/java/casa/fixi/app/SalvaFilePlugin.java):
 // scrive un file nella cartella Download vera del telefono passando da MediaStore,
