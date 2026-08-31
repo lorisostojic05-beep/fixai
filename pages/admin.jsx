@@ -262,6 +262,33 @@ export default function Admin() {
               ))}
             </div>
 
+            {/* Quali chiavi Stripe usa il server in questo momento. Serve
+                soprattutto al passaggio alla modalità reale: se resta "test"
+                qui, il sito non può incassare, e la pagina lo dice in rosso
+                invece di lasciartelo scoprire dal primo cliente. */}
+            {dati.stripe && (
+              <div style={{
+                background: dati.stripe.segreta === "sk_live" ? "#e8f5f0" : "#faeeda",
+                border: "1px solid " + (dati.stripe.segreta === "sk_live" ? "#C5E5DA" : "#EBD9B4"),
+                borderRadius: "12px", padding: "0.9rem 1.25rem", marginBottom: "1.5rem", fontSize: "13px",
+              }}>
+                <strong>Stripe: {dati.stripe.segreta === "sk_live" ? "modalità REALE" : "modalità TEST"}</strong>
+                <div style={{ color: "#666", marginTop: "4px" }}>
+                  chiave segreta <code>{dati.stripe.segreta}</code> · chiave pubblica <code>{dati.stripe.pubblica}</code>
+                </div>
+                {dati.stripe.segreta !== "sk_live" && (
+                  <div style={{ color: "#854F0B", marginTop: "6px" }}>
+                    In questa modalità le carte vere vengono rifiutate: non pubblicare l&apos;app.
+                  </div>
+                )}
+                {dati.stripe.segreta === "sk_live" && dati.stripe.pubblica !== "pk_live" && (
+                  <div style={{ color: "#B3261E", marginTop: "6px" }}>
+                    Le due chiavi non sono della stessa modalità: rifai il deploy senza cache.
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Richieste di rimborso. In alto e ben visibili: dietro ognuna
                 c'è qualcuno che aspetta i suoi soldi, e farlo aspettare porta
                 allo storno bancario — che costa €15 di penale e sporca il

@@ -201,6 +201,20 @@ export default async function handler(req, res) {
     return res.status(200).json({
       rimborsi,
       rimborsiDaDecidere: rimborsi.filter((r) => r.stato === "richiesto").length,
+
+      // Che chiavi Stripe sta usando DAVVERO il server, adesso. Nasce dal
+      // passaggio alla modalità reale del 30/08/2026: le variabili su Vercel
+      // sembravano cambiate ma il sito continuava a creare sessioni di prova,
+      // e non c'era modo di sapere se il problema fosse la variabile o il
+      // deploy. Qui si vede in un colpo d'occhio.
+      //
+      // Solo il PREFISSO: "sk_live" o "sk_test", mai il resto della chiave.
+      // Anche se questo endpoint è protetto, una chiave segreta non va
+      // spedita fuori dal server nemmeno a chi ha la password.
+      stripe: {
+        segreta: (process.env.STRIPE_SECRET_KEY || "").slice(0, 7) || "(mancante)",
+        pubblica: (process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "").slice(0, 7) || "(mancante)",
+      },
       totale,
       votate: conFeedback.length,
       votoMedio,
