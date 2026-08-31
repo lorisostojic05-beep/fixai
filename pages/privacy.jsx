@@ -4,15 +4,19 @@ import Head from "next/head";
 // È una base solida e onesta; per un'attività che incassa pagamenti conviene
 // farla rivedere da un consulente privacy.
 
-const AGGIORNAMENTO = "23 luglio 2026";
+const AGGIORNAMENTO = "31 agosto 2026";
 const EMAIL = "lorisostojic05@gmail.com";
 
 // P.IVA e sede compaiono nell'informativa SOLO se compilate qui: finché sono
 // vuote la pagina resta identica a prima. Serve a non pubblicare per sbaglio
 // un numero di partita IVA finto, che sarebbe peggio di non averlo scritto.
 // Compilandole, aggiorna anche AGGIORNAMENTO con la data di oggi.
-const PIVA = ""; // es. "01234567890"
-const SEDE = ""; // es. "Via Roma 1, 20158 Milano (MI)"
+const PIVA = "05223940239";
+// SEDE resta vuota di proposito: è l'indirizzo di casa di Loris, e questa
+// pagina è pubblica e indicizzata. La legge chiede che il titolare sia
+// identificabile e contattabile — nome, partita IVA ed email lo soddisfano,
+// senza rendere cercabile per sempre dove abita.
+const SEDE = "";
 
 export default function Privacy() {
   return (
