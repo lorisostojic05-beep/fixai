@@ -22,6 +22,15 @@ export default function App({ Component, pageProps }) {
           name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover"
         />
+        {/* Verifica di Google Search Console: dimostra a Google che il sito
+            e' nostro, e ci da' accesso a cosa cerca la gente per arrivarci.
+            Non e' un segreto — sta nell'HTML pubblico di ogni pagina, e
+            serve solo a quello. Va lasciato per sempre: se sparisce, Google
+            toglie la verifica e con essa l'accesso ai dati. */}
+        <meta
+          name="google-site-verification"
+          content="v35zw8dzYKk6k1sZnl93jAb9CCpVbt_DR5qiZxWKjEk"
+        />
       </Head>
 
       <style jsx global>{`
