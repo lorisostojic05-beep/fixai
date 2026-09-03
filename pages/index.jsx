@@ -825,10 +825,17 @@ export default function Home() {
              sempre dal cellulare, in piedi davanti alla macchina. Nasconderle
              proprio sul dispositivo del loro pubblico sarebbe il contrario di
              quello che servono.
-             NB: qui dentro niente apostrofi ne virgolette. Questo blocco e
-             una stringa: il server li converte in codice HTML e il browser
-             no, quindi la pagina non si idrata piu. */
-          .nav-links li.nav-guide { display: block; margin-right: 18px; }
+             Sul telefono resta da sola accanto al pulsante verde, e in grigio
+             sparirebbe: diventa una pillola col bordo, cosi si legge come un
+             secondo pulsante invece che come una scritta di servizio. */
+          .nav-links li.nav-guide { display: block; margin-right: 10px; }
+          .nav-links li.nav-guide a {
+            color: var(--verde);
+            font-weight: 500;
+            border: 1px solid rgba(26, 107, 80, 0.35);
+            padding: 9px 16px;
+            border-radius: 100px;
+          }
           .btn-nav { padding: 9px 18px; white-space: nowrap; }
           .hero { padding: 100px 24px 60px; }
           .hero-grid { grid-template-columns: 1fr; gap: 48px; }

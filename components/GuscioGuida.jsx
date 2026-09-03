@@ -86,13 +86,24 @@ export default function GuscioGuida({ titolo, descrizione, canonical, datiStrutt
 
         .g-nav-destra { display: flex; align-items: center; gap: 22px; }
 
+        /* Pillola col bordo, non scritta grigia: qui in barra ci sono solo
+           due voci, e accanto al verde pieno del pulsante una scritta grigia
+           passa inosservata — soprattutto sul telefono, che e' lo schermo da
+           cui arriva chi cerca il sintomo su Google. */
         .g-nav-link {
           font-size: 14px;
-          color: var(--grigio);
+          font-weight: 500;
+          color: var(--verde);
           text-decoration: none;
-          transition: color 0.2s;
+          border: 1px solid rgba(26, 107, 80, 0.35);
+          padding: 9px 17px;
+          border-radius: 100px;
+          transition: background 0.2s, border-color 0.2s;
         }
-        .g-nav-link:hover { color: var(--inchiostro); }
+        .g-nav-link:hover {
+          background: var(--verde-pallido);
+          border-color: rgba(26, 107, 80, 0.55);
+        }
 
         .g-nav-cta {
           background: var(--verde);

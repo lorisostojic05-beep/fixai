@@ -4,7 +4,10 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
+import android.webkit.WebBackForwardList;
+import android.webkit.WebView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -64,6 +67,59 @@ public class MainActivity extends BridgeActivity {
         // Se la finestra è già disegnata, chiediamo di riapplicare subito le
         // misure invece di aspettare il prossimo cambio di configurazione.
         ViewCompat.requestApplyInsets(contenuto);
+
+        preparaTastoIndietro();
+    }
+
+    // Il tasto indietro del telefono torna alla pagina precedente, e chiude
+    // l'app solo quando non c'è più niente dietro.
+    //
+    // Capacitor 6 NON fa nulla con questo tasto: nel suo codice Android non
+    // esiste alcun riferimento a onBackPressed o canGoBack. Senza questo
+    // metodo la pressione arriva ad Android, che chiude subito l'activity —
+    // da qualunque schermata, videodiagnosi pagata compresa. Finché l'app era
+    // una pagina sola quasi non si notava; da quando ci sono home, guide e
+    // diagnosi collegate tra loro è diventato un vicolo cieco.
+    //
+    // Si usa OnBackPressedDispatcher e non l'override di onBackPressed()
+    // perché con targetSdk 36 quest'ultimo può non essere più chiamato: da
+    // Android 15 il "ritorno predittivo" scavalca il vecchio percorso. Questa
+    // API funziona in entrambi i casi.
+    private void preparaTastoIndietro() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                WebView web = getBridge() == null ? null : getBridge().getWebView();
+                int passi = web == null ? 0 : passiIndietroUtili(web);
+                if (passi < 0) {
+                    web.goBackOrForward(passi);
+                    return;
+                }
+                // Niente dietro: si esce davvero. Va disattivato prima, se no
+                // la richiesta rimbalza di nuovo qui e l'app non si chiude.
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+            }
+        });
+    }
+
+    // Quanti passi indietro servono per arrivare a una pagina NOSTRA.
+    //
+    // Il pagamento avviene su checkout.stripe.com dentro la stessa WebView,
+    // quindi resta nella cronologia: tornando indietro di uno, chi ha appena
+    // pagato si ritroverebbe davanti alla cassa già saldata. Le pagine di
+    // Stripe si saltano tutte insieme.
+    //
+    // Restituisce un numero negativo (i passi da fare) oppure 0 se dietro non
+    // c'è nulla di utile.
+    private static int passiIndietroUtili(WebView web) {
+        WebBackForwardList cronologia = web.copyBackForwardList();
+        int corrente = cronologia.getCurrentIndex();
+        for (int i = corrente - 1; i >= 0; i--) {
+            String url = cronologia.getItemAtIndex(i).getUrl();
+            if (url != null && !url.contains("stripe.com")) return i - corrente;
+        }
+        return 0;
     }
 
     private TastiVolumePlugin tastiVolume() {
