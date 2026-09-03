@@ -1101,6 +1101,10 @@ export default function Home() {
         <div className="footer-logo">Fixi</div>
         <div>Diagnosi elettrodomestici via AI · fixi.casa</div>
         <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+          {/* Le guide ai guasti: e' da qui che Google raggiunge le pagine
+              nuove, quindi il link deve stare su OGNI schermata, non solo
+              in una sezione che si visita di rado. */}
+          <a href="/guida" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>Guide</a>
           <a href="/privacy" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>Privacy</a>
           {/* Anche qui e non solo dentro /diagnosi: l'app si apre su questa
               pagina, ed e' la prima che guarda chi deve segnalare un problema. */}
