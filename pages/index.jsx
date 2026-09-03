@@ -40,7 +40,14 @@ export default function Home() {
         <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
       </Head>
 
-      <style>{`
+      {/* Il CSS va passato cosi, e non come <style>{`...`}</style>.
+          Scritto in quel modo React lo tratta come testo e sul server gli
+          apostrofi di 'DM Sans' diventano &#x27;, mentre nel browser restano
+          apostrofi: le due versioni non combaciano, l'idratazione fallisce e
+          React butta via l'intera pagina costruita dal server per rifarla da
+          capo nel browser. La pagina si vedeva lo stesso, ma pagando una
+          ricostruzione completa a ogni visita. */}
+      <style dangerouslySetInnerHTML={{ __html: `
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         
         :root {
@@ -813,6 +820,15 @@ export default function Home() {
           /* Su mobile mostra solo logo + pulsante: le sezioni si raggiungono scorrendo */
           .nav-links { gap: 0; }
           .nav-links li:not(:last-child) { display: none; }
+          /* Le guide sono un eccezione: restano visibili anche sul telefono,
+             perche chi cerca il sintomo della sua lavatrice lo fa quasi
+             sempre dal cellulare, in piedi davanti alla macchina. Nasconderle
+             proprio sul dispositivo del loro pubblico sarebbe il contrario di
+             quello che servono.
+             NB: qui dentro niente apostrofi ne virgolette. Questo blocco e
+             una stringa: il server li converte in codice HTML e il browser
+             no, quindi la pagina non si idrata piu. */
+          .nav-links li.nav-guide { display: block; margin-right: 18px; }
           .btn-nav { padding: 9px 18px; white-space: nowrap; }
           .hero { padding: 100px 24px 60px; }
           .hero-grid { grid-template-columns: 1fr; gap: 48px; }
@@ -827,13 +843,19 @@ export default function Home() {
           .cta-final { padding: 80px 24px; }
           footer { flex-direction: column; gap: 16px; text-align: center; }
         }
-      `}</style>
+      ` }} />
 
       {/* NAV */}
       <nav className={scrollY > 50 ? "scrolled" : ""}>
         <a href="/" className="nav-logo">Fixi</a>
         <ul className="nav-links">
           <li><a href="#come-funziona">Come funziona</a></li>
+          {/* Le guide stanno nel menu, non solo nel footer. Chi arriva non e'
+              sempre pronto a pagare subito: se non ha niente da leggere se ne
+              va, mentre chi prova da solo e non ce la fa arriva alla diagnosi
+              gia' convinto. E' il percorso vero — problema, tentativo, resa —
+              e prima il sito offriva solo l'ultimo passo. */}
+          <li className="nav-guide"><a href="/guida">Guide</a></li>
           <li><a href="#prezzi">Prezzi</a></li>
           <li><a href="#tecnici">Sei un tecnico?</a></li>
           <li><a href="/diagnosi" className="btn-nav">Avvia diagnosi</a></li>
@@ -1099,7 +1121,10 @@ export default function Home() {
       {/* FOOTER */}
       <footer>
         <div className="footer-logo">Fixi</div>
-        <div>Diagnosi elettrodomestici via AI · fixi.casa</div>
+        {/* fixi.casa era un dominio mai posseduto, rimasto qui da quando il
+            sito viveva su .vercel.app. Dal 03/09/2026 l'indirizzo vero e'
+            questo. */}
+        <div>Diagnosi elettrodomestici via AI · fixiai.it</div>
         <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
           {/* Le guide ai guasti: e' da qui che Google raggiunge le pagine
               nuove, quindi il link deve stare su OGNI schermata, non solo
