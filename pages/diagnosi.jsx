@@ -461,13 +461,10 @@ export default function Diagnosi() {
     dimenticaSessione();
   };
 
-  const tornaAllaHome = () => {
-    if (!refertoSalvato && !emailInviata) {
-      const esciComunque = window.confirm(
-        "Non hai ancora salvato il referto né te lo sei fatto mandare per email: uscendo da qui lo perdi.\n\nVuoi uscire lo stesso?"
-      );
-      if (!esciComunque) return;
-    }
+  // L'uscita vera e propria, separata dalla domanda che la precede: serve
+  // anche al tasto indietro del telefono, che la domanda se la fa per conto
+  // suo e non deve rifarla due volte.
+  const chiudiEVaiAllaHome = () => {
     // Uscita voluta: la diagnosi è finita e non va più riproposta. Il recupero
     // esiste per chi esce SENZA volerlo (Android che chiude l'app in secondo
     // piano); continuare a offrirla a chi ha premuto "torna alla home" dopo
@@ -486,6 +483,14 @@ export default function Diagnosi() {
     stripeSessionRef.current = null;
     setPagamentoVerificato(false);
     window.location.href = "/";
+  };
+
+  const AVVISO_REFERTO =
+    "Non hai ancora salvato il referto né te lo sei fatto mandare per email: uscendo da qui lo perdi.\n\nVuoi uscire lo stesso?";
+
+  const tornaAllaHome = () => {
+    if (!refertoSalvato && !emailInviata && !window.confirm(AVVISO_REFERTO)) return;
+    chiudiEVaiAllaHome();
   };
 
   // Scroll automatico
@@ -513,6 +518,55 @@ useEffect(() => {
     setPagamentoVerificato(true);
   }
 }, []);
+
+// Il tasto indietro del telefono non deve far evaporare una diagnosi pagata.
+//
+// Dalla versione 10 l'app torna indietro invece di chiudersi — giusto
+// ovunque, tranne qui: la cronologia dopo il pagamento è
+//   home → /diagnosi → stripe → /diagnosi (sessione in corso)
+// e un indietro riportava alla schermata di scelta dell'elettrodomestico,
+// con la diagnosi appena pagata alle spalle.
+//
+// Il rimedio sta nella pagina e non nel codice nativo, quindi arriva subito
+// a tutti senza pubblicare un altro pacchetto: si mette una tappa finta
+// nella cronologia. Premendo indietro il telefono consuma quella, resta
+// sulla stessa pagina, e a noi arriva "popstate" — lì si chiede conferma
+// invece di sparire.
+//
+// Differenza importante tra le due fasi: dal REFERTO si esce come si esce
+// col pulsante, e la diagnosi si chiude davvero. Da una sessione IN CORSO
+// invece la memoria NON si cancella: chi esce per sbaglio deve ritrovarla,
+// ha pagato.
+useEffect(() => {
+  if (phase !== "session" && phase !== "report") return undefined;
+
+  const mettiTappa = () => {
+    if (!window.history.state?.fixiTappa) {
+      window.history.pushState({ fixiTappa: true }, "");
+    }
+  };
+  mettiTappa();
+
+  const allIndietro = () => {
+    if (phase === "report") {
+      if (!refertoSalvato && !emailInviata && !window.confirm(AVVISO_REFERTO)) {
+        mettiTappa();
+        return;
+      }
+      chiudiEVaiAllaHome();
+      return;
+    }
+    const esci = window.confirm(
+      "Sei nel mezzo di una diagnosi che hai pagato.\n\nSe esci ora la ritrovi da dove l'hai lasciata, per le prossime 2 ore.\n\nVuoi uscire?"
+    );
+    // Niente dimenticaSessione qui: la diagnosi resta in memoria apposta.
+    if (esci) window.location.href = "/";
+    else mettiTappa();
+  };
+
+  window.addEventListener("popstate", allIndietro);
+  return () => window.removeEventListener("popstate", allIndietro);
+}, [phase, refertoSalvato, emailInviata]);
 
 // C'è una diagnosi lasciata a metà da riprendere?
 useEffect(() => {
