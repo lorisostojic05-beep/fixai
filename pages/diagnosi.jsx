@@ -543,11 +543,13 @@ useEffect(() => {
   const mettiTappa = () => {
     if (!window.history.state?.fixiTappa) {
       window.history.pushState({ fixiTappa: true }, "");
+      registra("tappa indietro messa", `fase ${phase}, cronologia ${window.history.length}`);
     }
   };
   mettiTappa();
 
   const allIndietro = () => {
+    registra("INDIETRO premuto", `fase ${phase}, cronologia ${window.history.length}`);
     if (phase === "report") {
       if (!refertoSalvato && !emailInviata && !window.confirm(AVVISO_REFERTO)) {
         mettiTappa();
@@ -559,6 +561,7 @@ useEffect(() => {
     const esci = window.confirm(
       "Sei nel mezzo di una diagnosi che hai pagato.\n\nSe esci ora la ritrovi da dove l'hai lasciata, per le prossime 2 ore.\n\nVuoi uscire?"
     );
+    registra("risposta all'avviso", esci ? "esce" : "resta");
     // Niente dimenticaSessione qui: la diagnosi resta in memoria apposta.
     if (esci) window.location.href = "/";
     else mettiTappa();
