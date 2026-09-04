@@ -3,7 +3,7 @@ import styles from "../styles/diagnosi.module.css";
 import { loadStripe } from "@stripe/stripe-js";
 import { refertoPDF } from "../lib/generaPDF";
 import { salvaSessione, leggiSessioneSalvata, dimenticaSessione } from "../lib/sessione-salvata";
-import { avvisoAggiornamento, pluginDisponibile, LINK_PLAY_STORE } from "../lib/versione-app";
+import { avvisoAggiornamento, pluginDisponibile, LINK_PLAY_STORE, dentroApp, versioneInstallata, VERSIONE_INDIETRO_A_PASSI } from "../lib/versione-app";
 import { registra } from "../lib/registro";
 import { prendiPlugin, prendiPluginSubito } from "../lib/plugin-nativo";
 import { messaggioBenvenuto } from "../lib/benvenuto";
@@ -124,6 +124,9 @@ export default function Diagnosi() {
   const [tecLoading, setTecLoading] = useState(false);
   const [tecEsito, setTecEsito] = useState(null); // { tecniciContattati } dopo l'invio
   const [sessioneRecuperabile, setSessioneRecuperabile] = useState(null); // diagnosi lasciata a metà
+  // Parte da false: finché non sappiamo che versione dell'app c'è sotto, non
+  // si tocca la cronologia. Sbagliare in eccesso qui manda la gente su Stripe.
+  const [tappaSicura, setTappaSicura] = useState(false);
   const [avvisoVersione, setAvvisoVersione] = useState(null); // app più vecchia del sito
   const [mostraRimborso, setMostraRimborso] = useState(false);
   const [rimborsoEmail, setRimborsoEmail] = useState("");
@@ -539,6 +542,11 @@ useEffect(() => {
 // ha pagato.
 useEffect(() => {
   if (phase !== "session" && phase !== "report") return undefined;
+  // Con la versione 10 dell'app la tappa fa danno invece di proteggere: il
+  // conto dei passi del codice nativo non la vede, e si finisce due passi
+  // indietro — sulla cassa di Stripe. Meglio il comportamento della 10 da
+  // sola, che almeno riporta su /diagnosi.
+  if (!tappaSicura) return undefined;
 
   const mettiTappa = () => {
     if (!window.history.state?.fixiTappa) {
@@ -569,7 +577,19 @@ useEffect(() => {
 
   window.addEventListener("popstate", allIndietro);
   return () => window.removeEventListener("popstate", allIndietro);
-}, [phase, refertoSalvato, emailInviata]);
+}, [phase, refertoSalvato, emailInviata, tappaSicura]);
+
+// La tappa di protezione si può mettere solo se il tasto indietro nativo
+// torna indietro di un passo per volta: nel browser sempre (lì di mezzo non
+// c'è codice nativo), nell'app solo dalla versione 11 in su.
+useEffect(() => {
+  let vivo = true;
+  if (!dentroApp()) { setTappaSicura(true); return () => { vivo = false; }; }
+  versioneInstallata()
+    .then((v) => { if (vivo) setTappaSicura(v !== null && v >= VERSIONE_INDIETRO_A_PASSI); })
+    .catch(() => {});
+  return () => { vivo = false; };
+}, []);
 
 // C'è una diagnosi lasciata a metà da riprendere?
 useEffect(() => {

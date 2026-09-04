@@ -4,7 +4,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
-import android.webkit.WebBackForwardList;
 import android.webkit.WebView;
 
 import androidx.activity.OnBackPressedCallback;
@@ -90,9 +89,8 @@ public class MainActivity extends BridgeActivity {
             @Override
             public void handleOnBackPressed() {
                 WebView web = getBridge() == null ? null : getBridge().getWebView();
-                int passi = web == null ? 0 : passiIndietroUtili(web);
-                if (passi < 0) {
-                    web.goBackOrForward(passi);
+                if (web != null && web.canGoBack()) {
+                    web.goBack();
                     return;
                 }
                 // Niente dietro: si esce davvero. Va disattivato prima, se no
@@ -103,24 +101,26 @@ public class MainActivity extends BridgeActivity {
         });
     }
 
-    // Quanti passi indietro servono per arrivare a una pagina NOSTRA.
+    // NOTA per il futuro, costata una serata (05/09/2026).
     //
-    // Il pagamento avviene su checkout.stripe.com dentro la stessa WebView,
-    // quindi resta nella cronologia: tornando indietro di uno, chi ha appena
-    // pagato si ritroverebbe davanti alla cassa già saldata. Le pagine di
-    // Stripe si saltano tutte insieme.
+    // Qui prima non c'era goBack() ma un calcolo: si leggeva la cronologia con
+    // copyBackForwardList(), si cercava a ritroso la prima pagina non-Stripe e
+    // si saltava là con goBackOrForward(passi). Serviva a non far ricadere sulla
+    // cassa di Stripe chi aveva appena pagato.
     //
-    // Restituisce un numero negativo (i passi da fare) oppure 0 se dietro non
-    // c'è nulla di utile.
-    private static int passiIndietroUtili(WebView web) {
-        WebBackForwardList cronologia = web.copyBackForwardList();
-        int corrente = cronologia.getCurrentIndex();
-        for (int i = corrente - 1; i >= 0; i--) {
-            String url = cronologia.getItemAtIndex(i).getUrl();
-            if (url != null && !url.contains("stripe.com")) return i - corrente;
-        }
-        return 0;
-    }
+    // Funzionava, finché la pagina non ha iniziato a proteggersi da sola con
+    // history.pushState. Quelle tappe NON compaiono in copyBackForwardList: il
+    // conto usciva giusto sulla cronologia nativa e sbagliato su quella vera,
+    // e "due passi indietro" atterrava esattamente su Stripe — il posto che il
+    // calcolo doveva evitare. Il diario di bordo l'ha dimostrato: la tappa
+    // veniva messa, ma la pressione non arrivava mai alla pagina.
+    //
+    // Un passo per volta non ha questo problema, perché non c'e' nessun conto
+    // da sbagliare: goBack() usa la stessa cronologia che vede la pagina. Di
+    // Stripe si occupa la pagina, che intercetta la pressione prima ancora che
+    // si arrivi fin lì.
+    //
+    // Morale: non calcolare indici su due liste che non sai se coincidono.
 
     private TastiVolumePlugin tastiVolume() {
         if (getBridge() == null) return null;
