@@ -1,5 +1,11 @@
-import GuscioGuida from "../../components/GuscioGuida";
-import { guidaPerSlug, guideCollegate, tutteLeGuide, urlGuida } from "../../lib/guide";
+import GuscioGuida from "../../../components/GuscioGuida";
+import {
+  ELETTRODOMESTICI,
+  guidaPer,
+  guideCollegate,
+  tutteLeGuide,
+  urlGuida,
+} from "../../../lib/guide";
 
 // Una pagina per sintomo. Il contenuto sta tutto in lib/guide.js e l'aspetto
 // in components/GuscioGuida.jsx: qui c'e' solo il montaggio, cosi' aggiungere
@@ -9,7 +15,7 @@ import { guidaPerSlug, guideCollegate, tutteLeGuide, urlGuida } from "../../lib/
 // visitatore come HTML gia' pronto. Per Google conta: deve poter leggere il
 // testo senza aspettare che parta JavaScript.
 
-export default function Guida({ guida, altre }) {
+export default function Guida({ guida, scheda, altre }) {
   // Dati strutturati per le domande frequenti: il modo di chiedere a Google
   // di mostrare le risposte gia' aperte nei risultati di ricerca. Vanno
   // dichiarate solo domande che stanno DAVVERO nella pagina — se non
@@ -28,14 +34,17 @@ export default function Guida({ guida, altre }) {
     <GuscioGuida
       titolo={`${guida.titolo} — Fixi`}
       descrizione={guida.descrizione}
-      canonical={urlGuida(guida.slug)}
+      canonical={urlGuida(guida.elettrodomestico, guida.slug)}
       datiStrutturati={datiStrutturati}
     >
       <nav className="g-briciole">
-        <a href="/">Home</a> › <a href="/guida">Guide</a> › {guida.elettrodomestico}
+        <a href="/">Home</a> › <a href="/guida">Guide</a> ›{" "}
+        <a href={`/guida/${guida.elettrodomestico}`}>{scheda.titolo.toLowerCase()}</a>
       </nav>
 
-      <span className="g-etichetta">{guida.elettrodomestico}</span>
+      <span className="g-etichetta">
+        {scheda.emoji} {scheda.titolo}
+      </span>
       <h1 className="g-titolo">{guida.titolo}</h1>
       <p className="g-meta">
         Aggiornata il {dataItaliana(guida.aggiornata)} · lettura 4 minuti
@@ -70,9 +79,9 @@ export default function Guida({ guida, altre }) {
       <div className="g-cta">
         <div className="g-cta-titolo">Hai controllato tutto e non ne esci?</div>
         <p>
-          Inquadri {articolo(guida.elettrodomestico)} {guida.elettrodomestico} con la fotocamera
-          del telefono e un assistente ti guida passo passo fino a capire cos'è, in circa 10
-          minuti. Alla fine ricevi un referto scritto, con il pezzo da sostituire se serve.
+          Inquadri {articolo(guida.elettrodomestico)} {scheda.titolo.toLowerCase()} con la
+          fotocamera del telefono e un assistente ti guida passo passo fino a capire cos'è, in circa
+          10 minuti. Alla fine ricevi un referto scritto, con il pezzo da sostituire se serve.
         </p>
         <a href="/diagnosi" className="g-bottone">Avvia una diagnosi →</a>
         <span className="g-garanzia">
@@ -90,9 +99,9 @@ export default function Guida({ guida, altre }) {
 
       {altre.length > 0 && (
         <>
-          <h2 className="g-sezione">Altre guide</h2>
+          <h2 className="g-sezione">Altri guasti {articolo(guida.elettrodomestico)} {scheda.titolo.toLowerCase()}</h2>
           {altre.map((g) => (
-            <a className="g-scheda" href={`/guida/${g.slug}`} key={g.slug}>
+            <a className="g-scheda" href={`/guida/${g.elettrodomestico}/${g.slug}`} key={g.slug}>
               <div className="g-scheda-titolo">{g.titolo}</div>
               <div className="g-scheda-testo">{g.descrizione}</div>
             </a>
@@ -111,15 +120,20 @@ export default function Guida({ guida, altre }) {
 
 export async function getStaticPaths() {
   return {
-    paths: tutteLeGuide().map((g) => ({ params: { slug: g.slug } })),
+    paths: tutteLeGuide().map((g) => ({
+      params: { elettrodomestico: g.elettrodomestico, slug: g.slug },
+    })),
     fallback: false,
   };
 }
 
 export async function getStaticProps({ params }) {
-  const guida = guidaPerSlug(params.slug);
-  if (!guida) return { notFound: true };
-  return { props: { guida, altre: guideCollegate(params.slug) } };
+  const guida = guidaPer(params.elettrodomestico, params.slug);
+  const scheda = ELETTRODOMESTICI.find((e) => e.nome === params.elettrodomestico);
+  if (!guida || !scheda) return { notFound: true };
+  return {
+    props: { guida, scheda, altre: guideCollegate(params.elettrodomestico, params.slug) },
+  };
 }
 
 // ── Formattazione ───────────────────────────────────────────────────
@@ -135,7 +149,7 @@ function dataItaliana(iso) {
 // "la lavatrice" ma "il forno": l'articolo cambia, e scriverlo a mano in ogni
 // guida sarebbe una svista in agguato.
 function articolo(nome) {
-  return /^(lavatrice|lavastoviglie|asciugatrice|cappa|piastra)$/.test(nome) ? "la" : "il";
+  return /^(lavatrice|lavastoviglie|asciugatrice)$/.test(nome) ? "la" : "il";
 }
 
 function classeDifficolta(d) {

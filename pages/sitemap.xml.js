@@ -1,4 +1,4 @@
-import { tutteLeGuide, SITO } from "../lib/guide";
+import { tutteLeGuide, elettrodomesticiConGuide, SITO } from "../lib/guide";
 
 // La mappa del sito: l'elenco delle pagine che vogliamo su Google.
 //
@@ -31,8 +31,18 @@ function costruisciSitemap() {
       frequenza: p.frequenza,
       priorita: p.priorita,
     })),
+    // Le pagine di secondo livello, una per elettrodomestico. Solo quelle
+    // che hanno almeno una guida: le altre non esistono nemmeno.
+    ...elettrodomesticiConGuide()
+      .filter((e) => e.quante > 0)
+      .map((e) => ({
+        url: `${SITO}/guida/${e.nome}`,
+        data: oggi,
+        frequenza: "weekly",
+        priorita: "0.7",
+      })),
     ...tutteLeGuide().map((g) => ({
-      url: `${SITO}/guida/${g.slug}`,
+      url: `${SITO}/guida/${g.elettrodomestico}/${g.slug}`,
       data: g.aggiornata,
       frequenza: "monthly",
       priorita: "0.9",

@@ -303,6 +303,52 @@ export default function GuscioGuida({ titolo, descrizione, canonical, datiStrutt
         .g-scheda-titolo { font-size: 17px; font-weight: 600; color: var(--verde); margin-bottom: 5px; line-height: 1.35; }
         .g-scheda-testo { font-size: 14.5px; color: var(--grigio); line-height: 1.6; }
 
+        /* I sette riquadri degli elettrodomestici */
+        .g-griglia {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 14px;
+          margin-top: 30px;
+        }
+
+        .g-riquadro {
+          display: block;
+          background: #fff;
+          border: 1px solid var(--bordo);
+          border-radius: 16px;
+          padding: 22px 20px;
+          text-decoration: none;
+          color: inherit;
+          transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+        }
+        .g-riquadro:hover {
+          border-color: rgba(26, 107, 80, 0.4);
+          transform: translateY(-2px);
+          box-shadow: 0 12px 28px rgba(26, 107, 80, 0.09);
+        }
+
+        /* Senza guide: resta visibile ma spento, e non e' cliccabile. Una
+           scheda che porta a una pagina vuota e' peggio che dirlo prima. */
+        .g-riquadro.spento {
+          opacity: 0.5;
+          cursor: default;
+          background: transparent;
+        }
+        .g-riquadro.spento:hover {
+          border-color: var(--bordo);
+          transform: none;
+          box-shadow: none;
+        }
+
+        .g-riquadro-icona { font-size: 30px; line-height: 1; margin-bottom: 12px; }
+        .g-riquadro-titolo {
+          font-family: 'Instrument Serif', serif;
+          font-size: 23px;
+          line-height: 1.2;
+          margin-bottom: 5px;
+        }
+        .g-riquadro-quante { font-size: 13.5px; color: var(--grigio); }
+
         .g-gruppo {
           font-size: 12px;
           font-weight: 600;
