@@ -1,7 +1,33 @@
 import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
+import SceltaLingua from "../components/SceltaLingua";
+import { testiPer } from "../lib/testi";
+import { guideDisponibiliIn, LINGUE, PREDEFINITA } from "../lib/lingue";
+import { SITO } from "../lib/guide";
 
-export default function Home() {
+// L'indirizzo di una lingua: l'italiano non ha prefisso (fixiai.it), le altre
+// si', ed e' la stessa regola che applica Next.js agli indirizzi veri.
+const indirizzo = (codice) => (codice === PREDEFINITA ? `${SITO}/` : `${SITO}/${codice}`);
+
+// Le parole arrivano gia' scelte dal server: cosi' il browser scarica solo la
+// lingua che serve. Il perche' per esteso sta in lib/testi.js.
+export async function getStaticProps({ locale }) {
+  return {
+    props: {
+      testi: testiPer(locale),
+      // Le guide esistono solo in italiano: vedi LINGUE_CON_GUIDE in
+      // lib/lingue.js. Dove non ci sono, il collegamento non si mostra —
+      // altrimenti manderebbe a una pagina che risponde 404.
+      guide: guideDisponibiliIn(locale),
+      canonical: indirizzo(locale),
+      alternative: LINGUE.map((l) => ({ lingua: l.codice, url: indirizzo(l.codice) })),
+    },
+  };
+}
+
+// Tutte le parole di questa pagina stanno in testi/<lingua>.js. Qui dentro
+// restano solo impaginazione e comportamento — vedi il commento in testi/it.js.
+export default function Home({ testi: t, guide, canonical, alternative }) {
   const [scrollY, setScrollY] = useState(0);
   const [visible, setVisible] = useState({});
   const sectionRefs = useRef({});
@@ -35,8 +61,25 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Fixi — Diagnosi elettrodomestici via AI</title>
-        <meta name="description" content="Risparmia sulla visita del tecnico. Diagnosi AI via videochiamata in 10 minuti." />
+        <title>{t.meta.titolo}</title>
+        <meta name="description" content={t.meta.descrizione} />
+
+        {/* Senza queste righe, Google vede sette pagine diverse e non sa che
+            sono la stessa cosa in sette lingue: sceglie da solo quale mostrare,
+            e puo' proporre l'italiano a uno spagnolo. Con hreflang mostra a
+            ciascuno la sua, e nessuna delle sette ruba visibilita' alle altre.
+            x-default e' la risposta a "e per tutti gli altri?": l'italiano,
+            perche' e' la versione che esiste da piu' tempo ed e' l'unica con
+            le guide dietro. */}
+        <link rel="canonical" href={canonical} />
+        {alternative.map((a) => (
+          <link key={a.lingua} rel="alternate" hrefLang={a.lingua} href={a.url} />
+        ))}
+        <link
+          rel="alternate"
+          hrefLang="x-default"
+          href={alternative.find((a) => a.lingua === "it").url}
+        />
         <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
       </Head>
 
@@ -836,6 +879,11 @@ export default function Home() {
             padding: 9px 16px;
             border-radius: 100px;
           }
+          /* Anche la lingua resta visibile sul telefono, e per un motivo piu'
+             forte delle guide: dentro l'app la barra in alto e' l'unico posto
+             dove esiste: se sparisce qui, chi ha il telefono in una lingua e
+             ne vuole un'altra non ha nessun modo di cambiarla. */
+          .nav-links li.nav-lingua { display: block; margin-right: 10px; }
           .btn-nav { padding: 9px 18px; white-space: nowrap; }
           .hero { padding: 100px 24px 60px; }
           .hero-grid { grid-template-columns: 1fr; gap: 48px; }
@@ -856,16 +904,19 @@ export default function Home() {
       <nav className={scrollY > 50 ? "scrolled" : ""}>
         <a href="/" className="nav-logo">Fixi</a>
         <ul className="nav-links">
-          <li><a href="#come-funziona">Come funziona</a></li>
+          <li><a href="#come-funziona">{t.nav.comeFunziona}</a></li>
           {/* Le guide stanno nel menu, non solo nel footer. Chi arriva non e'
               sempre pronto a pagare subito: se non ha niente da leggere se ne
               va, mentre chi prova da solo e non ce la fa arriva alla diagnosi
               gia' convinto. E' il percorso vero — problema, tentativo, resa —
               e prima il sito offriva solo l'ultimo passo. */}
-          <li className="nav-guide"><a href="/guida">Guide</a></li>
-          <li><a href="#prezzi">Prezzi</a></li>
-          <li><a href="#tecnici">Sei un tecnico?</a></li>
-          <li><a href="/diagnosi" className="btn-nav">Avvia diagnosi</a></li>
+          {guide ? <li className="nav-guide"><a href="/guida">{t.nav.guide}</a></li> : null}
+          <li><a href="#prezzi">{t.nav.prezzi}</a></li>
+          <li><a href="#tecnici">{t.nav.tecnici}</a></li>
+          {/* Il tasto della lingua sta prima del pulsante verde e non dopo:
+              in fondo alla barra ci va la cosa che vogliamo far cliccare. */}
+          <li className="nav-lingua"><SceltaLingua testi={t.lingua} /></li>
+          <li><a href="/diagnosi" className="btn-nav">{t.nav.avvia}</a></li>
         </ul>
       </nav>
 
@@ -875,21 +926,21 @@ export default function Home() {
         <div className="hero-grid">
           <div>
             <div className="hero-badge">
-              <span>✦</span> Diagnosi AI in 10 minuti
+              <span>✦</span> {t.hero.badge}
             </div>
             <h1 className="hero-title">
-              La lavatrice è rotta.<br />
-              <em>Niente panico.</em>
+              {t.hero.titolo1}<br />
+              <em>{t.hero.titolo2}</em>
             </h1>
             <p className="hero-sub">
-              Un'AI ti guida via videochiamata, identifica il problema e ti consegna un referto preciso. Senza aspettare il tecnico. Senza pagare €80 solo per farlo venire.
+              {t.hero.sottotitolo}
             </p>
             <div className="hero-cta">
               <a href="/diagnosi" className="btn-primary">
-                Avvia diagnosi →
+                {t.hero.avvia} →
               </a>
               <a href="#come-funziona" className="btn-ghost">
-                Come funziona ↓
+                {t.hero.comeFunziona} ↓
               </a>
             </div>
           </div>
@@ -899,28 +950,28 @@ export default function Home() {
               <div className="phone-screen">
                 <div className="phone-header">
                   <div className="phone-logo">Fixi</div>
-                  <div className="phone-subtitle">Sessione attiva · 00:03:24</div>
+                  <div className="phone-subtitle">{t.telefono.sessione} · 00:03:24</div>
                 </div>
                 <div className="phone-video">
                   <span className="phone-video-icon">📷</span>
-                  <div className="phone-ai-label">AI analizza ▸</div>
+                  <div className="phone-ai-label">{t.telefono.analizza} ▸</div>
                 </div>
                 <div className="phone-chat">
-                  <div className="bubble-ai">Ho visto il pannellino. Prova a svitare il tappo con un panno — potrebbe uscire acqua residua.</div>
-                  <div className="bubble-user">Ok fatto, c'era del pelo</div>
-                  <div className="bubble-ai">Perfetto! Questo è il problema. Rimonta il filtro e testa un ciclo breve.</div>
+                  <div className="bubble-ai">{t.telefono.bolla1}</div>
+                  <div className="bubble-user">{t.telefono.bolla2}</div>
+                  <div className="bubble-ai">{t.telefono.bolla3}</div>
                 </div>
               </div>
             </div>
 
             <div className="phone-float-card float-left">
-              <div className="float-label">Risparmio stimato</div>
-              <div className="float-value float-green">€70,10</div>
+              <div className="float-label">{t.telefono.risparmioEtichetta}</div>
+              <div className="float-value float-green">{t.telefono.risparmioValore}</div>
             </div>
 
             <div className="phone-float-card float-right">
-              <div className="float-label">Problema risolto</div>
-              <div className="float-value">Filtro pompa ✓</div>
+              <div className="float-label">{t.telefono.problemaEtichetta}</div>
+              <div className="float-value">{t.telefono.problemaValore} ✓</div>
             </div>
           </div>
         </div>
@@ -928,15 +979,10 @@ export default function Home() {
 
       {/* STATS */}
       <div className="stats-bar">
-        {[
-          { num: "€9,90", label: "Diagnosi completa" },
-          { num: "10 min", label: "Tempo medio sessione" },
-          { num: "80%", label: "Risolti in autonomia" },
-          { num: "€70", label: "Risparmio medio" },
-        ].map((s, i) => (
+        {t.numeri.map((s, i) => (
           <div className="stat-item" key={i}>
-            <div className="stat-num">{s.num}</div>
-            <div className="stat-label">{s.label}</div>
+            <div className="stat-num">{s.valore}</div>
+            <div className="stat-label">{s.etichetta}</div>
           </div>
         ))}
       </div>
@@ -944,18 +990,21 @@ export default function Home() {
       {/* COME FUNZIONA */}
       <section id="come-funziona">
         <div ref={addRef("steps-title")} className={`fade-up ${visible["steps-title"] ? "visible" : ""}`}>
-          <div className="section-tag">Come funziona</div>
-          <h2 className="section-title">Quattro passi.<br />Problema risolto.</h2>
-          <p className="section-sub">Niente attese, niente sorprese. In meno di 15 minuti sai esattamente cosa c'è che non va.</p>
+          <div className="section-tag">{t.passi.tag}</div>
+          <h2 className="section-title">{t.passi.titolo1}<br />{t.passi.titolo2}</h2>
+          <p className="section-sub">{t.passi.sottotitolo}</p>
         </div>
 
         <div className="steps">
+          {/* Numeri e icone restano qui: non sono lingua, e ogni cosa che non
+              passa dal file dei testi e' una cosa che la traduzione non puo'
+              rompere. Il testo arriva da t.passi.elenco, nello stesso ordine. */}
           {[
-            { num: "01", icon: "📱", title: "Descrivi il problema", desc: "Seleziona l'elettrodomestico, inserisci la marca e descrivi il guasto in poche parole." },
-            { num: "02", icon: "💳", title: "Paga €9,90", desc: "Pagamento sicuro con carta. Molto meno di una visita del tecnico." },
-            { num: "03", icon: "🎥", title: "Videochiamata con l'AI", desc: "Punta la camera verso l'elettrodomestico. L'AI analizza e ti guida passo passo." },
-            { num: "04", icon: "📋", title: "Ricevi il referto", desc: "Diagnosi, soluzione fai-da-te e stima dei costi se serve il tecnico. In PDF." },
-          ].map((s, i) => (
+            { num: "01", icon: "📱" },
+            { num: "02", icon: "💳" },
+            { num: "03", icon: "🎥" },
+            { num: "04", icon: "📋" },
+          ].map(({ num, icon }, i) => ({ num, icon, ...t.passi.elenco[i] })).map((s, i) => (
             <div
               key={i}
               ref={addRef(`step-${i}`)}
@@ -963,8 +1012,8 @@ export default function Home() {
             >
               <div className="step-num">{s.num}</div>
               <div className="step-icon">{s.icon}</div>
-              <h3>{s.title}</h3>
-              <p>{s.desc}</p>
+              <h3>{s.titolo}</h3>
+              <p>{s.testo}</p>
             </div>
           ))}
         </div>
@@ -975,17 +1024,12 @@ export default function Home() {
         <div className="why-grid">
           <div>
             <div ref={addRef("why-title")} className={`fade-up ${visible["why-title"] ? "visible" : ""}`}>
-              <div className="section-tag">Perché Fixi</div>
-              <h2 className="section-title">Diagnosi precisa.<br />Referto in mano.</h2>
+              <div className="section-tag">{t.perche.tag}</div>
+              <h2 className="section-title">{t.perche.titolo1}<br />{t.perche.titolo2}</h2>
             </div>
 
             <div className="why-list">
-              {[
-                { icon: "🔍", title: "AI con visione", desc: "Il modello vede la tua macchina in tempo reale e analizza codici errore, perdite, componenti." },
-                { icon: "🛠️", title: "Guida passo passo", desc: "Non ti lascia solo. Ti dice esattamente cosa fare, come farlo e in quale ordine." },
-                { icon: "📄", title: "Referto per il tecnico", desc: "Se non riesci da solo, hai un documento con diagnosi e prezzi equi da mostrare al tecnico." },
-                { icon: "🌍", title: "Tutti i brand", desc: "Bosch, Samsung, Indesit, Whirlpool, Miele, LG, Candy e molti altri." },
-              ].map((w, i) => (
+              {["🔍", "🛠️", "📄", "🌍"].map((icon, i) => ({ icon, ...t.perche.elenco[i] })).map((w, i) => (
                 <div
                   key={i}
                   ref={addRef(`why-${i}`)}
@@ -993,8 +1037,8 @@ export default function Home() {
                 >
                   <div className="why-icon">{w.icon}</div>
                   <div className="why-text">
-                    <h3>{w.title}</h3>
-                    <p>{w.desc}</p>
+                    <h3>{w.titolo}</h3>
+                    <p>{w.testo}</p>
                   </div>
                 </div>
               ))}
@@ -1004,24 +1048,24 @@ export default function Home() {
           <div ref={addRef("why-visual")} className={`fade-up ${visible["why-visual"] ? "visible" : ""}`}>
             <div className="why-visual">
               <div style={{ fontSize: "12px", fontWeight: "600", color: "var(--grigio)", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "1px" }}>
-                Esempio referto
+                {t.perche.esempioTitolo}
               </div>
               <div className="referto-mock">
                 <div className="referto-row">
-                  <div className="referto-label">Diagnosi</div>
-                  <div className="referto-value">Filtro pompa scarico intasato. Codice E18 confermato.</div>
+                  <div className="referto-label">{t.perche.referto.diagnosiEtichetta}</div>
+                  <div className="referto-value">{t.perche.referto.diagnosiValore}</div>
                 </div>
                 <div className="referto-row" style={{ borderColor: "#2D9970" }}>
-                  <div className="referto-label" style={{ color: "#2D9970" }}>Soluzione fai-da-te</div>
-                  <div className="referto-value">Pulizia filtro in basso a destra. Guida inclusa nel PDF.</div>
+                  <div className="referto-label" style={{ color: "#2D9970" }}>{t.perche.referto.soluzioneEtichetta}</div>
+                  <div className="referto-value">{t.perche.referto.soluzioneValore}</div>
                 </div>
                 <div className="referto-row" style={{ borderColor: "#854F0B", background: "#FFFBF2" }}>
-                  <div className="referto-label" style={{ color: "#854F0B" }}>Se serve il tecnico</div>
-                  <div className="referto-value">Sostituzione pompa scarico</div>
+                  <div className="referto-label" style={{ color: "#854F0B" }}>{t.perche.referto.tecnicoEtichetta}</div>
+                  <div className="referto-value">{t.perche.referto.tecnicoValore}</div>
                 </div>
                 <div className="referto-row" style={{ borderColor: "#185FA5", background: "#F0F6FF" }}>
-                  <div className="referto-label" style={{ color: "#185FA5" }}>Stima costo</div>
-                  <div className="referto-price">€85–145</div>
+                  <div className="referto-label" style={{ color: "#185FA5" }}>{t.perche.referto.costoEtichetta}</div>
+                  <div className="referto-price">{t.perche.referto.costoValore}</div>
                 </div>
               </div>
             </div>
@@ -1033,9 +1077,9 @@ export default function Home() {
       <section id="prezzi" style={{ background: "white", maxWidth: "100%", padding: "100px 48px" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <div ref={addRef("pricing-title")} className={`fade-up ${visible["pricing-title"] ? "visible" : ""}`}>
-            <div className="section-tag">Prezzi</div>
-            <h2 className="section-title">Semplice e trasparente.</h2>
-            <p className="section-sub">Nessun abbonamento: paghi solo quando hai bisogno.</p>
+            <div className="section-tag">{t.prezzi.tag}</div>
+            <h2 className="section-title">{t.prezzi.titolo}</h2>
+            <p className="section-sub">{t.prezzi.sottotitolo}</p>
           </div>
 
           <div style={{ maxWidth: "380px", marginTop: "60px" }}>
@@ -1045,17 +1089,16 @@ export default function Home() {
               className={`price-card ${visible["price-1"] ? "visible" : ""}`}
               style={{ display: "block", textDecoration: "none", color: "inherit", cursor: "pointer" }}
             >
-              <div className="price-name">Diagnosi singola</div>
-              <div className="price-amount"><sup>€</sup>9<sup>,90</sup></div>
-              <div className="price-period">a sessione · nessun abbonamento</div>
+              <div className="price-name">{t.prezzi.nome}</div>
+              <div className="price-amount">
+                <sup>{t.prezzi.importoValuta}</sup>{t.prezzi.importoIntero}<sup>{t.prezzi.importoCentesimi}</sup>
+              </div>
+              <div className="price-period">{t.prezzi.periodo}</div>
               <ul className="price-features">
-                <li>30 min videochiamata AI</li>
-                <li>Referto PDF scaricabile</li>
-                <li>Guida fai-da-te inclusa</li>
-                <li>Stima costo tecnico</li>
+                {t.prezzi.caratteristiche.map((c, i) => <li key={i}>{c}</li>)}
               </ul>
               <div style={{ marginTop: "24px", background: "var(--verde)", color: "white", textAlign: "center", padding: "13px", borderRadius: "100px", fontWeight: 500, fontSize: "15px" }}>
-                Avvia diagnosi →
+                {t.prezzi.avvia} →
               </div>
             </a>
           </div>
@@ -1066,42 +1109,33 @@ export default function Home() {
       <div className="tecnici-section" id="tecnici">
         <div className="tecnici-inner">
           <div>
-            <div className="section-tag">Per i professionisti</div>
-            <h2 className="section-title">Sei un tecnico?<br /><em style={{ fontStyle: "italic", color: "#5DCAA5" }}>Unisciti a Fixi.</em></h2>
-            <p className="section-sub">Ricevi lavori qualificati con diagnosi già fatta. Nessun costo di iscrizione, nessun credito da acquistare: in questa fase di lancio i contatti non ti costano nulla.</p>
+            <div className="section-tag">{t.tecnici.tag}</div>
+            <h2 className="section-title">{t.tecnici.titolo1}<br /><em style={{ fontStyle: "italic", color: "#5DCAA5" }}>{t.tecnici.titolo2}</em></h2>
+            <p className="section-sub">{t.tecnici.sottotitolo}</p>
 
             <div className="tecnici-benefits">
-              {[
-                { icon: "🎯", title: "Clienti già qualificati", desc: "Arrivano con diagnosi e referto — sai già cosa c'è da fare prima di uscire." },
-                { icon: "💸", title: "Costo zero", desc: "Iscrizione gratuita e nessuna commissione: in fase di lancio i contatti sono gratis." },
-                { icon: "⭐", title: "Costruisci la tua reputazione", desc: "Recensioni verificate, badge qualità, più visibilità con il tempo." },
-              ].map((b, i) => (
+              {["🎯", "💸", "⭐"].map((icon, i) => ({ icon, ...t.tecnici.vantaggi[i] })).map((b, i) => (
                 <div className="tecnici-benefit" key={i}>
                   <div className="tecnici-benefit-icon">{b.icon}</div>
                   <div>
-                    <h3>{b.title}</h3>
-                    <p>{b.desc}</p>
+                    <h3>{b.titolo}</h3>
+                    <p>{b.testo}</p>
                   </div>
                 </div>
               ))}
             </div>
 
             <div className="tecnici-cta">
-              <a href="/iscriviti-tecnico" className="btn-white">Iscriviti gratis →</a>
-              <a href="#" className="btn-ghost-white">Scopri di più</a>
+              <a href="/iscriviti-tecnico" className="btn-white">{t.tecnici.iscriviti} →</a>
+              <a href="#" className="btn-ghost-white">{t.tecnici.scopri}</a>
             </div>
           </div>
 
           <div className="tecnici-stats">
-            {[
-              { num: "€0", label: "Costo iscrizione" },
-              { num: "0%", label: "Commissione sui lavori" },
-              { num: "48h", label: "Tempo medio attivazione" },
-              { num: "∞", label: "Lavori disponibili" },
-            ].map((s, i) => (
+            {t.tecnici.numeri.map((s, i) => (
               <div className="tecnici-stat" key={i}>
-                <div className="tecnici-stat-num">{s.num}</div>
-                <div className="tecnici-stat-label">{s.label}</div>
+                <div className="tecnici-stat-num">{s.valore}</div>
+                <div className="tecnici-stat-label">{s.etichetta}</div>
               </div>
             ))}
           </div>
@@ -1110,18 +1144,18 @@ export default function Home() {
 
       {/* CTA FINALE */}
       <div className="cta-final">
-        <div className="section-tag" style={{ textAlign: "center" }}>Inizia ora</div>
-        <h2 className="section-title">La lavatrice non aspetta.<br /><em className="serif" style={{ color: "var(--verde)" }}>Tu neanche.</em></h2>
-        <p className="section-sub" style={{ margin: "0 auto 40px" }}>Diagnosi completa in 10 minuti. €9,90. Senza appuntamento.</p>
+        <div className="section-tag" style={{ textAlign: "center" }}>{t.finale.tag}</div>
+        <h2 className="section-title">{t.finale.titolo1}<br /><em className="serif" style={{ color: "var(--verde)" }}>{t.finale.titolo2}</em></h2>
+        <p className="section-sub" style={{ margin: "0 auto 40px" }}>{t.finale.sottotitolo}</p>
         <a href="/diagnosi" className="btn-primary" style={{ fontSize: "16px", padding: "18px 36px" }}>
-          Avvia diagnosi →
+          {t.finale.avvia} →
         </a>
         {/* La garanzia sta qui, sotto il pulsante, perché è qui che uno decide
             se fidarsi di un servizio che non conosce — ed è la fiducia
             l'ostacolo, non i €9,90. */}
         <p style={{ margin: "18px auto 0", fontSize: "14px", color: "var(--grigio)", maxWidth: "460px", lineHeight: 1.6 }}>
-          <strong style={{ color: "var(--verde)" }}>Soddisfatto o rimborsato.</strong> Se la diagnosi non ti è
-          stata utile ti restituiamo i €9,90, entro 14 giorni e senza discussioni.
+          <strong style={{ color: "var(--verde)" }}>{t.finale.garanziaTitolo}</strong>{" "}
+          {t.finale.garanziaTesto}
         </p>
       </div>
 
@@ -1131,16 +1165,16 @@ export default function Home() {
         {/* fixi.casa era un dominio mai posseduto, rimasto qui da quando il
             sito viveva su .vercel.app. Dal 03/09/2026 l'indirizzo vero e'
             questo. */}
-        <div>Diagnosi elettrodomestici via AI · fixiai.it</div>
+        <div>{t.footer.descrizione} · fixiai.it</div>
         <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
           {/* Le guide ai guasti: e' da qui che Google raggiunge le pagine
               nuove, quindi il link deve stare su OGNI schermata, non solo
               in una sezione che si visita di rado. */}
-          <a href="/guida" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>Guide</a>
-          <a href="/privacy" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>Privacy</a>
+          {guide ? <a href="/guida" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>{t.footer.guide}</a> : null}
+          <a href="/privacy" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>{t.footer.privacy}</a>
           {/* Anche qui e non solo dentro /diagnosi: l'app si apre su questa
               pagina, ed e' la prima che guarda chi deve segnalare un problema. */}
-          <a href="/stato" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>Stato tecnico</a>
+          <a href="/stato" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>{t.footer.stato}</a>
           <span>© 2026 Fixi</span>
         </div>
       </footer>

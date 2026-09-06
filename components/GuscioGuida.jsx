@@ -7,6 +7,12 @@ import Head from "next/head";
 // del titolo. Qui dentro stanno i colori, i caratteri e le proporzioni della
 // home, cosi' le due meta' del sito sembrano la stessa cosa.
 //
+// Questo guscio e' rimasto in italiano, ed e' voluto: le guide esistono solo
+// in italiano (vedi LINGUE_CON_GUIDE in lib/lingue.js), quindi le uniche
+// pagine che lo usano sono italiane. Metterci il tasto della lingua vorrebbe
+// dire offrire uno spagnolo che porta a un 404. Quando le guide spagnole
+// saranno pronte, qui vanno aggiunti i testi tradotti e <SceltaLingua>.
+//
 // ATTENZIONE al modo in cui il CSS viene passato: dangerouslySetInnerHTML e
 // non <style>{`...`}</style>. Scritto in quel secondo modo React lo tratta
 // come testo, sul server gli apostrofi dei nomi dei caratteri diventano

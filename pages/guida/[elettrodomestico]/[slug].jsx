@@ -119,6 +119,10 @@ export default function Guida({ guida, scheda, altre }) {
 }
 
 export async function getStaticPaths() {
+  // Gli indirizzi qui sotto non dichiarano la lingua, e Next.js in quel caso
+  // li genera solo per quella predefinita: nascono /guida/... e basta.
+  // Insieme a fallback:false e' quello che fa rispondere 404 a
+  // /es/guida/lavadora/no-desagua finche' le guide spagnole non esistono.
   return {
     paths: tutteLeGuide().map((g) => ({
       params: { elettrodomestico: g.elettrodomestico, slug: g.slug },

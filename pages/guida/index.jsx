@@ -1,5 +1,6 @@
 import GuscioGuida from "../../components/GuscioGuida";
 import { elettrodomesticiConGuide, tutteLeGuide, SITO } from "../../lib/guide";
+import { guideDisponibiliIn } from "../../lib/lingue";
 
 // Primo livello delle guide: un riquadro per elettrodomestico.
 //
@@ -63,7 +64,14 @@ export default function IndiceGuide({ elettrodomestici, totale }) {
   );
 }
 
-export async function getStaticProps() {
+export async function getStaticProps({ locale }) {
+  // Le guide esistono solo in italiano (vedi LINGUE_CON_GUIDE in
+  // lib/lingue.js). Nelle altre lingue questa pagina non deve esistere
+  // affatto: mostrare l'indice tradotto con dentro i collegamenti alle guide
+  // italiane vorrebbe dire promettere 70 pagine e consegnarne zero, e Google
+  // vedrebbe /es/guida come un doppione di /guida.
+  if (!guideDisponibiliIn(locale)) return { notFound: true };
+
   return {
     props: {
       elettrodomestici: elettrodomesticiConGuide(),
