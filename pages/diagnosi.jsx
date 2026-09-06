@@ -7,6 +7,8 @@ import { avvisoAggiornamento, pluginDisponibile, LINK_PLAY_STORE } from "../lib/
 import { registra } from "../lib/registro";
 import { prendiPlugin, prendiPluginSubito } from "../lib/plugin-nativo";
 import { messaggioBenvenuto } from "../lib/benvenuto";
+import { testiPer, riempi } from "../lib/testi";
+import { voceDi, prefissoDi } from "../lib/lingue";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
@@ -66,7 +68,8 @@ function ChatBubble({ message }) {
   );
 }
 
-function VideoPanel({ videoRef, isActive, analysisActive }) {
+// Sta fuori da Diagnosi, quindi le parole non le vede: gliele passa chi lo usa.
+function VideoPanel({ videoRef, isActive, analysisActive, testi }) {
   return (
     <div className={styles.videoPanel}>
       <video ref={videoRef} autoPlay muted playsInline className={styles.video} />
@@ -74,14 +77,14 @@ function VideoPanel({ videoRef, isActive, analysisActive }) {
         <div className={styles.videoOverlay}>
           <div className={styles.videoPlaceholder}>
             <span className={styles.cameraIcon}>📷</span>
-            <p>Camera non attiva</p>
+            <p>{testi.cameraSpentaRiquadro}</p>
           </div>
         </div>
       )}
       {isActive && (
         <div className={styles.videoStatus}>
           <span className={`${styles.statusDot} ${analysisActive ? styles.analyzing : ""}`} />
-          {analysisActive ? "AI sta analizzando..." : "In attesa..."}
+          {analysisActive ? testi.staAnalizzando : testi.inAttesa}
         </div>
       )}
     </div>
@@ -89,7 +92,17 @@ function VideoPanel({ videoRef, isActive, analysisActive }) {
 }
 
 // ─── Pagina principale ──────────────────────────────────────────────
-export default function Diagnosi() {
+
+// Le parole arrivano gia' scelte dal server, come sulla home: il browser
+// scarica solo la lingua che serve. Vedi lib/testi.js.
+export async function getStaticProps({ locale }) {
+  return { props: { testi: testiPer(locale), linguaPagina: locale } };
+}
+
+export default function Diagnosi({ testi, linguaPagina }) {
+  // "t" sono le parole di QUESTA pagina: testi.diagnosi. Il resto di testi
+  // (nav, footer...) qui non serve.
+  const t = testi.diagnosi;
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const intervalRef = useRef(null);
@@ -99,7 +112,11 @@ export default function Diagnosi() {
   // Lingua in cui sta andando avanti la conversazione. Serve in due punti:
   // per leggere ad alta voce con la pronuncia giusta e per impostare il
   // microfono, altrimenti l'utente risponde in inglese a un orecchio italiano.
-  const linguaConversazioneRef = useRef("it-IT");
+  // Parte dalla lingua della pagina, non dall'italiano fisso: il primo
+  // messaggio arriva prima che il riconoscitore abbia qualcosa da leggere, e
+  // uno spagnolo se lo sentirebbe pronunciare all'italiana. Vale anche per il
+  // microfono, che con la lingua sbagliata capisce poco o niente.
+  const linguaConversazioneRef = useRef(voceDi(linguaPagina));
 
   const [phase, setPhase] = useState("setup");       // setup | session | report
   const [cameraActive, setCameraActive] = useState(false);
@@ -183,7 +200,7 @@ export default function Diagnosi() {
       return refertoPDF(report, a, b, p);
     } catch (e) {
       console.error("Referto PDF non generato:", e);
-      alert("Non sono riuscito a preparare il PDF. Fattelo mandare per email qui sotto: il referto è identico.");
+      alert(t.avvisi.pdfNonRiuscito);
       return null;
     }
   };
@@ -252,7 +269,7 @@ export default function Diagnosi() {
         );
         setRefertoSalvato(true);
         registra("Scarica: riuscito");
-        alert(`✅ Salvato nei Download del telefono come ${nomeFile}`);
+        alert(riempi(t.avvisi.salvatoNeiDownload, { file: nomeFile }));
       } catch (e) {
         registra("Scarica: fallito", e);
         // Si ripiega sulla condivisione, che funziona ovunque — ma dicendolo
@@ -273,10 +290,12 @@ export default function Diagnosi() {
         const androidVecchio = e?.code === "NON_SUPPORTATO";
         alert(
           senzaPlugin
-            ? "Per salvare direttamente nei Download serve l'ultima versione di Fixi: aggiornala dal Play Store. Intanto apro la condivisione: scegli «Salva su file»."
+            ? t.avvisi.salvataggioVecchiaApp
             : androidVecchio
-            ? "Questo telefono ha una versione di Android che non permette il salvataggio diretto nei Download. Apro la condivisione: scegli «Salva su file»."
-            : `Salvataggio nei Download non riuscito. Apro la condivisione: scegli «Salva su file».\n\nSe puoi, manda questo dettaglio a chi ha fatto l'app: ${e?.code || "-"} ${e?.message || e}`
+            ? t.avvisi.salvataggioAndroidVecchio
+            : riempi(t.avvisi.salvataggioAltro, {
+                dettaglio: `${e?.code || "-"} ${e?.message || e}`,
+              })
         );
         await condividiReferto();
       }
@@ -336,7 +355,7 @@ export default function Diagnosi() {
         // Chiudere il menù senza scegliere non è un errore
         if (/cancel|abort|dismiss/i.test(e?.message || "")) return;
         console.error("Condivisione non riuscita:", e);
-        alert("Non sono riuscito a condividere il PDF. Fattelo mandare per email qui sotto: il referto è identico.");
+        alert(t.avvisi.condivisioneNonRiuscita);
       }
       return;
     }
@@ -402,7 +421,7 @@ export default function Diagnosi() {
     if (loading) return;
     const frame = captureFrame();
     if (!frame) {
-      if (avvisa) alert("Camera non attiva.");
+      if (avvisa) alert(t.avvisi.cameraNonAttiva);
       return;
     }
     // Marcatore diverso da quello dell'analisi automatica: qui l'utente ha
@@ -482,11 +501,10 @@ export default function Diagnosi() {
     sessionStorage.removeItem("Fixi_stripe_session");
     stripeSessionRef.current = null;
     setPagamentoVerificato(false);
-    window.location.href = "/";
+    window.location.href = prefissoDi(linguaPagina) || "/";
   };
 
-  const AVVISO_REFERTO =
-    "Non hai ancora salvato il referto né te lo sei fatto mandare per email: uscendo da qui lo perdi.\n\nVuoi uscire lo stesso?";
+  const AVVISO_REFERTO = t.avvisi.refertoNonSalvato;
 
   const tornaAllaHome = () => {
     if (!refertoSalvato && !emailInviata && !window.confirm(AVVISO_REFERTO)) return;
@@ -563,12 +581,10 @@ useEffect(() => {
       chiudiEVaiAllaHome();
       return;
     }
-    const esci = window.confirm(
-      "Sei nel mezzo di una diagnosi che hai pagato.\n\nSe esci ora la ritrovi da dove l'hai lasciata, per le prossime 2 ore.\n\nVuoi uscire?"
-    );
+    const esci = window.confirm(t.avvisi.diagnosiInCorso);
     registra("risposta all'avviso", esci ? "esce" : "resta");
     // Niente dimenticaSessione qui: la diagnosi resta in memoria apposta.
-    if (esci) window.location.href = "/";
+    if (esci) window.location.href = prefissoDi(linguaPagina) || "/";
     else mettiTappa();
   };
 
@@ -660,12 +676,12 @@ useEffect(() => {
           setPhase("confermaPagamento");
           setTimeout(() => startSession(urlAppliance, urlBrand, urlProblem), 3000);
         } else {
-          alert("Pagamento non confermato. Riprova.");
+          alert(t.avvisi.pagamentoNonConfermato);
         }
       })
       .finally(() => setVerificandoPagamento(false));
   } else if (esitoPagamento === "annullato") {
-    alert("Pagamento annullato. Puoi riprovare quando vuoi.");
+    alert(t.avvisi.pagamentoAnnullato);
   }
 }, []);
 
@@ -690,13 +706,13 @@ useEffect(() => {
       stopPeriodicAnalysis();
       setPhase("setup");
       if (err.name === "NotAllowedError") {
-        alert("⚠️ Hai negato l'accesso alla camera. Per usare Fixi devi consentire l'accesso alla camera nelle impostazioni del browser.");
+        alert(t.avvisi.cameraNegata);
       } else if (err.name === "NotFoundError") {
-        alert("⚠️ Nessuna camera trovata. Assicurati che il dispositivo abbia una camera funzionante.");
+        alert(t.avvisi.cameraAssente);
       } else if (err.name === "NotReadableError") {
-        alert("⚠️ La camera è già in uso da un'altra applicazione. Chiudi Teams, Zoom o altre app e riprova.");
+        alert(t.avvisi.cameraOccupata);
       } else {
-        alert("⚠️ Impossibile accedere alla camera. Controlla i permessi del browser e riprova.");
+        alert(t.avvisi.cameraGenerico);
       }
     }
   };
@@ -706,7 +722,9 @@ useEffect(() => {
   // stessa identica cosa, e tenere due nomi per un solo gesto confonde.
   const spegniFlusso = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
+      // "traccia" e non "t": da quando le parole della pagina si chiamano t,
+      // riusare quel nome qui dentro lo coprirebbe senza dirlo a nessuno.
+      streamRef.current.getTracks().forEach((traccia) => traccia.stop());
       streamRef.current = null;
     }
     setCameraActive(false);
@@ -839,7 +857,7 @@ useEffect(() => {
           const d = await res.json().catch(() => ({}));
           setMessages([
             ...messagesRef.current,
-            { role: "assistant", content: `⚠️ ${d.error || "Pagamento non valido."}` },
+            { role: "assistant", content: `⚠️ ${d.error || t.errori.pagamentoNonValido}` },
           ]);
           return;
         }
@@ -884,12 +902,12 @@ useEffect(() => {
               testoLive += evt.text;
               mostraLive(testoLive);
             } else if (evt.type === "report_start") {
-              mostraLive("📋 Sto preparando il referto…");
+              mostraLive(t.sessione.preparoReferto);
             } else if (evt.type === "done") {
               finalMessage = evt.message || "";
               report = evt.report || null;
             } else if (evt.type === "error") {
-              serverError = evt.error || "Errore del servizio.";
+              serverError = evt.error || t.errori.servizio;
             }
           }
         }
@@ -940,13 +958,13 @@ useEffect(() => {
         }
       } catch (err) {
         console.error("Errore API:", err);
-        let errMsg = "⚠️ Qualcosa è andato storto. Riprova, oppure clicca 📋 Genera referto per salvare la diagnosi raccolta finora.";
+        let errMsg = t.errori.generico;
         if (err.name === "AbortError") {
-          errMsg = "⚠️ La risposta ci sta mettendo troppo. Controlla la connessione e riprova tra un momento.";
+          errMsg = t.errori.troppoLento;
         } else if (err.message && /network|fetch|failed to fetch/i.test(err.message)) {
-          errMsg = "⚠️ Problema di rete. Controlla la connessione a internet e riprova.";
+          errMsg = t.errori.rete;
         } else if (err.message && /50\d|503|non disponibile|richiesto/i.test(err.message)) {
-          errMsg = "⚠️ Servizio AI momentaneamente sovraccarico. Riprova tra qualche secondo.";
+          errMsg = t.errori.sovraccarico;
         }
         // Rimuovi eventuale bolla "in diretta" e mostra l'errore
         setMessages([...messagesRef.current, { role: "assistant", content: errMsg }]);
@@ -980,7 +998,7 @@ if (!frame) return;
 setMessages((prev) => {
   const last = prev[prev.length - 1];
   if (last?.content === "📷 Sto analizzando quello che inquadri...") return prev;
-  return [...prev, { role: "assistant", content: "📷 Sto analizzando quello che inquadri..." }];
+  return [...prev, { role: "assistant", content: t.sessione.staAnalizzandoBolla }];
 });
 await callAI("[FRAME_AUTO]", frame);
 setMessages((prev) => prev.filter(m => m.content !== "📷 Sto analizzando quello che inquadri..."));
@@ -1002,7 +1020,7 @@ setMessages((prev) => prev.filter(m => m.content !== "📷 Sto analizzando quell
   }, []);
 const avviaCheckout = async () => {
   if (!appliance || !problem || !brand) {
-    alert("Compila tutti i campi prima di procedere.");
+    alert(t.avvisi.compilaTutto);
     return;
   }
   // Salva le info prima di andare su Stripe
@@ -1026,7 +1044,7 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
     const currentProblem = overrideProblem || problem;
 
     if (!currentAppliance || !currentProblem) {
-      alert("Seleziona l'elettrodomestico e descrivi il problema.");
+      alert(t.avvisi.selezionaElettrodomestico);
       return;
     }
     await startCamera();
@@ -1035,7 +1053,13 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
     // Su misura dell'elettrodomestico scelto: vedi lib/benvenuto.js
     const welcomeMsg = {
       role: "assistant",
-      content: messaggioBenvenuto(currentAppliance, currentBrand, currentProblem),
+      content: messaggioBenvenuto(
+        currentAppliance,
+        currentBrand,
+        currentProblem,
+        t.benvenuto,
+        t.elettrodomestici[currentAppliance]
+      ),
     };
     sessionStartRef.current = Date.now();
     sessioneTokenRef.current = null;
@@ -1059,11 +1083,11 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
   const richiediRimborso = async () => {
     const email = (rimborsoEmail || emailUtente || "").trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      alert("Inserisci l'indirizzo email che hai usato per il pagamento.");
+      alert(t.avvisi.rimborsoEmail);
       return;
     }
     if (rimborsoMotivo.trim().length < 10) {
-      alert("Scrivi in due righe cosa non ha funzionato: serve a noi per decidere, e per non ripetere l'errore.");
+      alert(t.avvisi.rimborsoMotivo);
       return;
     }
     setRimborsoLoading(true);
@@ -1085,10 +1109,10 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
         setRimborsoInviato(true);
         setMostraRimborso(false);
       } else {
-        alert(dati.error || "Non sono riuscito a inviare la richiesta. Riprova.");
+        alert(dati.error || t.avvisi.rimborsoNonInviato);
       }
     } catch {
-      alert("⚠️ Problema di rete. Riprova.");
+      alert(t.avvisi.rete);
     } finally {
       setRimborsoLoading(false);
     }
@@ -1097,11 +1121,11 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
   // ── Richiesta tecnico dal referto ───────────────────────────────
   const richiediTecnico = async () => {
     if (!tecForm.nome.trim() || !tecForm.telefono.trim()) {
-      alert("Inserisci nome e telefono: servono al tecnico per contattarti.");
+      alert(t.avvisi.tecnicoDati);
       return;
     }
     if (!/^\d{5}$/.test(tecForm.cap.trim())) {
-      alert("Inserisci un CAP valido di 5 cifre.");
+      alert(t.avvisi.tecnicoCap);
       return;
     }
     setTecLoading(true);
@@ -1125,7 +1149,7 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
         setTecEsito(data);
       }
     } catch {
-      alert("⚠️ Problema di rete. Riprova.");
+      alert(t.avvisi.rete);
     } finally {
       setTecLoading(false);
     }
@@ -1138,7 +1162,7 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
     sessionStorage.setItem("Fixi_report_appliance", appliance);
     sessionStorage.setItem("Fixi_report_brand", brand);
     sessionStorage.setItem("Fixi_report_problem", problem);
-    await callAI("Genera ora il referto finale con diagnosi, soluzione e stima costi.");
+    await callAI(t.sessione.chiediReferto);
   };
 
   // ── Rendering ──────────────────────────────────────────────────
@@ -1288,7 +1312,7 @@ const avviaAscolto = async () => {
       const { available } = await SR.available();
       registra("Microfono: disponibile?", available);
       if (!available) {
-        alert("Il riconoscimento vocale non è disponibile su questo telefono. Puoi scrivere il messaggio.");
+        alert(t.avvisi.vocaleNonDisponibile);
         return;
       }
       let stato = await SR.checkPermissions();
@@ -1296,7 +1320,7 @@ const avviaAscolto = async () => {
         stato = await SR.requestPermissions();
       }
       if (stato.speechRecognition !== "granted") {
-        alert("Per dettare serve il permesso del microfono: puoi attivarlo dalle impostazioni del telefono.");
+        alert(t.avvisi.vocalePermesso);
         return;
       }
       // Si ascolta nella lingua in cui Fixi ha appena parlato, ma solo se il
@@ -1335,7 +1359,7 @@ const avviaAscolto = async () => {
       // Riconoscimento finito senza capire niente. Prima qui non succedeva
       // nulla: il pallino rosso tornava microfono e basta, e chi provava
       // vedeva un pulsante che "non fa niente" per quanto lo premesse.
-      alert("Non ho capito quello che hai detto. Riprova parlando vicino al telefono, oppure scrivi il messaggio nella casella.");
+      alert(t.avvisi.vocaleNonCapito);
     } catch (err) {
       setAscoltoAttivo(false);
       registra("Microfono: errore", err);
@@ -1343,17 +1367,14 @@ const avviaAscolto = async () => {
       // Prima qui c'era solo il console.error: per chi usa l'app il pulsante
       // sembrava rotto e non c'era modo di capire perché. Il messaggio tecnico
       // si porta dietro il motivo vero, che è quello che serve per aggiustare.
-      alert(
-        "Non sono riuscito ad avviare la dettatura. Puoi scrivere il messaggio nella casella.\n\n" +
-          `Dettaglio: ${err?.message || err}`
-      );
+      alert(riempi(t.avvisi.vocaleNonAvviata, { dettaglio: err?.message || err }));
     }
     return;
   }
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    alert("Il tuo browser non supporta il riconoscimento vocale. Usa Chrome.");
+    alert(t.avvisi.vocaleBrowser);
     return;
   }
   const recognition = new SpeechRecognition();
@@ -1377,8 +1398,8 @@ const avviaAscolto = async () => {
     if (e?.error === "no-speech" || e?.error === "aborted") return;
     const spiegazione =
       e?.error === "not-allowed"
-        ? "Il permesso del microfono è stato negato: puoi darlo dalle impostazioni del browser."
-        : `Dettatura non riuscita (${e?.error || "motivo sconosciuto"}). Puoi scrivere il messaggio.`;
+        ? t.avvisi.vocaleNegatoBrowser
+        : riempi(t.avvisi.vocaleAltro, { motivo: e?.error || "?" });
     alert(spiegazione);
   };
   recognitionRef.current = recognition;
@@ -1406,10 +1427,8 @@ if (phase === "confermaPagamento") {
       <div className={styles.setupCard} style={{ textAlign: "center" }}>
         <div style={{ fontSize: "48px", marginBottom: "16px" }}>✅</div>
         <div className={styles.logo}>Fixi</div>
-        <h1 style={{ marginTop: "8px" }}>Pagamento confermato!</h1>
-        <p className={styles.subtitle}>
-          Ottimo! Tra pochi secondi inizia la tua sessione di videodiagnosi.
-        </p>
+        <h1 style={{ marginTop: "8px" }}>{t.pagato.titolo}</h1>
+        <p className={styles.subtitle}>{t.pagato.sottotitolo}</p>
         <div style={{ 
           background: "#e8f5f0", 
           borderRadius: "10px", 
@@ -1418,13 +1437,13 @@ if (phase === "confermaPagamento") {
           fontSize: "13px",
           color: "#0F6E56"
         }}>
-          <p><strong>Preparati:</strong></p>
-          <p>⚠️ Stacca la spina dell'elettrodomestico</p>
-          <p>💡 Assicurati di avere buona illuminazione</p>
-          <p>📷 Tieni il telefono pronto per inquadrare</p>
+          <p><strong>{t.pagato.preparati}</strong></p>
+          <p>⚠️ {t.pagato.spina}</p>
+          <p>💡 {t.pagato.luce}</p>
+          <p>📷 {t.pagato.telefono}</p>
         </div>
         <div style={{ marginTop: "16px", color: "#999", fontSize: "13px" }}>
-          La sessione inizia automaticamente...
+          {t.pagato.attesa}
         </div>
       </div>
     </div>
@@ -1441,7 +1460,7 @@ if (phase === "confermaPagamento") {
           <div className={styles.modaleSfondo} role="dialog" aria-modal="true">
             <div className={styles.modale}>
               <div className={styles.modaleIcona}>⬆️</div>
-              <h2 className={styles.modaleTitolo}>Aggiorna Fixi</h2>
+              <h2 className={styles.modaleTitolo}>{t.aggiorna.titolo}</h2>
               <p className={styles.modaleTesto}>{avvisoVersione}</p>
               <a
                 className={styles.modaleAzione}
@@ -1450,10 +1469,10 @@ if (phase === "confermaPagamento") {
                 rel="noreferrer"
                 onClick={() => rimandaAvviso()}
               >
-                Apri il Play Store
+                {t.aggiorna.apri}
               </a>
               <button className={styles.modaleDopo} onClick={rimandaAvviso}>
-                Più tardi
+                {t.aggiorna.dopo}
               </button>
             </div>
           </div>
@@ -1461,10 +1480,8 @@ if (phase === "confermaPagamento") {
 
         <div className={styles.setupCard}>
           <div className={styles.logo}>Fixi</div>
-          <h1>Diagnosi elettrodomestico</h1>
-          <p className={styles.subtitle}>
-            Risparmia fino a €70 sulla visita del tecnico. La nostra AI diagnostica il problema via videochiamata.
-          </p>
+          <h1>{t.setup.titolo}</h1>
+          <p className={styles.subtitle}>{t.setup.sottotitolo}</p>
 
           {/* Un riquadro e non una finestrella di sistema: aprire l'app e
               trovarsi subito un "OK / Annulla" è sgradevole, e chi sbaglia
@@ -1476,32 +1493,40 @@ if (phase === "confermaPagamento") {
             <div className={styles.ripresaBox}>
               <p className={styles.ripresaTitolo}>
                 {sessioneRecuperabile.report
-                  ? "Hai un referto non ancora salvato"
-                  : "Hai una diagnosi lasciata a metà"}
+                  ? t.setup.ripresaTitoloReferto
+                  : t.setup.ripresaTitoloMeta}
               </p>
               <p className={styles.ripresaTesto}>
+                {/* Il nome dell'elettrodomestico resta quello che l'utente ha
+                    scelto: e' un dato della sua sessione, non un'etichetta. */}
                 {[sessioneRecuperabile.brand, sessioneRecuperabile.appliance].filter(Boolean).join(" ") ||
-                  "Diagnosi in corso"}
+                  t.setup.ripresaSenzaNome}
                 {sessioneRecuperabile.problem ? ` — "${sessioneRecuperabile.problem}"` : ""}
                 <br />
                 {sessioneRecuperabile.report
-                  ? "Puoi riaprirlo e salvarlo, senza pagare di nuovo."
-                  : "Puoi riprenderla da dove eri, senza pagare di nuovo."}
+                  ? t.setup.ripresaTestoReferto
+                  : t.setup.ripresaTestoMeta}
               </p>
               <div className={styles.ripresaAzioni}>
                 <button className={styles.ripresaSi} onClick={riprendiSessione}>
-                  {sessioneRecuperabile.report ? "Riapri il referto" : "Riprendi la diagnosi"}
+                  {sessioneRecuperabile.report ? t.setup.ripresaApriReferto : t.setup.ripresaRiprendi}
                 </button>
                 <button className={styles.ripresaNo} onClick={scartaSessione}>
-                  Ricomincia
+                  {t.setup.ripresaRicomincia}
                 </button>
               </div>
             </div>
           )}
 
           <div className={styles.formGroup}>
-            <label>Che elettrodomestico?</label>
+            <label>{t.setup.domanda}</label>
             <div className={styles.applianceGrid}>
+              {/* "nome" resta in italiano in TUTTE le lingue, ed e' voluto: e'
+                  il valore che viaggia verso pages/api/diagnosi.js e verso la
+                  tabella di lib/benvenuto.js, che sono scritti in italiano.
+                  Tradurlo qui manderebbe "Lavadora" a un prompt che si aspetta
+                  "Lavatrice", e l'avvertenza di sicurezza sull'acqua non
+                  arriverebbe piu'. Si traduce solo l'etichetta scritta sopra. */}
               {[
                 { nome: "Lavatrice", icona: "🫧" },
                 { nome: "Lavastoviglie", icona: "🍽️" },
@@ -1516,26 +1541,26 @@ if (phase === "confermaPagamento") {
                   className={`${styles.applianceBtn} ${appliance === nome ? styles.selected : ""}`}
                   onClick={() => setAppliance(nome)}
                 >
-                  {icona} {nome}
+                  {icona} {t.elettrodomestici[nome] || nome}
                 </button>
               ))}
             </div>
           </div>
 
           <div className={styles.formGroup}>
-            <label>Marca</label>
+            <label>{t.setup.marca}</label>
             <input
               type="text"
-              placeholder="es. Bosch, Samsung, Indesit..."
+              placeholder={t.setup.marcaEsempio}
               value={brand}
 onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1))}              className={styles.input}
             />
           </div>
 
           <div className={styles.formGroup}>
-            <label>Descrivi il problema</label>
+            <label>{t.setup.problema}</label>
             <textarea
-              placeholder="es. Non scarica l'acqua, codice errore E18, fa rumore strano..."
+              placeholder={t.setup.problemaEsempio}
               value={problem}
               onChange={(e) => setProblem(e.target.value)}
               className={styles.textarea}
@@ -1545,7 +1570,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
 
           {verificandoPagamento ? (
   <button className={styles.startBtn} disabled>
-    ⏳ Verifica pagamento...
+    ⏳ {t.setup.verifica}
   </button>
 ) : pagamentoVerificato ? (
   <>
@@ -1554,7 +1579,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
     onClick={startSession}
     disabled={!appliance || !problem || !brand}
   >
-    🎥 Avvia videodiagnosi
+    🎥 {t.setup.avvia}
   </button>
 </>
 ) : (
@@ -1564,11 +1589,9 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
       onClick={avviaCheckout}
       disabled={!appliance || !problem || !brand}
     >
-      💳 Paga €9,90 e avvia diagnosi
+      💳 {t.setup.paga}
     </button>
-    <p className={styles.disclaimer}>
-      Pagamento sicuro con Stripe. Riceverai il referto PDF al termine.
-    </p>
+    <p className={styles.disclaimer}>{t.setup.pagamentoSicuro}</p>
   </>
 )}
 
@@ -1578,22 +1601,22 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
               stessa posizione della via d'uscita del referto, se no non la si
               riconosce come tale. */}
           <a
-            href="/"
+            href={prefissoDi(linguaPagina) || "/"}
             style={{
               display: "block", textAlign: "center", margin: "18px auto 4px",
               color: "#8A8A85", fontSize: "14px", textDecoration: "underline",
             }}
           >
-            ← Torna alla home
+            ← {t.setup.tornaHome}
           </a>
 
           <p className={styles.disclaimer}>
-            La camera viene usata solo durante la sessione. Nessun video viene salvato.
+            {t.setup.camera}
             {" "}
             {/* Unico modo per aprire la diagnostica dentro l'app, che non ha
                 barra degli indirizzi. Volutamente poco appariscente: serve a
                 chi segnala un problema, non all'utente normale. */}
-            <a href="/stato" className={styles.linkStato}>Stato tecnico</a>
+            <a href={`${prefissoDi(linguaPagina)}/stato`} className={styles.linkStato}>{t.setup.statoTecnico}</a>
           </p>
         </div>
       </div>
@@ -1606,37 +1629,43 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
         <div className={styles.reportCard}>
           <div className={styles.reportHeader}>
             <div className={styles.logo}>Fixi</div>
-            <h2>📋 Referto diagnosi</h2>
-            <p className={styles.reportDate}>{new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}</p>
+            <h2>📋 {t.referto.titolo}</h2>
+            {/* La data segue la lingua della pagina: "6 settembre 2026" per un
+                italiano, "September 6, 2026" per un inglese. Prima era fissa su
+                it-IT, e un tedesco si sarebbe visto il mese in italiano dentro
+                una pagina tedesca. */}
+            <p className={styles.reportDate}>
+              {new Date().toLocaleDateString(linguaPagina, { day: "numeric", month: "long", year: "numeric" })}
+            </p>
           </div>
 
           {report && (
             <div className={styles.reportBody}>
               <div className={styles.reportSection}>
-                <h3>🔍 Diagnosi</h3>
+                <h3>🔍 {t.referto.diagnosi}</h3>
                 <p>{report.diagnosis}</p>
               </div>
 
               {report.diyPossible && (
                 <div className={`${styles.reportSection} ${styles.diy}`}>
-                  <h3>✅ Soluzione fai-da-te</h3>
+                  <h3>✅ {t.referto.faiDaTe}</h3>
                   <p>{report.diyInstructions}</p>
                 </div>
               )}
 
               {report.sparePart && (
                 <div className={`${styles.reportSection} ${styles.part}`}>
-                  <h3>🔧 Pezzo da sostituire</h3>
+                  <h3>🔧 {t.referto.pezzo}</h3>
                   <p><strong>{report.sparePart.name}</strong></p>
-                  <p>Codice: {report.sparePart.code}</p>
-                  <p>Prezzo stimato: {report.sparePart.price}</p>
+                  <p>{t.referto.codice} {report.sparePart.code}</p>
+                  <p>{t.referto.prezzoStimato} {report.sparePart.price}</p>
                 </div>
               )}
 
               <div className={`${styles.reportSection} ${styles.cost}`}>
-                <h3>💰 Stima intervento tecnico</h3>
+                <h3>💰 {t.referto.stimaIntervento}</h3>
                 <p className={styles.priceEstimate}>{report.technicianCost}</p>
-                <p className={styles.priceNote}>Mostra questo referto al tecnico per ottenere un prezzo equo.</p>
+                <p className={styles.priceNote}>{t.referto.mostraAlTecnico}</p>
               </div>
             </div>
           )}
@@ -1653,7 +1682,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
                 return scaricaReferto();
               }}
             >
-              📥 Scarica
+              📥 {t.referto.scarica}
             </button>
             <button
               className={styles.shareBtn}
@@ -1662,7 +1691,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
                 return condividiReferto();
               }}
             >
-              📤 Condividi
+              📤 {t.referto.condividi}
             </button>
           </div>
 
@@ -1693,7 +1722,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
                 setPagamentoVerificato(false);
               }}
             >
-              🔄 Nuova diagnosi
+              🔄 {t.referto.nuova}
             </button>
           </div>
 
@@ -1702,7 +1731,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
   <div className={styles.emailRow}>
     <input
       type="email"
-      placeholder="Invia referto via email..."
+      placeholder={t.referto.emailSegnaposto}
       value={emailUtente}
       onChange={(e) => setEmailUtente(e.target.value)}
       className={styles.input}
@@ -1713,7 +1742,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
       onClick={async () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailUtente || !emailRegex.test(emailUtente)) {
-          alert("Inserisci un indirizzo email valido.");
+          alert(t.avvisi.emailNonValida);
           return;
         }
         setEmailLoading(true);
@@ -1731,26 +1760,26 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
           });
           const data = await res.json().catch(() => ({}));
           if (data.inviata) setEmailInviata(true);
-          else alert("Non è stato possibile inviare l'email. Riprova, oppure scarica il PDF.");
+          else alert(t.avvisi.emailNonInviata);
         } catch {
-          alert("⚠️ Problema di rete: email non inviata. Controlla la connessione e riprova.");
+          alert(t.avvisi.reteEmail);
         } finally {
           setEmailLoading(false);
         }
       }}
     >
-      {emailLoading ? "⏳ Invio..." : "✉️ Invia"}
+      {emailLoading ? `⏳ ${t.referto.invio}` : `✉️ ${t.referto.invia}`}
     </button>
   </div>
 ) : (
   <p style={{ textAlign: "center", color: "#0F6E56", fontSize: "13px", marginTop: "12px" }}>
-    ✅ Referto inviato a {emailUtente}!
+    ✅ {riempi(t.referto.inviato, { email: emailUtente })}
   </p>
 )}
 {!feedbackInviato ? (
   <div style={{ marginTop: "16px", background: "#f5f5f3", borderRadius: "10px", padding: "14px" }}>
     <p style={{ fontSize: "13px", fontWeight: "500", marginBottom: "10px", textAlign: "center" }}>
-      La diagnosi era utile?
+      {t.referto.utile}
     </p>
     <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginBottom: "10px" }}>
       {[1,2,3,4,5].map((v) => (
@@ -1774,19 +1803,19 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
         onClick={() => inviaFeedback(true)}
         style={{ background: "#1D9E75", color: "white", border: "none", borderRadius: "8px", padding: "8px 16px", fontSize: "13px", cursor: "pointer" }}
       >
-        ✅ Risolto da solo
+        ✅ {t.referto.risoltoDaSolo}
       </button>
       <button
         onClick={() => inviaFeedback(false)}
         style={{ background: "#f5f5f3", color: "#333", border: "1px solid #e0e0de", borderRadius: "8px", padding: "8px 16px", fontSize: "13px", cursor: "pointer" }}
       >
-        ❌ Serve il tecnico
+        ❌ {t.referto.serveTecnico}
       </button>
     </div>
   </div>
 ) : (
   <p style={{ textAlign: "center", color: "#0F6E56", fontSize: "13px", marginTop: "12px" }}>
-    Grazie per il feedback! 🙏
+    {t.referto.grazieFeedback}
   </p>
 )}
 
@@ -1795,47 +1824,53 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
   {tecEsito ? (
     <div style={{ textAlign: "center" }}>
       <p style={{ fontSize: "15px", fontWeight: 600, marginBottom: "6px" }}>
-        ✅ Richiesta inviata!
+        ✅ {t.tecnico.inviata}
       </p>
       <p style={{ fontSize: "13px", color: "#444", lineHeight: 1.6 }}>
+        {/* Singolare e plurale sono due frasi intere, non una con il suffisso
+            attaccato al volo: fuori dall'italiano la differenza non e' una
+            lettera finale, e il rumeno ha una forma sua per i numeri fino a 19. */}
         {tecEsito.tecniciContattati > 0
-          ? `Abbiamo avvisato ${tecEsito.tecniciContattati} tecnic${tecEsito.tecniciContattati === 1 ? "o" : "i"} della tua zona con il referto già pronto. Il primo disponibile ti chiamerà al numero che hai lasciato.`
-          : "Al momento non ci sono tecnici attivi nella tua zona: abbiamo registrato la richiesta e ti contatteremo appena ne troviamo uno."}
+          ? riempi(
+              tecEsito.tecniciContattati === 1 ? t.tecnico.avvisatoUno : t.tecnico.avvisatiTanti,
+              { quanti: tecEsito.tecniciContattati }
+            )
+          : t.tecnico.nessuno}
       </p>
     </div>
   ) : (
     <>
       <p style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>
-        🔧 Preferisci un tecnico?
+        🔧 {t.tecnico.preferisci}
       </p>
       <p style={{ fontSize: "12px", color: "#555", marginBottom: "12px" }}>
-        Inviamo il referto ai tecnici della tua zona: il primo disponibile ti contatta. Gratis e senza impegno.
+        {t.tecnico.spiegazione}
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
         <input
           type="text"
-          placeholder="Nome *"
+          placeholder={t.tecnico.nome}
           value={tecForm.nome}
           onChange={(e) => setTecForm({ ...tecForm, nome: e.target.value })}
           className={styles.input}
         />
         <input
           type="tel"
-          placeholder="Telefono *"
+          placeholder={t.tecnico.telefono}
           value={tecForm.telefono}
           onChange={(e) => setTecForm({ ...tecForm, telefono: e.target.value })}
           className={styles.input}
         />
         <input
           type="text"
-          placeholder="Città"
+          placeholder={t.tecnico.citta}
           value={tecForm.citta}
           onChange={(e) => setTecForm({ ...tecForm, citta: e.target.value })}
           className={styles.input}
         />
         <input
           type="text"
-          placeholder="CAP *"
+          placeholder={t.tecnico.cap}
           maxLength={5}
           value={tecForm.cap}
           onChange={(e) => setTecForm({ ...tecForm, cap: e.target.value.replace(/\D/g, "") })}
@@ -1851,7 +1886,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
           cursor: "pointer", opacity: tecLoading ? 0.7 : 1,
         }}
       >
-        {tecLoading ? "⏳ Invio in corso..." : "📨 Trova un tecnico nella mia zona"}
+        {tecLoading ? `⏳ ${t.tecnico.invioInCorso}` : `📨 ${t.tecnico.trova}`}
       </button>
     </>
   )}
@@ -1865,23 +1900,23 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
     un rimborso, i voti smetterebbero di essere sinceri. */}
 {rimborsoInviato ? (
   <p style={{ margin: "20px 0 0", fontSize: "13px", color: "#0F6E56", textAlign: "center", lineHeight: 1.6 }}>
-    ✅ Richiesta ricevuta. Ti rispondiamo per email entro pochi giorni.
+    ✅ {t.rimborso.ricevuta}
   </p>
 ) : mostraRimborso ? (
   <div style={{ marginTop: "20px", background: "#FAF8F3", border: "1px solid #E8E4DC", borderRadius: "12px", padding: "14px 16px" }}>
     <p style={{ margin: "0 0 10px", fontSize: "13px", color: "#55655f", lineHeight: 1.5 }}>
-      Raccontaci cosa non ha funzionato. Se la diagnosi non ti è stata utile ti restituiamo i €9,90.
+      {t.rimborso.racconta}
     </p>
     <input
       type="email"
-      placeholder="Email usata per il pagamento"
+      placeholder={t.rimborso.email}
       value={rimborsoEmail}
       onChange={(e) => setRimborsoEmail(e.target.value)}
       className={styles.input}
       style={{ width: "100%", marginBottom: "8px" }}
     />
     <textarea
-      placeholder="Perché non ti è servita?"
+      placeholder={t.rimborso.motivo}
       value={rimborsoMotivo}
       onChange={(e) => setRimborsoMotivo(e.target.value)}
       rows={3}
@@ -1898,7 +1933,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
           fontFamily: "inherit", cursor: "pointer", opacity: rimborsoLoading ? 0.7 : 1,
         }}
       >
-        {rimborsoLoading ? "⏳ Invio..." : "Invia la richiesta"}
+        {rimborsoLoading ? `⏳ ${t.rimborso.invio}` : t.rimborso.invia}
       </button>
       <button
         onClick={() => setMostraRimborso(false)}
@@ -1908,7 +1943,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
           fontFamily: "inherit", cursor: "pointer",
         }}
       >
-        Annulla
+        {t.rimborso.annulla}
       </button>
     </div>
   </div>
@@ -1926,7 +1961,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
       cursor: "pointer", padding: "6px",
     }}
   >
-    La diagnosi non ti è stata utile? Chiedi il rimborso
+    {t.rimborso.chiedi}
   </button>
 )}
 
@@ -1941,7 +1976,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
     textDecoration: "underline", cursor: "pointer", padding: "8px",
   }}
 >
-  ← Torna alla home
+  ← {t.referto.tornaHome}
 </button>
         </div>
       </div>
@@ -1965,7 +2000,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
     voceAttivaRef.current = nuovoValore;
     window.speechSynthesis.cancel();
   }}
-            title={voceAttiva ? "Silenzia voce" : "Attiva voce"}
+            title={voceAttiva ? t.sessione.silenzia : t.sessione.attivaVoce}
           >
             {voceAttiva ? "🔊" : "🔇"}
           </button>
@@ -1975,20 +2010,20 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
               if (cameraActive) spegniFlusso();
               else startCamera();
             }}
-            title={cameraActive ? "Disattiva camera" : "Attiva camera"}
+            title={cameraActive ? t.sessione.spegniCamera : t.sessione.accendiCamera}
           >
-            {cameraActive ? "📷" : "📷 Off"}
+            {cameraActive ? "📷" : `📷 ${t.sessione.cameraSpenta}`}
           </button>
           <button
             className={styles.endBtn}
             onClick={() => analizzaOra(true)}
             disabled={loading}
-            title="Analizza quello che inquadri ora (o premi un tasto del volume)"
+            title={t.sessione.analizzaSpiega}
           >
-            📷 Analizza
+            📷 {t.sessione.analizza}
           </button>
 <button className={styles.endBtn} onClick={requestReport}>
-  📋 Genera referto
+  📋 {t.sessione.generaReferto}
 </button>
         </div>
       </div>
@@ -1998,6 +2033,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
           videoRef={videoRef}
           isActive={cameraActive}
           analysisActive={analysisActive}
+          testi={t.sessione}
         />
 
         <div className={styles.chatPanel}>
@@ -2031,7 +2067,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
       return ascoltoAttivo ? fermaAscolto() : avviaAscolto();
     }}
     disabled={loading}
-    title={ascoltoAttivo ? "Tocca per smettere" : "Tocca e parla"}
+    title={ascoltoAttivo ? t.sessione.toccaPerSmettere : t.sessione.toccaEParla}
   >
     {ascoltoAttivo ? "🔴" : "🎤"}
   </button>
@@ -2041,7 +2077,7 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
     value={inputText}
     onChange={(e) => setInputText(e.target.value)}
     onKeyDown={(e) => e.key === "Enter" && handleSend()}
-    placeholder="Parla o scrivi..."
+    placeholder={t.sessione.parlaOScrivi}
     className={styles.chatInput}
     disabled={loading}
   />

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import SceltaLingua from "../components/SceltaLingua";
 import { testiPer } from "../lib/testi";
-import { guideDisponibiliIn, LINGUE, PREDEFINITA } from "../lib/lingue";
+import { guideDisponibiliIn, prefissoDi, LINGUE, PREDEFINITA } from "../lib/lingue";
 import { SITO } from "../lib/guide";
 
 // L'indirizzo di una lingua: l'italiano non ha prefisso (fixiai.it), le altre
@@ -21,13 +21,16 @@ export async function getStaticProps({ locale }) {
       guide: guideDisponibiliIn(locale),
       canonical: indirizzo(locale),
       alternative: LINGUE.map((l) => ({ lingua: l.codice, url: indirizzo(l.codice) })),
+      // Da mettere davanti a ogni indirizzo interno, se no dalla home
+      // spagnola si finisce sulla diagnosi italiana: vedi prefissoDi().
+      pre: prefissoDi(locale),
     },
   };
 }
 
 // Tutte le parole di questa pagina stanno in testi/<lingua>.js. Qui dentro
 // restano solo impaginazione e comportamento — vedi il commento in testi/it.js.
-export default function Home({ testi: t, guide, canonical, alternative }) {
+export default function Home({ testi: t, guide, canonical, alternative, pre }) {
   const [scrollY, setScrollY] = useState(0);
   const [visible, setVisible] = useState({});
   const sectionRefs = useRef({});
@@ -902,7 +905,7 @@ export default function Home({ testi: t, guide, canonical, alternative }) {
 
       {/* NAV */}
       <nav className={scrollY > 50 ? "scrolled" : ""}>
-        <a href="/" className="nav-logo">Fixi</a>
+        <a href={pre || "/"} className="nav-logo">Fixi</a>
         <ul className="nav-links">
           <li><a href="#come-funziona">{t.nav.comeFunziona}</a></li>
           {/* Le guide stanno nel menu, non solo nel footer. Chi arriva non e'
@@ -910,13 +913,13 @@ export default function Home({ testi: t, guide, canonical, alternative }) {
               va, mentre chi prova da solo e non ce la fa arriva alla diagnosi
               gia' convinto. E' il percorso vero — problema, tentativo, resa —
               e prima il sito offriva solo l'ultimo passo. */}
-          {guide ? <li className="nav-guide"><a href="/guida">{t.nav.guide}</a></li> : null}
+          {guide ? <li className="nav-guide"><a href={`${pre}/guida`}>{t.nav.guide}</a></li> : null}
           <li><a href="#prezzi">{t.nav.prezzi}</a></li>
           <li><a href="#tecnici">{t.nav.tecnici}</a></li>
           {/* Il tasto della lingua sta prima del pulsante verde e non dopo:
               in fondo alla barra ci va la cosa che vogliamo far cliccare. */}
           <li className="nav-lingua"><SceltaLingua testi={t.lingua} /></li>
-          <li><a href="/diagnosi" className="btn-nav">{t.nav.avvia}</a></li>
+          <li><a href={`${pre}/diagnosi`} className="btn-nav">{t.nav.avvia}</a></li>
         </ul>
       </nav>
 
@@ -936,7 +939,7 @@ export default function Home({ testi: t, guide, canonical, alternative }) {
               {t.hero.sottotitolo}
             </p>
             <div className="hero-cta">
-              <a href="/diagnosi" className="btn-primary">
+              <a href={`${pre}/diagnosi`} className="btn-primary">
                 {t.hero.avvia} →
               </a>
               <a href="#come-funziona" className="btn-ghost">
@@ -1084,7 +1087,7 @@ export default function Home({ testi: t, guide, canonical, alternative }) {
 
           <div style={{ maxWidth: "380px", marginTop: "60px" }}>
             <a
-              href="/diagnosi"
+              href={`${pre}/diagnosi`}
               ref={addRef("price-1")}
               className={`price-card ${visible["price-1"] ? "visible" : ""}`}
               style={{ display: "block", textDecoration: "none", color: "inherit", cursor: "pointer" }}
@@ -1126,7 +1129,7 @@ export default function Home({ testi: t, guide, canonical, alternative }) {
             </div>
 
             <div className="tecnici-cta">
-              <a href="/iscriviti-tecnico" className="btn-white">{t.tecnici.iscriviti} →</a>
+              <a href={`${pre}/iscriviti-tecnico`} className="btn-white">{t.tecnici.iscriviti} →</a>
               <a href="#" className="btn-ghost-white">{t.tecnici.scopri}</a>
             </div>
           </div>
@@ -1147,7 +1150,7 @@ export default function Home({ testi: t, guide, canonical, alternative }) {
         <div className="section-tag" style={{ textAlign: "center" }}>{t.finale.tag}</div>
         <h2 className="section-title">{t.finale.titolo1}<br /><em className="serif" style={{ color: "var(--verde)" }}>{t.finale.titolo2}</em></h2>
         <p className="section-sub" style={{ margin: "0 auto 40px" }}>{t.finale.sottotitolo}</p>
-        <a href="/diagnosi" className="btn-primary" style={{ fontSize: "16px", padding: "18px 36px" }}>
+        <a href={`${pre}/diagnosi`} className="btn-primary" style={{ fontSize: "16px", padding: "18px 36px" }}>
           {t.finale.avvia} →
         </a>
         {/* La garanzia sta qui, sotto il pulsante, perché è qui che uno decide
@@ -1170,11 +1173,11 @@ export default function Home({ testi: t, guide, canonical, alternative }) {
           {/* Le guide ai guasti: e' da qui che Google raggiunge le pagine
               nuove, quindi il link deve stare su OGNI schermata, non solo
               in una sezione che si visita di rado. */}
-          {guide ? <a href="/guida" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>{t.footer.guide}</a> : null}
-          <a href="/privacy" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>{t.footer.privacy}</a>
+          {guide ? <a href={`${pre}/guida`} style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>{t.footer.guide}</a> : null}
+          <a href={`${pre}/privacy`} style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>{t.footer.privacy}</a>
           {/* Anche qui e non solo dentro /diagnosi: l'app si apre su questa
               pagina, ed e' la prima che guarda chi deve segnalare un problema. */}
-          <a href="/stato" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>{t.footer.stato}</a>
+          <a href={`${pre}/stato`} style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>{t.footer.stato}</a>
           <span>© 2026 Fixi</span>
         </div>
       </footer>
