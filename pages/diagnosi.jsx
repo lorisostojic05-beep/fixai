@@ -585,9 +585,23 @@ useEffect(() => {
 useEffect(() => {
   let vivo = true;
   if (!dentroApp()) { setTappaSicura(true); return () => { vivo = false; }; }
-  versioneInstallata()
-    .then((v) => { if (vivo) setTappaSicura(v !== null && v >= VERSIONE_INDIETRO_A_PASSI); })
-    .catch(() => {});
+
+  // Se entro due secondi non sappiamo che versione c'è sotto, diamo per
+  // buona la 11 e mettiamo la protezione lo stesso.
+  //
+  // Il default non è neutro e va scelto con cognizione. Sbagliare per
+  // eccesso danneggia solo chi ha la 10 — una build vissuta un giorno sul
+  // test chiuso. Sbagliare per difetto lascia senza protezione tutti quelli
+  // che hanno la 11, cioè da qui in avanti tutti: e il 05/09/2026 è successo
+  // esattamente questo, perché la domanda sulla versione non tornava mai.
+  const scadenza = new Promise((r) => setTimeout(() => r(VERSIONE_INDIETRO_A_PASSI), 2000));
+  Promise.race([versioneInstallata().catch(() => null), scadenza])
+    .then((v) => {
+      if (!vivo) return;
+      const sicura = v === null ? true : v >= VERSIONE_INDIETRO_A_PASSI;
+      registra("versione app per il tasto indietro", `${v === null ? "sconosciuta" : v} → protezione ${sicura ? "attiva" : "spenta"}`);
+      setTappaSicura(sicura);
+    });
   return () => { vivo = false; };
 }, []);
 
