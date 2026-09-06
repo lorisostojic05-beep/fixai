@@ -3,7 +3,7 @@ import styles from "../styles/diagnosi.module.css";
 import { loadStripe } from "@stripe/stripe-js";
 import { refertoPDF } from "../lib/generaPDF";
 import { salvaSessione, leggiSessioneSalvata, dimenticaSessione } from "../lib/sessione-salvata";
-import { avvisoAggiornamento, pluginDisponibile, LINK_PLAY_STORE, dentroApp, versioneInstallata, VERSIONE_INDIETRO_A_PASSI } from "../lib/versione-app";
+import { avvisoAggiornamento, pluginDisponibile, LINK_PLAY_STORE } from "../lib/versione-app";
 import { registra } from "../lib/registro";
 import { prendiPlugin, prendiPluginSubito } from "../lib/plugin-nativo";
 import { messaggioBenvenuto } from "../lib/benvenuto";
@@ -124,9 +124,6 @@ export default function Diagnosi() {
   const [tecLoading, setTecLoading] = useState(false);
   const [tecEsito, setTecEsito] = useState(null); // { tecniciContattati } dopo l'invio
   const [sessioneRecuperabile, setSessioneRecuperabile] = useState(null); // diagnosi lasciata a metà
-  // Parte da false: finché non sappiamo che versione dell'app c'è sotto, non
-  // si tocca la cronologia. Sbagliare in eccesso qui manda la gente su Stripe.
-  const [tappaSicura, setTappaSicura] = useState(false);
   const [avvisoVersione, setAvvisoVersione] = useState(null); // app più vecchia del sito
   const [mostraRimborso, setMostraRimborso] = useState(false);
   const [rimborsoEmail, setRimborsoEmail] = useState("");
@@ -542,15 +539,19 @@ useEffect(() => {
 // ha pagato.
 useEffect(() => {
   if (phase !== "session" && phase !== "report") return undefined;
-  // Con la versione 10 dell'app la tappa fa danno invece di proteggere: il
-  // conto dei passi del codice nativo non la vede, e si finisce due passi
-  // indietro — sulla cassa di Stripe. Meglio il comportamento della 10 da
-  // sola, che almeno riporta su /diagnosi.
-  if (!tappaSicura) return undefined;
 
+  // La tappa DEVE avere un indirizzo suo (#in-corso), non basta pushState
+  // senza terzo argomento.
+  //
+  // Verificato sul tablet il 05/09/2026 col diario: senza indirizzo la tappa
+  // esisteva per JavaScript — history.length la contava — ma la WebView di
+  // Android non la registrava nella sua cronologia di pagine. goBack() la
+  // saltava e andava alla pagina vera precedente, che dopo un pagamento e'
+  // la cassa di Stripe. Con un indirizzo diverso la tappa diventa una voce
+  // vera anche per Android, e tornare indietro resta dentro la pagina.
   const mettiTappa = () => {
     if (!window.history.state?.fixiTappa) {
-      window.history.pushState({ fixiTappa: true }, "");
+      window.history.pushState({ fixiTappa: true }, "", "#in-corso");
       registra("tappa indietro messa", `fase ${phase}, cronologia ${window.history.length}`);
     }
   };
@@ -577,33 +578,7 @@ useEffect(() => {
 
   window.addEventListener("popstate", allIndietro);
   return () => window.removeEventListener("popstate", allIndietro);
-}, [phase, refertoSalvato, emailInviata, tappaSicura]);
-
-// La tappa di protezione si può mettere solo se il tasto indietro nativo
-// torna indietro di un passo per volta: nel browser sempre (lì di mezzo non
-// c'è codice nativo), nell'app solo dalla versione 11 in su.
-useEffect(() => {
-  let vivo = true;
-  if (!dentroApp()) { setTappaSicura(true); return () => { vivo = false; }; }
-
-  // Se entro due secondi non sappiamo che versione c'è sotto, diamo per
-  // buona la 11 e mettiamo la protezione lo stesso.
-  //
-  // Il default non è neutro e va scelto con cognizione. Sbagliare per
-  // eccesso danneggia solo chi ha la 10 — una build vissuta un giorno sul
-  // test chiuso. Sbagliare per difetto lascia senza protezione tutti quelli
-  // che hanno la 11, cioè da qui in avanti tutti: e il 05/09/2026 è successo
-  // esattamente questo, perché la domanda sulla versione non tornava mai.
-  const scadenza = new Promise((r) => setTimeout(() => r(VERSIONE_INDIETRO_A_PASSI), 2000));
-  Promise.race([versioneInstallata().catch(() => null), scadenza])
-    .then((v) => {
-      if (!vivo) return;
-      const sicura = v === null ? true : v >= VERSIONE_INDIETRO_A_PASSI;
-      registra("versione app per il tasto indietro", `${v === null ? "sconosciuta" : v} → protezione ${sicura ? "attiva" : "spenta"}`);
-      setTappaSicura(sicura);
-    });
-  return () => { vivo = false; };
-}, []);
+}, [phase, refertoSalvato, emailInviata]);
 
 // C'è una diagnosi lasciata a metà da riprendere?
 useEffect(() => {
