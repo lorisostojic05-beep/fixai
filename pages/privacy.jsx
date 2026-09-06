@@ -1,10 +1,24 @@
 import Head from "next/head";
+import { testiPer } from "../lib/testi";
+import { riempi, grassetto, spezzaSu, dataLeggibile } from "../lib/frasi";
+import { prefissoDi, PREDEFINITA } from "../lib/lingue";
 
 // Privacy policy pubblica — richiesta da Google Play e dalle normative privacy.
 // È una base solida e onesta; per un'attività che incassa pagamenti conviene
 // farla rivedere da un consulente privacy.
+//
+// Dal 06/09/2026 è tradotta nelle sette lingue del sito. È un documento
+// legale, non un'interfaccia: le versioni tradotte portano in alto una riga
+// che dice che in caso di differenze fa fede l'italiano. Non è un cavillo —
+// è la stessa cosa che fanno tutti i servizi che pubblicano un'informativa in
+// più lingue, perché una sfumatura persa in traduzione non può cambiare quello
+// a cui il titolare si è impegnato.
 
-const AGGIORNAMENTO = "31 agosto 2026";
+// La data si tiene in forma anno-mese-giorno e non gia' scritta a parole: il
+// mese lo compone dataLeggibile() nella lingua di chi legge. Scritta per
+// esteso restava italiana dentro le pagine tradotte — "Letzte Aktualisierung:
+// 25 luglio 2026", tedesco tranne il mese.
+const AGGIORNAMENTO = "2026-08-31";
 const EMAIL = "lorisostojic05@gmail.com";
 
 // P.IVA e sede compaiono nell'informativa SOLO se compilate qui: finché sono
@@ -18,91 +32,123 @@ const PIVA = "05223940239";
 // senza rendere cercabile per sempre dove abita.
 const SEDE = "";
 
-export default function Privacy() {
+const TITOLARE = "Loris Ostojic";
+
+export async function getStaticProps({ locale }) {
+  return {
+    props: {
+      testi: testiPer(locale).privacy,
+      tradotta: locale !== PREDEFINITA,
+      lingua: locale,
+      pre: prefissoDi(locale),
+    },
+  };
+}
+
+export default function Privacy({ testi: t, tradotta, pre, lingua }) {
   return (
     <>
       <Head>
-        <title>Privacy Policy — Fixi</title>
+        <title>{t.metaTitolo}</title>
         <meta name="robots" content="all" />
       </Head>
       <div style={{ background: "#FAF8F3", minHeight: "100vh", fontFamily: "system-ui, sans-serif", color: "#1C1C1A" }}>
         <div style={{ maxWidth: "760px", margin: "0 auto", padding: "48px 24px 80px" }}>
           <div style={{ fontSize: "26px", fontWeight: 800, color: "#1A6B50", marginBottom: "4px" }}>Fixi</div>
-          <h1 style={{ fontSize: "30px", margin: "12px 0 6px" }}>Informativa sulla privacy</h1>
-          <p style={{ color: "#6B6B68", fontSize: "14px", marginBottom: "32px" }}>Ultimo aggiornamento: {AGGIORNAMENTO}</p>
+          <h1 style={{ fontSize: "30px", margin: "12px 0 6px" }}>{t.titolo}</h1>
+          <p style={{ color: "#6B6B68", fontSize: "14px", marginBottom: tradotta ? "16px" : "32px" }}>
+            {riempi(t.aggiornato, { data: dataLeggibile(AGGIORNAMENTO, lingua) })}
+          </p>
 
-          <Sezione titolo="1. Chi siamo (Titolare del trattamento)">
-            <p>Fixi è un servizio di diagnosi di elettrodomestici tramite videochiamata con intelligenza artificiale, che mette inoltre in contatto gli utenti con tecnici riparatori.</p>
+          {/* Solo sulle versioni tradotte: sull'italiana non avrebbe senso. */}
+          {tradotta && (
+            <p
+              style={{
+                background: "#F1EEE6",
+                border: "1px solid #E4E0D8",
+                borderRadius: "8px",
+                padding: "10px 14px",
+                fontSize: "13px",
+                color: "#55554F",
+                marginBottom: "32px",
+                lineHeight: 1.6,
+              }}
+            >
+              {t.traduzioneDiCortesia}
+            </p>
+          )}
+
+          <Sezione titolo={t.chiSiamo.titolo}>
+            <p>{t.chiSiamo.cosa}</p>
             <p>
-              Titolare del trattamento: <strong>Loris Ostojic</strong>
-              {PIVA ? <> — P.IVA {PIVA}</> : null}
-              {SEDE ? <>, con sede in {SEDE}</> : null}
-              . Per qualsiasi domanda sulla privacy puoi scriverci a <a href={`mailto:${EMAIL}`} style={linkStyle}>{EMAIL}</a>.
+              <Forte
+                frase={riempi(t.chiSiamo.titolare, {
+                  nome: TITOLARE,
+                  piva: PIVA ? riempi(t.chiSiamo.conPiva, { piva: PIVA }) : "",
+                  sede: SEDE ? riempi(t.chiSiamo.conSede, { sede: SEDE }) : "",
+                })}
+              />{" "}
+              <ConEmail frase={t.chiSiamo.domande} />
             </p>
           </Sezione>
 
-          <Sezione titolo="2. Quali dati raccogliamo">
-            <p>A seconda di come usi Fixi, trattiamo:</p>
-            <ul style={ulStyle}>
-              <li><strong>Dati della diagnosi</strong>: tipo di elettrodomestico, marca, descrizione del problema e i messaggi che scambi con l'assistente AI.</li>
-              <li><strong>Immagini dalla camera</strong>: durante la sessione, i fotogrammi che inquadri vengono inviati per l'analisi all'AI. <strong>Non salviamo i video né i fotogrammi</strong>: sono elaborati e poi scartati.</li>
-              <li><strong>Email</strong>: se scegli di ricevere il referto via email o di essere ricontattato da un tecnico.</li>
-              <li><strong>Dati per la richiesta di un tecnico</strong>: nome, telefono, città e CAP, che condividiamo con i tecnici della tua zona per permettere loro di contattarti.</li>
-              <li><strong>Dati di pagamento</strong>: i pagamenti sono gestiti da Stripe. <strong>Non vediamo né conserviamo i dati della tua carta</strong>; registriamo solo l'esito del pagamento.</li>
-              <li><strong>Recensioni</strong>: il voto e il commento che lasci su un intervento.</li>
-              <li><strong>Se sei un tecnico</strong>: nome, cognome, email, telefono, città, CAP, specializzazioni ed esperienza che inserisci in fase di iscrizione.</li>
-            </ul>
+          <Sezione titolo={t.dati.titolo}>
+            <p>{t.dati.intro}</p>
+            <Elenco voci={t.dati.voci} />
           </Sezione>
 
-          <Sezione titolo="3. Perché li usiamo">
-            <ul style={ulStyle}>
-              <li>Per fornirti la diagnosi e generare il referto.</li>
-              <li>Per inviarti il referto via email, se lo richiedi.</li>
-              <li>Per metterti in contatto con un tecnico della tua zona, se lo richiedi.</li>
-              <li>Per gestire il pagamento del servizio.</li>
-              <li>Per migliorare il servizio (statistiche aggregate e feedback).</li>
-            </ul>
-            <p>La base giuridica è l'esecuzione del servizio che ci chiedi e, dove previsto, il tuo consenso.</p>
+          <Sezione titolo={t.perche.titolo}>
+            <Elenco voci={t.perche.voci} />
+            <p>{t.perche.base}</p>
           </Sezione>
 
-          <Sezione titolo="4. La camera">
-            <p>L'accesso alla camera viene usato <strong>solo durante la sessione di diagnosi</strong> e solo per mostrare all'AI ciò che inquadri. I fotogrammi vengono analizzati in tempo reale e non vengono memorizzati sui nostri sistemi. Puoi disattivare la camera in qualsiasi momento durante la sessione.</p>
+          <Sezione titolo={t.camera.titolo}>
+            <p><Forte frase={t.camera.testo} /></p>
           </Sezione>
 
-          <Sezione titolo="5. Servizi di terze parti">
-            <p>Per funzionare, Fixi si appoggia a fornitori che trattano alcuni dati per nostro conto:</p>
-            <ul style={ulStyle}>
-              <li><strong>Anthropic</strong> — l'intelligenza artificiale che analizza le immagini e dialoga con te.</li>
-              <li><strong>Stripe</strong> — la gestione dei pagamenti.</li>
-              <li><strong>Supabase</strong> — il database dove salviamo le sessioni, le richieste di intervento e i dati dei tecnici.</li>
-              <li><strong>Resend</strong> — l'invio delle email (referti, notifiche ai tecnici).</li>
-              <li><strong>Vercel</strong> — l'hosting del servizio.</li>
-            </ul>
-            <p>Ciascun fornitore tratta i dati secondo le proprie informative privacy.</p>
+          <Sezione titolo={t.terzeParti.titolo}>
+            <p>{t.terzeParti.intro}</p>
+            <Elenco voci={t.terzeParti.voci} />
+            <p>{t.terzeParti.chiusura}</p>
           </Sezione>
 
-          <Sezione titolo="6. Per quanto tempo conserviamo i dati">
-            <p>Conserviamo i dati delle sessioni, delle richieste di intervento e dei tecnici per il tempo necessario a fornire il servizio e adempiere agli obblighi di legge. Puoi chiederci in qualsiasi momento la cancellazione dei tuoi dati.</p>
+          <Sezione titolo={t.conservazione.titolo}>
+            <p>{t.conservazione.testo}</p>
           </Sezione>
 
-          <Sezione titolo="7. I tuoi diritti">
-            <p>Hai il diritto di accedere ai tuoi dati, correggerli, chiederne la cancellazione o limitarne l'uso, e di opporti al trattamento. Per esercitare questi diritti scrivici a <a href={`mailto:${EMAIL}`} style={linkStyle}>{EMAIL}</a>.</p>
-            <p>Per la sola cancellazione trovi i passaggi, l'elenco dei dati eliminati e i tempi nella pagina <a href="/cancellazione-dati" style={linkStyle}>richiesta di cancellazione dei dati</a>.</p>
+          <Sezione titolo={t.diritti.titolo}>
+            <p><ConEmail frase={t.diritti.testo} /></p>
+            <p>
+              {(() => {
+                const { prima, dopo } = spezzaSu(t.diritti.cancellazione, "link");
+                return (
+                  <>
+                    {prima}
+                    <a href={`${pre}/cancellazione-dati`} style={linkStyle}>
+                      {t.diritti.cancellazioneLink}
+                    </a>
+                    {dopo}
+                  </>
+                );
+              })()}
+            </p>
           </Sezione>
 
-          <Sezione titolo="8. Minori">
-            <p>Fixi non è rivolto a minori di 16 anni e non raccogliamo consapevolmente i loro dati.</p>
+          <Sezione titolo={t.minori.titolo}>
+            <p>{t.minori.testo}</p>
           </Sezione>
 
-          <Sezione titolo="9. Modifiche a questa informativa">
-            <p>Potremmo aggiornare questa informativa. In caso di modifiche rilevanti lo segnaleremo su questa pagina, aggiornando la data in alto.</p>
+          <Sezione titolo={t.modifiche.titolo}>
+            <p>{t.modifiche.testo}</p>
           </Sezione>
 
-          <Sezione titolo="10. Contatti">
-            <p>Per qualsiasi domanda sulla privacy o sui tuoi dati: <a href={`mailto:${EMAIL}`} style={linkStyle}>{EMAIL}</a>.</p>
+          <Sezione titolo={t.contatti.titolo}>
+            <p><ConEmail frase={t.contatti.testo} /></p>
           </Sezione>
 
-          <p style={{ marginTop: "40px" }}><a href="/" style={linkStyle}>← Torna a Fixi</a></p>
+          <p style={{ marginTop: "40px" }}>
+            <a href={pre || "/"} style={linkStyle}>← {t.torna}</a>
+          </p>
         </div>
       </div>
     </>
@@ -111,6 +157,42 @@ export default function Privacy() {
 
 const linkStyle = { color: "#1A6B50", textDecoration: "underline" };
 const ulStyle = { paddingLeft: "20px", lineHeight: 1.7 };
+
+// Rende **cosi** in grassetto. I pezzi arrivano da lib/frasi.js come dati, mai
+// come HTML: se in una traduzione finisse del codice, verrebbe stampato invece
+// che eseguito.
+function Forte({ frase }) {
+  return (
+    <>
+      {grassetto(frase).map((p) =>
+        p.forte ? <strong key={p.chiave}>{p.testo}</strong> : <span key={p.chiave}>{p.testo}</span>
+      )}
+    </>
+  );
+}
+
+// Frase con dentro l'indirizzo email, cliccabile. Il segnaposto {email} sta
+// nella frase e non ai suoi bordi, cosi' ogni lingua lo mette dove vuole.
+function ConEmail({ frase }) {
+  const { prima, dopo } = spezzaSu(frase, "email");
+  return (
+    <>
+      {prima}
+      <a href={`mailto:${EMAIL}`} style={linkStyle}>{EMAIL}</a>
+      {dopo}
+    </>
+  );
+}
+
+function Elenco({ voci }) {
+  return (
+    <ul style={ulStyle}>
+      {voci.map((v, i) => (
+        <li key={i}><Forte frase={v} /></li>
+      ))}
+    </ul>
+  );
+}
 
 function Sezione({ titolo, children }) {
   return (

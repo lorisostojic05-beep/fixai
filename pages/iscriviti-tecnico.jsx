@@ -1,6 +1,8 @@
 import { useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { testiPer } from "../lib/testi";
+import { prefissoDi } from "../lib/lingue";
 
 const SPECIALIZZAZIONI = [
   "Lavatrici",
@@ -13,7 +15,11 @@ const SPECIALIZZAZIONI = [
   "Caldaie",
 ];
 
-export default function IscrivitiTecnico() {
+export async function getStaticProps({ locale }) {
+  return { props: { testi: testiPer(locale).tecnicoIscrizione, pre: prefissoDi(locale) } };
+}
+
+export default function IscrivitiTecnico({ testi: t, pre }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [inviato, setInviato] = useState(false);
@@ -50,9 +56,9 @@ export default function IscrivitiTecnico() {
       });
       const data = await res.json();
       if (data.ok) setInviato(true);
-      else alert("Errore durante l'invio. Riprova.");
+      else alert(t.erroreInvio);
     } catch (err) {
-      alert("Errore di connessione. Riprova.");
+      alert(t.erroreConnessione);
     } finally {
       setLoading(false);
     }
@@ -63,11 +69,11 @@ export default function IscrivitiTecnico() {
       <div style={styles.container}>
         <div style={styles.card}>
           <div style={{ fontSize: "48px", marginBottom: "16px", textAlign: "center" }}>🎉</div>
-          <h1 style={{ ...styles.title, textAlign: "center" }}>Richiesta inviata!</h1>
+          <h1 style={{ ...styles.title, textAlign: "center" }}>{t.inviata}</h1>
           <p style={{ ...styles.sub, textAlign: "center", marginBottom: "24px" }}>
-            Abbiamo ricevuto la tua iscrizione. La esamineremo entro 48 ore e ti contatteremo via email.
+            {t.inviataTesto}
           </p>
-          <Link href="/" style={styles.btnPrimary}>Torna alla home →</Link>
+          <Link href={pre || "/"} style={styles.btnPrimary}>{t.tornaHome} →</Link>
         </div>
       </div>
     );
@@ -76,15 +82,15 @@ export default function IscrivitiTecnico() {
   return (
     <>
       <Head>
-        <title>Iscriviti come tecnico — Fixi</title>
-        <meta name="description" content="Unisciti alla rete Fixi. Ricevi lavori qualificati, zero costi fissi." />
+        <title>{t.metaTitolo}</title>
+        <meta name="description" content={t.metaDescrizione} />
         <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
       </Head>
 
       <div style={styles.page}>
         {/* Header */}
         <div style={styles.header}>
-          <Link href="/" style={styles.logo}>Fixi</Link>
+          <Link href={pre || "/"} style={styles.logo}>Fixi</Link>
         </div>
 
         <div style={styles.container}>
@@ -108,28 +114,28 @@ export default function IscrivitiTecnico() {
             {/* Step 1 — Dati personali */}
             {step === 1 && (
               <div>
-                <h1 style={styles.title}>Ciao! Iniziamo<br /><em style={styles.em}>con i tuoi dati.</em></h1>
-                <p style={styles.sub}>Ci vogliono 3 minuti. Nessun costo, nessun obbligo.</p>
+                <h1 style={styles.title}>{t.passo1Titolo1}<br /><em style={styles.em}>{t.passo1Titolo2}</em></h1>
+                <p style={styles.sub}>{t.passo1Sotto}</p>
 
                 <div style={styles.formGrid}>
                   <div style={styles.formGroup}>
-                    <label style={styles.label}>Nome</label>
-                    <input style={styles.input} value={form.nome} onChange={(e) => update("nome", e.target.value)} placeholder="Mario" />
+                    <label style={styles.label}>{t.nome}</label>
+                    <input style={styles.input} value={form.nome} onChange={(e) => update("nome", e.target.value)} placeholder={t.nomeEsempio} />
                   </div>
                   <div style={styles.formGroup}>
-                    <label style={styles.label}>Cognome</label>
-                    <input style={styles.input} value={form.cognome} onChange={(e) => update("cognome", e.target.value)} placeholder="Rossi" />
+                    <label style={styles.label}>{t.cognome}</label>
+                    <input style={styles.input} value={form.cognome} onChange={(e) => update("cognome", e.target.value)} placeholder={t.cognomeEsempio} />
                   </div>
                 </div>
 
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Email</label>
-                  <input style={styles.input} type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="mario@email.com" />
+                  <label style={styles.label}>{t.email}</label>
+                  <input style={styles.input} type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder={t.emailEsempio} />
                 </div>
 
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Telefono</label>
-                  <input style={styles.input} type="tel" value={form.telefono} onChange={(e) => update("telefono", e.target.value)} placeholder="+39 333 1234567" />
+                  <label style={styles.label}>{t.telefono}</label>
+                  <input style={styles.input} type="tel" value={form.telefono} onChange={(e) => update("telefono", e.target.value)} placeholder={t.telefonoEsempio} />
                 </div>
 
                 {/* Al passo 1 "Indietro" esce dal modulo. Prima non c'era, e chi
@@ -138,15 +144,15 @@ export default function IscrivitiTecnico() {
                     Segnalato da un tester. Stessa forma e stessa posizione degli
                     altri passi, se no non lo si riconosce come la via d'uscita. */}
                 <div style={styles.btnRow}>
-                  <Link href="/" style={{ ...styles.btnGhost, textAlign: "center", textDecoration: "none" }}>
-                    ← Indietro
+                  <Link href={pre || "/"} style={{ ...styles.btnGhost, textAlign: "center", textDecoration: "none" }}>
+                    ← {t.indietro}
                   </Link>
                   <button
                     style={styles.btnPrimary}
                     onClick={() => setStep(2)}
                     disabled={!form.nome || !form.cognome || !form.email || !form.telefono}
                   >
-                    Continua →
+                    {t.continua} →
                   </button>
                 </div>
               </div>
@@ -155,21 +161,21 @@ export default function IscrivitiTecnico() {
             {/* Step 2 — Zona e specializzazioni */}
             {step === 2 && (
               <div>
-                <h1 style={styles.title}>Dove operi<br /><em style={styles.em}>e in cosa sei esperto?</em></h1>
+                <h1 style={styles.title}>{t.passo2Titolo1}<br /><em style={styles.em}>{t.passo2Titolo2}</em></h1>
 
                 <div style={styles.formGrid}>
                   <div style={styles.formGroup}>
-                    <label style={styles.label}>Città</label>
-                    <input style={styles.input} value={form.citta} onChange={(e) => update("citta", e.target.value)} placeholder="Milano" />
+                    <label style={styles.label}>{t.citta}</label>
+                    <input style={styles.input} value={form.citta} onChange={(e) => update("citta", e.target.value)} placeholder={t.cittaEsempio} />
                   </div>
                   <div style={styles.formGroup}>
-                    <label style={styles.label}>CAP</label>
-                    <input style={styles.input} value={form.cap} onChange={(e) => update("cap", e.target.value)} placeholder="20100" />
+                    <label style={styles.label}>{t.cap}</label>
+                    <input style={styles.input} value={form.cap} onChange={(e) => update("cap", e.target.value)} placeholder={t.capEsempio} />
                   </div>
                 </div>
 
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Specializzazioni</label>
+                  <label style={styles.label}>{t.specializzazioniTitolo}</label>
                   <div style={styles.specGrid}>
                     {SPECIALIZZAZIONI.map((s) => (
                       <button
@@ -180,25 +186,25 @@ export default function IscrivitiTecnico() {
                         }}
                         onClick={() => toggleSpec(s)}
                       >
-                        {s}
+                        {t.specializzazioni[s] || s}
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Anni di esperienza</label>
-                  <input style={styles.input} type="number" value={form.anni_esperienza} onChange={(e) => update("anni_esperienza", e.target.value)} placeholder="es. 10" min="0" max="50" />
+                  <label style={styles.label}>{t.anni}</label>
+                  <input style={styles.input} type="number" value={form.anni_esperienza} onChange={(e) => update("anni_esperienza", e.target.value)} placeholder={t.anniEsempio} min="0" max="50" />
                 </div>
 
                 <div style={styles.btnRow}>
-                  <button style={styles.btnGhost} onClick={() => setStep(1)}>← Indietro</button>
+                  <button style={styles.btnGhost} onClick={() => setStep(1)}>← {t.indietro}</button>
                   <button
                     style={styles.btnPrimary}
                     onClick={() => setStep(3)}
                     disabled={!form.citta || !form.cap || form.specializzazioni.length === 0}
                   >
-                    Continua →
+                    {t.continua} →
                   </button>
                 </div>
               </div>
@@ -207,36 +213,35 @@ export default function IscrivitiTecnico() {
             {/* Step 3 — Presentazione */}
             {step === 3 && (
               <div>
-                <h1 style={styles.title}>Presentati<br /><em style={styles.em}>ai tuoi futuri clienti.</em></h1>
-                <p style={styles.sub}>Una breve descrizione di chi sei e come lavori.</p>
+                <h1 style={styles.title}>{t.passo3Titolo1}<br /><em style={styles.em}>{t.passo3Titolo2}</em></h1>
+                <p style={styles.sub}>{t.passo3Sotto}</p>
 
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Descrizione (opzionale)</label>
+                  <label style={styles.label}>{t.descrizione}</label>
                   <textarea
                     style={{ ...styles.input, height: "120px", resize: "vertical" }}
                     value={form.descrizione}
                     onChange={(e) => update("descrizione", e.target.value)}
-                    placeholder="Es. Tecnico specializzato in lavatrici e lavastoviglie con 10 anni di esperienza. Intervengo a Milano e provincia entro 24 ore..."
+                    placeholder={t.descrizioneEsempio}
                   />
                 </div>
 
                 <div style={{ background: "#EAF5EF", borderRadius: "12px", padding: "16px", marginBottom: "24px" }}>
                   <p style={{ fontSize: "13px", color: "#1A6B50", lineHeight: "1.6" }}>
-                    ✓ Iscrizione gratuita<br />
-                    ✓ Nessuna commissione sui lavori in questa fase di lancio<br />
-                    ✓ Attivazione entro 48 ore dalla verifica<br />
-                    ✓ Puoi disiscriverti in qualsiasi momento
+                    ✓ {t.promessa1}<br />
+                    ✓ {t.promessa2}<br />
+                    ✓ {t.promessa3}<br />
+                    ✓ {t.promessa4}
                   </p>
                   <p style={{ fontSize: "12px", color: "#4A6B5E", lineHeight: "1.6", marginTop: "10px" }}>
-                    Se in futuro introdurremo una commissione sui lavori, te lo comunicheremo
-                    via email con anticipo: potrai decidere se continuare o disiscriverti.
+                    {t.seCambia}
                   </p>
                 </div>
 
                 <div style={styles.btnRow}>
-                  <button style={styles.btnGhost} onClick={() => setStep(2)}>← Indietro</button>
+                  <button style={styles.btnGhost} onClick={() => setStep(2)}>← {t.indietro}</button>
                   <button style={styles.btnPrimary} onClick={invia} disabled={loading}>
-                    {loading ? "Invio..." : "Invia richiesta →"}
+                    {loading ? t.invio : `${t.invia} →`}
                   </button>
                 </div>
               </div>

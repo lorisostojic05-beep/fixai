@@ -7,7 +7,8 @@ import { avvisoAggiornamento, pluginDisponibile, LINK_PLAY_STORE } from "../lib/
 import { registra } from "../lib/registro";
 import { prendiPlugin, prendiPluginSubito } from "../lib/plugin-nativo";
 import { messaggioBenvenuto } from "../lib/benvenuto";
-import { testiPer, riempi } from "../lib/testi";
+import { testiPer } from "../lib/testi";
+import { riempi } from "../lib/frasi";
 import { voceDi, prefissoDi } from "../lib/lingue";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);

@@ -3,6 +3,9 @@ import Head from "next/head";
 import Link from "next/link";
 import { leggiRegistro, svuotaRegistro } from "../lib/registro";
 import { prendiPluginSubito } from "../lib/plugin-nativo";
+import { testiPer } from "../lib/testi";
+import { riempi } from "../lib/frasi";
+import { prefissoDi } from "../lib/lingue";
 
 // Pagina di diagnostica, da aprire DENTRO l'app quando qualcosa "non va".
 //
@@ -18,7 +21,11 @@ const PLUGIN = [
   ["SpeechRecognition", "dettatura vocale (dalla 1.1)"],
 ];
 
-export default function Stato() {
+export async function getStaticProps({ locale }) {
+  return { props: { testi: testiPer(locale).stato, pre: prefissoDi(locale) } };
+}
+
+export default function Stato({ testi: t, pre }) {
   const [info, setInfo] = useState(null);
   const [esiti, setEsiti] = useState({});
 
@@ -159,60 +166,53 @@ export default function Stato() {
 
   return (
     <>
-      <Head><title>Stato tecnico — Fixi</title></Head>
+      <Head><title>{t.metaTitolo}</title></Head>
       <div style={s.pagina}>
-        <h1 style={s.titolo}>Stato tecnico</h1>
-        <p style={s.sotto}>
-          Serve a capire perché qualcosa non funziona. Fai una fotografia di questa schermata
-          e mandala a chi ha fatto l'app.
-        </p>
+        <h1 style={s.titolo}>{t.titolo}</h1>
+        <p style={s.sotto}>{t.aCosaServe}</p>
 
         {guasto ? (
-          <p style={s.avviso}>Non sono riuscito a leggere lo stato: {guasto}</p>
+          <p style={s.avviso}>{riempi(t.nonLetto, { errore: guasto })}</p>
         ) : !info ? (
-          <p>Carico… (se resta così, la pagina non si è avviata)</p>
+          <p>{t.carico}</p>
         ) : (
           <>
-            <h2 style={s.sezione}>Dove stai girando</h2>
-            {riga("Dentro l'app", info.nellApp ? "sì" : "no — sei nel browser", info.nellApp)}
-            {riga("Piattaforma", info.piattaforma)}
-            {riga("Versione installata", info.versione || "non disponibile")}
+            <h2 style={s.sezione}>{t.dove}</h2>
+            {riga(t.dentroApp, info.nellApp ? t.si : t.noBrowser, info.nellApp)}
+            {riga(t.piattaforma, info.piattaforma)}
+            {riga(t.versione, info.versione || t.nonDisponibile)}
 
-            <h2 style={s.sezione}>Funzioni native</h2>
+            <h2 style={s.sezione}>{t.funzioni}</h2>
             {!info.sannoRispondere && (
-              <p style={s.avviso}>Questa versione non sa elencare i plugin: è molto vecchia.</p>
+              <p style={s.avviso}>{t.troppoVecchia}</p>
             )}
             {PLUGIN.map(([nome, cosa]) =>
-              riga(`${nome} — ${cosa}`, info.plugin[nome] === null ? "?" : info.plugin[nome] ? "presente" : "ASSENTE", info.plugin[nome])
+              riga(`${nome} — ${cosa}`, info.plugin[nome] === null ? "?" : info.plugin[nome] ? t.presente : t.assente, info.plugin[nome])
             )}
 
-            <h2 style={s.sezione}>Prove</h2>
-            <button style={s.bottone} onClick={provaAlert}>1. I messaggi si vedono?</button>
+            <h2 style={s.sezione}>{t.prove}</h2>
+            <button style={s.bottone} onClick={provaAlert}>{t.prova1}</button>
             <p style={s.esito}>{esiti.alert || "—"}</p>
 
-            <button style={s.bottone} onClick={provaDownload}>2. Scrivi un file nei Download</button>
+            <button style={s.bottone} onClick={provaDownload}>{t.prova2}</button>
             <p style={s.esito}>{esiti.download || "—"}</p>
 
-            <button style={s.bottone} onClick={provaDettatura}>3. Controlla il microfono</button>
+            <button style={s.bottone} onClick={provaDettatura}>{t.prova3}</button>
             <p style={s.esito}>{esiti.voce || "—"}</p>
 
-            <button style={s.bottone} onClick={provaPDF}>4. Genera il PDF del referto</button>
+            <button style={s.bottone} onClick={provaPDF}>{t.prova4}</button>
             <p style={s.esito}>{esiti.pdf || "—"}</p>
 
-            <button style={s.bottone} onClick={provaCatena}>5. Referto + salvataggio, tutto insieme</button>
+            <button style={s.bottone} onClick={provaCatena}>{t.prova5}</button>
             <p style={s.esito}>{esiti.catena || "—"}</p>
 
             {/* Il pezzo piu' utile: cosa e' successo davvero premendo i
                 pulsanti veri, dentro la diagnosi. Le righe le scrive l'app
                 mentre la usi e restano qui anche cambiando schermata. */}
-            <h2 style={s.sezione}>Diario di bordo</h2>
-            <p style={s.sotto}>
-              Cosa è successo premendo i pulsanti veri. Se qui non compare niente dopo
-              aver premuto il microfono o Scarica, vuol dire che il tocco non arriva
-              nemmeno al codice.
-            </p>
+            <h2 style={s.sezione}>{t.diario}</h2>
+            <p style={s.sotto}>{t.diarioSpiega}</p>
             {registro.length === 0 ? (
-              <p style={s.esito}>Nessuna riga. Usa l'app, poi torna qui.</p>
+              <p style={s.esito}>{t.diarioVuoto}</p>
             ) : (
               <pre style={s.diario}>{registro.join("\n")}</pre>
             )}
@@ -223,15 +223,15 @@ export default function Stato() {
                 setRegistro([]);
               }}
             >
-              Svuota il diario
+              {t.svuota}
             </button>
 
-            <h2 style={s.sezione}>Dettagli</h2>
+            <h2 style={s.sezione}>{t.dettagli}</h2>
             <p style={s.piccolo}>{info.userAgent}</p>
           </>
         )}
 
-        <Link href="/" style={s.indietro}>← Torna alla home</Link>
+        <Link href={pre || "/"} style={s.indietro}>← {t.torna}</Link>
       </div>
     </>
   );
