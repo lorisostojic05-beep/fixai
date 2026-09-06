@@ -540,15 +540,11 @@ useEffect(() => {
 useEffect(() => {
   if (phase !== "session" && phase !== "report") return undefined;
 
-  // La tappa DEVE avere un indirizzo suo (#in-corso), non basta pushState
-  // senza terzo argomento.
-  //
-  // Verificato sul tablet il 05/09/2026 col diario: senza indirizzo la tappa
-  // esisteva per JavaScript — history.length la contava — ma la WebView di
-  // Android non la registrava nella sua cronologia di pagine. goBack() la
-  // saltava e andava alla pagina vera precedente, che dopo un pagamento e'
-  // la cassa di Stripe. Con un indirizzo diverso la tappa diventa una voce
-  // vera anche per Android, e tornare indietro resta dentro la pagina.
+  // La tappa nella cronologia serve SOLO nel browser, dove il tasto indietro
+  // passa davvero da qui. Nell'app Android non funziona e non puo'
+  // funzionare: la WebView tiene due cronologie separate e quella su cui
+  // agisce il tasto non vede pushState. Li' decide il codice nativo, che
+  // interroga window.fixiIndietro qui sotto.
   const mettiTappa = () => {
     if (!window.history.state?.fixiTappa) {
       window.history.pushState({ fixiTappa: true }, "", "#in-corso");
@@ -576,8 +572,24 @@ useEffect(() => {
     else mettiTappa();
   };
 
+  // Il codice nativo dell'app chiama questa prima di andare indietro.
+  // Restituendo true dice "me ne occupo io": l'app non torna indietro e
+  // resta dove siamo. Dalla versione 12 in su.
+  //
+  // Risponde SUBITO true e mostra la domanda un istante dopo: window.confirm
+  // blocca il JavaScript finche' l'utente non risponde, e il codice nativo
+  // sta aspettando questo valore per decidere. Bloccarlo li' significherebbe
+  // tenere fermi tutti e due.
+  window.fixiIndietro = () => {
+    setTimeout(allIndietro, 0);
+    return true;
+  };
+
   window.addEventListener("popstate", allIndietro);
-  return () => window.removeEventListener("popstate", allIndietro);
+  return () => {
+    window.removeEventListener("popstate", allIndietro);
+    if (window.fixiIndietro) delete window.fixiIndietro;
+  };
 }, [phase, refertoSalvato, emailInviata]);
 
 // C'è una diagnosi lasciata a metà da riprendere?

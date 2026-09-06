@@ -89,16 +89,40 @@ public class MainActivity extends BridgeActivity {
             @Override
             public void handleOnBackPressed() {
                 WebView web = getBridge() == null ? null : getBridge().getWebView();
-                if (web != null && web.canGoBack()) {
-                    web.goBack();
-                    return;
-                }
-                // Niente dietro: si esce davvero. Va disattivato prima, se no
-                // la richiesta rimbalza di nuovo qui e l'app non si chiude.
-                setEnabled(false);
-                getOnBackPressedDispatcher().onBackPressed();
+
+                // Prima si CHIEDE alla pagina se vuole gestirla lei.
+                //
+                // Serve perche' la WebView tiene due cronologie separate: quella
+                // delle pagine, su cui agisce goBack(), e quella interna della
+                // pagina, dove vivono history.pushState e gli indirizzi con #.
+                // La prima non vede la seconda. Verificato tre volte col diario
+                // di bordo il 05-06/09/2026: la pagina metteva la sua tappa,
+                // history.length la contava, e goBack() la ignorava lo stesso
+                // andando alla pagina precedente vera — dopo un pagamento, la
+                // cassa di Stripe.
+                //
+                // Quindi dal JavaScript quel tasto non e' intercettabile, e
+                // l'unico punto in cui si puo' decidere e' questo. La pagina
+                // espone window.fixiIndietro(): se restituisce true significa
+                // "me ne occupo io, non andare indietro".
+                if (web == null) { esci(this); return; }
+                web.evaluateJavascript(
+                        "(function(){try{return !!(window.fixiIndietro && window.fixiIndietro());}"
+                                + "catch(e){return false;}})()",
+                        valore -> {
+                            if ("true".equals(valore)) return;
+                            if (web.canGoBack()) { web.goBack(); return; }
+                            esci(this);
+                        });
             }
         });
+    }
+
+    // Uscita vera dall'app. Il callback va disattivato prima, se no la
+    // richiesta rimbalza di nuovo su handleOnBackPressed e l'app non si chiude.
+    private void esci(OnBackPressedCallback callback) {
+        callback.setEnabled(false);
+        getOnBackPressedDispatcher().onBackPressed();
     }
 
     // NOTA per il futuro, costata una serata (05/09/2026).
