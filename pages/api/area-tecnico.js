@@ -9,6 +9,9 @@ import crypto from "crypto";
 import { Resend } from "resend";
 import { MITTENTE, RISPOSTA_A, riferimento } from "../../lib/email-mittente";
 import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
+import { testiPer } from "../../lib/testi";
+import { riempi } from "../../lib/frasi";
+import { linguaValida, PREDEFINITA } from "../../lib/lingue";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -30,24 +33,26 @@ async function tecnicoDaToken(token) {
   return data;
 }
 
-function emailRecensioneHtml(nomeCliente, nomeTecnico, linkRecensione) {
+// Va al CLIENTE, quindi nella sua lingua: quella salvata nella richiesta,
+// perche' questa email parte giorni dopo e non c'e' nessuna pagina da cui
+// dedurla. Le altre email di questo file vanno ai tecnici e restano italiane.
+function emailRecensioneHtml(nomeCliente, nomeTecnico, linkRecensione, t, lingua) {
   return `<!DOCTYPE html>
-<html lang="it"><head><meta charset="UTF-8"><title>Com'è andata?</title></head>
+<html lang="${lingua}"><head><meta charset="UTF-8"><title>${esc(t.intestazione)}</title></head>
 <body style="margin:0;padding:0;background:#f5f5f3;font-family:system-ui,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;"><tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="background:white;border-radius:16px;overflow:hidden;">
 <tr><td style="background:#0F6E56;padding:28px 36px;">
   <p style="margin:0;color:white;font-size:24px;font-weight:800;">Fixi</p>
-  <p style="margin:4px 0 0;color:#b4e6d2;font-size:13px;">Com'è andata la riparazione?</p>
+  <p style="margin:4px 0 0;color:#b4e6d2;font-size:13px;">${esc(t.intestazione)}</p>
 </td></tr>
 <tr><td style="padding:24px 36px;">
-  <p style="margin:0 0 12px;font-size:15px;">Ciao <strong>${esc(nomeCliente)}</strong>,</p>
+  <p style="margin:0 0 12px;font-size:15px;">${esc(riempi(t.saluto, { nome: nomeCliente }))}</p>
   <p style="margin:0 0 20px;font-size:14px;color:#444;line-height:1.6;">
-    il tecnico <strong>${esc(nomeTecnico)}</strong> ha segnato il tuo intervento come completato.
-    Ci racconti com'è andata? Bastano 30 secondi e aiuti gli altri clienti a scegliere bene.
+    ${esc(riempi(t.testo, { tecnico: nomeTecnico }))}
   </p>
   <a href="${linkRecensione}" style="display:inline-block;background:#0F6E56;color:white;text-decoration:none;padding:14px 28px;border-radius:100px;font-size:15px;font-weight:600;">
-    Lascia una recensione →
+    ${esc(t.pulsante)} →
   </a>
 </td></tr>
 </table></td></tr></table></body></html>`;
@@ -125,16 +130,20 @@ export default async function handler(req, res) {
       // Invita il cliente a lasciare una recensione (se ha lasciato l'email)
       if (lavoro.email) {
         const baseUrl = req.headers.origin || `https://${req.headers.host}`;
+        const linguaCliente = linguaValida(lavoro.lingua) ? lavoro.lingua : PREDEFINITA;
+        const tr = testiPer(linguaCliente).emailRecensione;
         try {
           const esito = await resend.emails.send({
             from: MITTENTE,
             replyTo: RISPOSTA_A,
             to: lavoro.email,
-            subject: `Com'è andata la riparazione? Lascia una recensione (#${riferimento(lavoro.token)})`,
+            subject: riempi(tr.oggetto, { numero: `#${riferimento(lavoro.token)}` }),
             html: emailRecensioneHtml(
               lavoro.nome,
               `${tecnico.nome} ${tecnico.cognome}`,
-              `${baseUrl}/recensione?token=${recensioneToken}`
+              `${baseUrl}/recensione?token=${recensioneToken}`,
+              tr,
+              linguaCliente
             ),
           });
           if (esito?.error) console.warn("Email recensione non inviata:", esito.error);

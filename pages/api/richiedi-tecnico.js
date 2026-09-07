@@ -8,6 +8,7 @@ import { Resend } from "resend";
 import { MITTENTE, RISPOSTA_A, riferimento } from "../../lib/email-mittente";
 import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
 import { capValido, mercatoDi } from "../../lib/mercati";
+import { linguaValida, PREDEFINITA } from "../../lib/lingue";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -133,6 +134,10 @@ export default async function handler(req, res) {
       report: report || null,
       stato,
       tecnici_contattati: tecnici.length,
+      // Serve dopo, non adesso: le email "tecnico trovato" e "com'e' andata"
+      // partono giorni piu' tardi, quando il cliente non e' piu' sul sito e
+      // non c'e' piu' nessuna pagina da cui dedurre la sua lingua.
+      lingua: linguaValida(lingua) ? lingua : PREDEFINITA,
     });
     if (error) throw error;
 

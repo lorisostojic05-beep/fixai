@@ -252,6 +252,34 @@ export default {
     piede: "Referto generato da sistema AI. Consultare sempre un tecnico qualificato.",
   },
 
+  // Le due email che partono DOPO, quando il cliente non e' piu' sul sito: le
+  // fa scattare il tecnico, non lui. Per questo la sua lingua va letta dalla
+  // colonna "lingua" di richieste_intervento invece che dalla pagina.
+  //
+  // Attenzione: le email che vanno al TECNICO restano italiane, e non e' una
+  // dimenticanza — i tecnici sono italiani. Qui c'e' solo cio' che legge il
+  // cliente.
+  emailTecnicoTrovato: {
+    oggetto: "Abbiamo trovato il tuo tecnico! 🔧 (richiesta {numero})",
+    titolo: "Tecnico trovato ✅",
+    sottotitolo:
+      "Ciao {nome}, un tecnico ha accettato la tua richiesta e ti contatterà a breve. Ecco i suoi riferimenti:",
+    campoNome: "Nome",
+    campoTelefono: "Telefono",
+    campoEmail: "Email",
+    campoZona: "Zona",
+    accordatevi: "Vi consigliamo di accordarvi telefonicamente su orario e sopralluogo.",
+  },
+
+  emailRecensione: {
+    oggetto: "Com'è andata la riparazione? Lascia una recensione ({numero})",
+    intestazione: "Com'è andata la riparazione?",
+    saluto: "Ciao {nome},",
+    testo:
+      "il tecnico {tecnico} ha segnato il tuo intervento come completato. Ci racconti com'è andata? Bastano 30 secondi e aiuti gli altri clienti a scegliere bene.",
+    pulsante: "Lascia una recensione",
+  },
+
   // Il PDF: lo stesso referto, ma e' il foglio che il cliente mette in mano al
   // tecnico. Condivide quasi tutto con l'email; qui c'e' solo quello che
   // cambia, per non tenere due copie delle stesse frasi.

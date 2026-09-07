@@ -6,6 +6,9 @@
 import { Resend } from "resend";
 import { MITTENTE, RISPOSTA_A, riferimento } from "../../lib/email-mittente";
 import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
+import { testiPer } from "../../lib/testi";
+import { riempi } from "../../lib/frasi";
+import { linguaValida, PREDEFINITA } from "../../lib/lingue";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -16,9 +19,11 @@ const esc = (v) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
-function emailContatti({ titolo, sottotitolo, righe, linkArea }) {
+// lingua e le due frasi in coda arrivano da fuori: questo stampo serve sia al
+// tecnico (sempre in italiano) sia al cliente (nella sua lingua).
+function emailContatti({ titolo, sottotitolo, righe, linkArea, lingua = "it", accordatevi, linkTesto }) {
   return `<!DOCTYPE html>
-<html lang="it"><head><meta charset="UTF-8"><title>${esc(titolo)}</title></head>
+<html lang="${lingua}"><head><meta charset="UTF-8"><title>${esc(titolo)}</title></head>
 <body style="margin:0;padding:0;background:#f5f5f3;font-family:system-ui,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;"><tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="background:white;border-radius:16px;overflow:hidden;">
@@ -31,8 +36,8 @@ function emailContatti({ titolo, sottotitolo, righe, linkArea }) {
   <div style="background:#e8f5f0;border-radius:10px;padding:16px;">
     ${righe.map((r) => `<p style="margin:0 0 6px;font-size:14px;"><strong>${esc(r[0])}:</strong> ${esc(r[1])}</p>`).join("")}
   </div>
-  <p style="margin:16px 0 0;font-size:12px;color:#888;">Vi consigliamo di accordarvi telefonicamente su orario e sopralluogo.</p>
-  ${linkArea ? `<p style="margin:12px 0 0;font-size:13px;"><a href="${linkArea}" style="color:#0F6E56;">Gestisci questo lavoro dalla tua area tecnico →</a></p>` : ""}
+  <p style="margin:16px 0 0;font-size:12px;color:#888;">${esc(accordatevi)}</p>
+  ${linkArea ? `<p style="margin:12px 0 0;font-size:13px;"><a href="${linkArea}" style="color:#0F6E56;">${esc(linkTesto)} →</a></p>` : ""}
 </td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -130,27 +135,39 @@ export default async function handler(req, res) {
             linkArea: tecnico.accesso_token
               ? `${baseUrl}/area-tecnico?token=${tecnico.accesso_token}`
               : null,
+            // Il tecnico e' italiano: questa copia resta com'era.
+            accordatevi: "Vi consigliamo di accordarvi telefonicamente su orario e sopralluogo.",
+            linkTesto: "Gestisci questo lavoro dalla tua area tecnico",
           }),
         }),
       ];
 
-      // Email al cliente con i contatti del tecnico (se ha lasciato l'email)
+      // Email al cliente con i contatti del tecnico (se ha lasciato l'email).
+      //
+      // Questa e' l'unica delle due email che va a lui e non al tecnico, e
+      // parte giorni dopo la diagnosi: la sua lingua non si puo' dedurre da
+      // nessuna pagina, e infatti sta scritta nella richiesta (colonna
+      // "lingua", riempita da richiedi-tecnico.js).
       if (assegnata.email) {
+        const lingua = linguaValida(assegnata.lingua) ? assegnata.lingua : PREDEFINITA;
+        const t = testiPer(lingua).emailTecnicoTrovato;
         emailPromises.push(
           resend.emails.send({
             from: MITTENTE,
             replyTo: RISPOSTA_A,
             to: assegnata.email,
-            subject: `Abbiamo trovato il tuo tecnico! 🔧 (richiesta #${riferimento(token)})`,
+            subject: riempi(t.oggetto, { numero: `#${riferimento(token)}` }),
             html: emailContatti({
-              titolo: "Tecnico trovato ✅",
-              sottotitolo: `Ciao ${esc(assegnata.nome)}, un tecnico ha accettato la tua richiesta e ti contatterà a breve. Ecco i suoi riferimenti:`,
+              lingua,
+              titolo: t.titolo,
+              sottotitolo: esc(riempi(t.sottotitolo, { nome: assegnata.nome })),
               righe: [
-                ["Nome", `${tecnico.nome} ${tecnico.cognome}`],
-                ["Telefono", tecnico.telefono],
-                ["Email", tecnico.email],
-                ["Zona", tecnico.citta || ""],
+                [t.campoNome, `${tecnico.nome} ${tecnico.cognome}`],
+                [t.campoTelefono, tecnico.telefono],
+                [t.campoEmail, tecnico.email],
+                [t.campoZona, tecnico.citta || ""],
               ],
+              accordatevi: t.accordatevi,
             }),
           })
         );
