@@ -7,6 +7,7 @@ import crypto from "crypto";
 import { Resend } from "resend";
 import { MITTENTE, RISPOSTA_A, riferimento } from "../../lib/email-mittente";
 import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
+import { capValido, mercatoDi } from "../../lib/mercati";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -98,13 +99,19 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Metodo non consentito" });
   }
 
-  const { nome, telefono, email, citta, cap, appliance, brand, problem, report } = req.body || {};
+  const { nome, telefono, email, citta, cap, appliance, brand, problem, report, lingua } = req.body || {};
 
   if (!nome || !telefono || !cap) {
     return res.status(400).json({ error: "Nome, telefono e CAP sono obbligatori" });
   }
-  if (!/^\d{5}$/.test(String(cap).trim())) {
-    return res.status(400).json({ error: "Il CAP deve essere di 5 cifre" });
+  // Cinque cifre valgono in Italia, non altrove: il Portogallo scrive
+  // "1000-001", la Romania sei cifre. La forma giusta la sa lib/mercati.js.
+  // Il controllo resta anche qui e non solo nella pagina: la pagina si puo'
+  // scavalcare, questa no.
+  if (!capValido(cap, lingua)) {
+    return res.status(400).json({
+      error: `Codice postale non valido per ${mercatoDi(lingua).paese} (esempio: ${mercatoDi(lingua).capEsempio})`,
+    });
   }
 
   try {

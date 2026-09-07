@@ -129,7 +129,7 @@ REGOLE
 6. I testi brevi (voci di menu, pulsanti, etichette) devono restare brevi: finiscono dentro pulsanti di larghezza fissa. Se la traduzione fedele e' molto piu' lunga, scegline una piu' corta con lo stesso significato.
 7. Usa il registro che userebbe un'app per consumatori in quel mercato: tono diretto e amichevole, dando del tu dove e' naturale nella lingua.
 8. Alcune frasi arrivano spezzate a meta' perche' nella pagina vanno su due righe: traducile come due meta' della stessa frase.
-9. Le parti fra graffe — {nome}, {email}, {quanti}, {file}, {problema}, {sicurezza}, {dove} — sono buchi che il programma riempie: lascia la graffa e la parola dentro ESATTAMENTE come sono, senza tradurle. Spostale pure dove le vuole la sintassi della lingua d'arrivo.
+9. Le parti fra graffe con un numero dentro — {0}, {1}, {2} — sono buchi che il programma riempie con dei dati. Riportale IDENTICHE, numero compreso, e non aggiungerne né toglierne. Spostale pure dove le vuole la sintassi della lingua d'arrivo.
 10. Gli asterischi doppi (**cosi**) mettono in grassetto e gli asterischi singoli (*cosi*) il corsivo: vanno mantenuti attorno alla parte corrispondente della frase tradotta. La sequenza \\n manda a capo: lasciala dov'e'.
 11. ATTENZIONE alle frasi che parlano di corrente, acqua e gas: le legge qualcuno che ha l'elettrodomestico davanti e le mani libere. Traducile alla lettera, senza abbreviare, senza addolcire e senza cambiare l'ordine delle azioni.
 
@@ -147,6 +147,31 @@ Rispondi SOLO con il JSON tradotto. Niente spiegazioni, niente blocchi di codice
 // di frasi e basta, e i nomi glieli rimettiamo noi qui, dove non possono
 // sbagliarsi. Un'intera categoria di errori sparisce invece di essere
 // intercettata dopo.
+
+// ─── Anche i buchi si mascherano ────────────────────────────────────────────
+// Stessa storia dei nomi delle chiavi: {codice} sembra una parola italiana, e
+// il portoghese la restituiva come {codigo} — sempre, anche con la regola
+// scritta nella richiesta. Un buco rinominato non viene piu' riempito da
+// nessuno, e a schermo resta scritto "{codigo}" al posto del codice del pezzo.
+//
+// Quindi non gliene mandiamo il nome: parte {0}, torna {0}, e il nome glielo
+// rimettiamo noi. Un numero non somiglia a niente in nessuna lingua.
+function maschera(frase) {
+  const nomi = [];
+  const testo = String(frase).replace(/\{(\w+)\}/g, (intero, nome) => {
+    const gia = nomi.indexOf(nome);
+    if (gia >= 0) return `{${gia}}`;
+    nomi.push(nome);
+    return `{${nomi.length - 1}}`;
+  });
+  return { testo, nomi };
+}
+
+function smaschera(frase, nomi) {
+  return String(frase).replace(/\{(\d+)\}/g, (intero, i) =>
+    nomi[Number(i)] !== undefined ? `{${nomi[Number(i)]}}` : intero
+  );
+}
 
 /** Le frasi di un pezzo, nell'ordine in cui compaiono. */
 function raccogli(valore) {
@@ -289,6 +314,11 @@ for (const lingua of daFare) {
 
   await aGruppi(daTradurre, INSIEME, async (pezzo) => {
     const nome = pezzo.percorso.join(".") || "(tutto)";
+    // I nomi dei buchi restano qui: fuori esce {0}, {1}, e al ritorno li
+    // rimettiamo a posto noi.
+    const originali = raccogli(pezzo.valore);
+    const coperte = originali.map(maschera);
+    const mascherate = coperte.map((c) => c.testo);
     try {
       const risposta = await cliente.messages.create({
         model: MODELLO,
@@ -296,7 +326,7 @@ for (const lingua of daFare) {
         messages: [
           {
             role: "user",
-            content: `${istruzioni(lingua.nome)}\n\n${JSON.stringify(raccogli(pezzo.valore), null, 2)}`,
+            content: `${istruzioni(lingua.nome)}\n\n${JSON.stringify(mascherate, null, 2)}`,
           },
         ],
       });
@@ -308,14 +338,14 @@ for (const lingua of daFare) {
         return;
       }
 
-      const frasi = estraiJSON(risposta.content.map((b) => b.text || "").join(""));
-      const attese = raccogli(pezzo.valore);
-      if (!Array.isArray(frasi) || frasi.length !== attese.length) {
+      const grezze = estraiJSON(risposta.content.map((b) => b.text || "").join(""));
+      if (!Array.isArray(grezze) || grezze.length !== originali.length) {
         guai.push(
-          `${nome}: tornate ${Array.isArray(frasi) ? frasi.length : "?"} frasi invece di ${attese.length}`
+          `${nome}: tornate ${Array.isArray(grezze) ? grezze.length : "?"} frasi invece di ${originali.length}`
         );
         return;
       }
+      const frasi = grezze.map((f, i) => smaschera(f, coperte[i].nomi));
 
       // Rimessi i nomi, si ricontrolla lo stesso: qui restano da verificare le
       // frasi vuote e i segnaposto persi, che l'ordine giusto non garantisce.

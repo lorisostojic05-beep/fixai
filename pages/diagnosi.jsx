@@ -10,6 +10,7 @@ import { messaggioBenvenuto } from "../lib/benvenuto";
 import { testiPer } from "../lib/testi";
 import { riempi } from "../lib/frasi";
 import { voceDi, prefissoDi } from "../lib/lingue";
+import { capValido, ripulisciCap, mercatoDi } from "../lib/mercati";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
@@ -198,7 +199,11 @@ export default function Diagnosi({ testi, linguaPagina }) {
     const b = sessionStorage.getItem("Fixi_report_brand") || brand;
     const p = sessionStorage.getItem("Fixi_report_problem") || problem;
     try {
-      return refertoPDF(report, a, b, p);
+      // Il nome dell'elettrodomestico si TRADUCE prima di stamparlo: "a" e' la
+      // chiave italiana con cui gira nel programma, non un'etichetta. Senza
+      // questa riga il referto spagnolo diceva "BOSCH — Lavatrice".
+      // testi (non t): al PDF servono sia testi.email che testi.pdf.
+      return refertoPDF(report, t.elettrodomestici[a] || a, b, p, testi, linguaPagina);
     } catch (e) {
       console.error("Referto PDF non generato:", e);
       alert(t.avvisi.pdfNonRiuscito);
@@ -844,6 +849,9 @@ useEffect(() => {
               appliance,
               brand,
               initialProblem: problem,
+              // Il paese decide il listino del referto: senza, un tedesco si
+              // vedrebbe i prezzi italiani. Vedi lib/prezzi.js.
+              lingua: linguaPagina,
             }),
             signal: controller.signal,
           });
@@ -1125,8 +1133,13 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
       alert(t.avvisi.tecnicoDati);
       return;
     }
-    if (!/^\d{5}$/.test(tecForm.cap.trim())) {
-      alert(t.avvisi.tecnicoCap);
+    // La forma del codice postale cambia da paese a paese: cinque cifre in
+    // Italia, "1000-001" in Portogallo, sei in Romania. Vedi lib/mercati.js.
+    if (!capValido(tecForm.cap, linguaPagina)) {
+      alert(riempi(t.avvisi.tecnicoCap, {
+        paese: mercatoDi(linguaPagina).paese,
+        esempio: mercatoDi(linguaPagina).capEsempio,
+      }));
       return;
     }
     setTecLoading(true);
@@ -1141,6 +1154,9 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
           brand: sessionStorage.getItem("Fixi_report_brand") || brand,
           problem: sessionStorage.getItem("Fixi_report_problem") || problem,
           report,
+          // Il server ricontrolla il CAP, e per farlo deve sapere di che
+          // paese e' la forma attesa.
+          lingua: linguaPagina,
         }),
       });
       const data = await res.json();
@@ -1757,6 +1773,10 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
               appliance,
               brand,
               problem,
+              // Il referto arriva a casa quando l'utente non e' piu' sul sito:
+              // senza questa riga gli arrivava in italiano qualunque lingua
+              // avesse usato per la diagnosi.
+              lingua: linguaPagina,
             }),
           });
           const data = await res.json().catch(() => ({}));
@@ -1872,9 +1892,9 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
         <input
           type="text"
           placeholder={t.tecnico.cap}
-          maxLength={5}
+          maxLength={mercatoDi(linguaPagina).capLunghezza}
           value={tecForm.cap}
-          onChange={(e) => setTecForm({ ...tecForm, cap: e.target.value.replace(/\D/g, "") })}
+          onChange={(e) => setTecForm({ ...tecForm, cap: ripulisciCap(e.target.value, linguaPagina) })}
           className={styles.input}
         />
       </div>

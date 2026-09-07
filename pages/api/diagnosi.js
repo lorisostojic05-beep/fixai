@@ -2,6 +2,7 @@
 // Backend della sessione di diagnosi — chiama Claude con visione + history
 
 import Anthropic from "@anthropic-ai/sdk";
+import { sezioneCosti } from "../../lib/prezzi";
 import Stripe from "stripe";
 import { supabaseAdmin } from "../../lib/supabase-admin";
 
@@ -616,36 +617,14 @@ Vale per tutti gli elettrodomestici, non solo per i condizionatori: una marca ch
 4. Asciugare l'acqua che si forma
 5. Riaccendere — se ora funziona, il sistema no-frost ha un problema
 
-## STIMA COSTI AGGIORNATA (mercato italiano 2024-2025)
+## STIMA COSTI
 
-| Intervento | Manodopera | Pezzo | Totale |
-|-----------|------------|-------|--------|
-| Pulizia filtro pompa | €0 fai-da-te | — | €0 |
-| Sostituzione pompa scarico | €60–90 | €25–55 | €85–145 |
-| Sostituzione guarnizione oblò | €50–80 | €20–45 | €70–125 |
-| Sostituzione resistenza | €70–100 | €25–65 | €95–165 |
-| Sostituzione blocca-porta | €40–65 | €15–30 | €55–95 |
-| Sostituzione valvola ingresso | €50–70 | €15–35 | €65–105 |
-| Sostituzione cuscinetti | €120–180 | €35–85 | €155–265 |
-| Sostituzione scheda elettronica | €150–250 | €80–220 | €230–470 |
-| Sostituzione motore | €150–220 | €80–180 | €230–400 |
-| Sostituzione NTC/termostato | €50–70 | €10–25 | €60–95 |
-| Sostituzione pressostato | €55–75 | €15–30 | €70–105 |
-| Sostituzione ammortizzatori | €70–100 | €20–45 | €90–145 |
-| Sostituzione cinghia | €55–75 | €10–20 | €65–95 |
-| Ricarica gas frigorifero | €80–150 | €30–60 | €110–210 |
-| Sostituzione compressore frigo | €150–250 | €100–250 | €250–500 |
-| Sostituzione pompa lavastoviglie | €70–100 | €30–70 | €100–170 |
-| Pulizia filtri condizionatore | €0 fai-da-te | — | €0 |
-| Manutenzione/sanificazione split | €70–130 | — | €70–130 |
-| Ricerca perdita + ricarica gas condizionatore | €100–200 | €40–90 | €140–290 |
-| Sostituzione ventola unità interna | €90–150 | €40–90 | €130–240 |
-| Sostituzione scheda elettronica split | €120–200 | €90–200 | €210–400 |
-| Sostituzione compressore condizionatore | €200–350 | €150–350 | €350–700 |
-| Sostituzione telecomando (universale) | €0 fai-da-te | €15–40 | €15–40 |
-
-**Nota**: Prezzi indicativi per area nord Italia. Al sud i prezzi manodopera possono essere 10-20% inferiori.
-**Nota condizionatori**: gli interventi sul circuito frigorifero costano di più perché richiedono un tecnico certificato F-Gas con attrezzatura dedicata; in piena estate i tempi di attesa si allungano e alcuni tecnici applicano un supplemento per l'urgenza.
+La tabella dei costi non sta qui: arriva in un blocco a parte, in fondo a
+questo manuale, ed e' su misura del paese dell'utente. Sta fuori per due
+ragioni. La prima e' che i prezzi cambiano da paese a paese e questo manuale
+no: tenendoli separati, il manuale resta una sola copia in cache per tutte e
+sette le lingue invece di sette. La seconda e' che fuori dall'Italia quei
+numeri sono STIME dichiarate, e la tabella se lo porta scritto addosso.
 
 ## QUANDO CONSIGLIARE SOSTITUZIONE INVECE DI RIPARAZIONE
 
@@ -707,7 +686,7 @@ Il referto deve essere in JSON con questa struttura:
       "price": "€XX–YY"
     },
     "technicianCost": "€XX–YY (manodopera + pezzo)",
-    "urgency": "bassa/media/alta",
+    "urgency": "bassa/media/alta",   <-- SEMPRE una di queste tre parole italiane, anche quando rispondi in un'altra lingua: non e' testo da mostrare, e' un'etichetta che il programma confronta. Tradotta in "baja" o "low", il referto perde il colore e la frase dell'urgenza.
     "summary": "Una frase riassuntiva per il tecnico"
   },
   "message": "Messaggio finale all'utente"
@@ -722,7 +701,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Metodo non consentito" });
   }
 
-  const { messages, frame, appliance, brand, initialProblem, sessionId, stripeSessionId } = req.body;
+  const { messages, frame, appliance, brand, initialProblem, sessionId, stripeSessionId, lingua } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "Parametri non validi" });
@@ -756,6 +735,10 @@ export default async function handler(req, res) {
       system: [
         // Il manuale è stabile → in cache (-90% costo dal 2° messaggio)
         { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+        // Il listino sta in un blocco suo e DOPO il manuale, non dentro:
+        // cambia da paese a paese, e messo prima spaccherebbe la cache del
+        // manuale in una copia per lingua. Vedi lib/prezzi.js.
+        { type: "text", text: sezioneCosti(lingua) },
         {
           type: "text",
           text: `ELETTRODOMESTICO DICHIARATO: ${appliance || "non specificato"}. Se vedi qualcosa di diverso da questo nella camera, rispondi SKIP e chiedi all'utente di inquadrare l'elettrodomestico corretto.`,

@@ -22,10 +22,20 @@ const PLUGIN = [
 ];
 
 export async function getStaticProps({ locale }) {
-  return { props: { testi: testiPer(locale).stato, pre: prefissoDi(locale) } };
+  const tutti = testiPer(locale);
+  return {
+    props: {
+      testi: tutti.stato,
+      // Le prove 4 e 5 costruiscono un referto vero: al generatore servono le
+      // stesse parole che userebbe il PDF di un cliente.
+      testiReferto: { email: tutti.email, pdf: tutti.pdf },
+      lingua: locale,
+      pre: prefissoDi(locale),
+    },
+  };
 }
 
-export default function Stato({ testi: t, pre }) {
+export default function Stato({ testi: t, testiReferto, lingua, pre }) {
   const [info, setInfo] = useState(null);
   const [esiti, setEsiti] = useState({});
 
@@ -108,7 +118,7 @@ export default function Stato({ testi: t, pre }) {
         sparePart: { name: "Pezzo di prova", code: "XX-000", price: "€10" },
         technicianCost: "€50–80",
       };
-      const { blob, nomeFile } = refertoPDF(finto, "Lavatrice", "Bosch", "Prova");
+      const { blob, nomeFile } = refertoPDF(finto, "Lavatrice", "Bosch", "Prova", testiReferto, lingua);
       segna("pdf", `RIUSCITO → ${nomeFile}, ${blob?.size ?? "?"} byte`);
     } catch (e) {
       segna("pdf", `FALLITO → ${e?.name || ""} ${e?.message || e}`);
@@ -124,7 +134,7 @@ export default function Stato({ testi: t, pre }) {
       const { refertoPDF } = await import("../lib/generaPDF");
       const { blob, nomeFile } = refertoPDF(
         { diagnosis: "Prova catena completa.", urgency: "bassa", diyPossible: false, sparePart: null, technicianCost: "€50" },
-        "Lavatrice", "Bosch", "Prova"
+        "Lavatrice", "Bosch", "Prova", testiReferto, lingua
       );
       const base64 = await new Promise((ris, rif) => {
         const l = new FileReader();

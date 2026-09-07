@@ -3,6 +3,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { testiPer } from "../lib/testi";
 import { prefissoDi } from "../lib/lingue";
+import { ripulisciCap, mercatoDi } from "../lib/mercati";
 
 const SPECIALIZZAZIONI = [
   "Lavatrici",
@@ -16,10 +17,10 @@ const SPECIALIZZAZIONI = [
 ];
 
 export async function getStaticProps({ locale }) {
-  return { props: { testi: testiPer(locale).tecnicoIscrizione, pre: prefissoDi(locale) } };
+  return { props: { testi: testiPer(locale).tecnicoIscrizione, pre: prefissoDi(locale), lingua: locale } };
 }
 
-export default function IscrivitiTecnico({ testi: t, pre }) {
+export default function IscrivitiTecnico({ testi: t, pre, lingua }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [inviato, setInviato] = useState(false);
@@ -170,7 +171,7 @@ export default function IscrivitiTecnico({ testi: t, pre }) {
                   </div>
                   <div style={styles.formGroup}>
                     <label style={styles.label}>{t.cap}</label>
-                    <input style={styles.input} value={form.cap} onChange={(e) => update("cap", e.target.value)} placeholder={t.capEsempio} />
+                    <input style={styles.input} value={form.cap} onChange={(e) => update("cap", ripulisciCap(e.target.value, lingua))} placeholder={mercatoDi(lingua).capEsempio} />
                   </div>
                 </div>
 

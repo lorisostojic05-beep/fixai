@@ -217,6 +217,57 @@ export default {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
+  //  L'EMAIL CON IL REFERTO
+  //
+  //  E' l'unica cosa di Fixi che arriva a casa dell'utente quando lui non e'
+  //  piu' sul sito. Prima era sempre italiana: uno spagnolo faceva tutta la
+  //  diagnosi in spagnolo, pagava, e poi si ritrovava nella posta un documento
+  //  in una lingua che non legge — proprio il pezzo che deve mostrare al
+  //  tecnico.
+  // ═══════════════════════════════════════════════════════════════════════════
+  email: {
+    oggetto: "Il tuo referto Fixi {numero} — {macchina}",
+    sottotitolo: "Diagnosi elettrodomestici via videochiamata AI",
+    intestazione: "Referto {numero} — {data}",
+    problema: "Problema riportato: \"{problema}\"",
+
+    diagnosi: "DIAGNOSI",
+    faiDaTe: "SOLUZIONE FAI-DA-TE",
+    pezzo: "PEZZO DA SOSTITUIRE",
+    codice: "Codice: {codice}",
+    prezzo: "Prezzo: {prezzo}",
+    stima: "STIMA INTERVENTO TECNICO",
+    mostraAlTecnico: "Mostra questo referto al tecnico per un prezzo equo.",
+
+    // "bassa/media/alta" restano in italiano dentro il referto perche' sono
+    // etichette, non testo: qui si traduce solo quello che si legge.
+    urgenza: "Urgenza: {livello} — {cosaFare}",
+    urgenzaBassa: "BASSA",
+    urgenzaMedia: "MEDIA",
+    urgenzaAlta: "ALTA",
+    urgenzaBassaCosaFare: "Nessuna fretta",
+    urgenzaMediaCosaFare: "Intervieni entro qualche giorno",
+    urgenzaAltaCosaFare: "Intervieni il prima possibile",
+
+    piede: "Referto generato da sistema AI. Consultare sempre un tecnico qualificato.",
+  },
+
+  // Il PDF: lo stesso referto, ma e' il foglio che il cliente mette in mano al
+  // tecnico. Condivide quasi tutto con l'email; qui c'e' solo quello che
+  // cambia, per non tenere due copie delle stesse frasi.
+  pdf: {
+    dataReferto: "Referto del {data}",
+    numeroReferto: "Referto #{numero}",
+    nome: "Nome: {nome}",
+    codice: "Codice: {codice}",
+    prezzoStimato: "Prezzo stimato: {prezzo}",
+    risolvibileDaSolo: "Risolvibile in autonomia",
+    mostraAlTecnico: "Mostra questo referto al tecnico per ottenere un prezzo equo.",
+    piedeSinistra: "Fixi — Diagnosi elettrodomestici via AI",
+    piedeCentro: "Questo referto è generato da un sistema AI a scopo diagnostico.",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
   //  L'INFORMATIVA PRIVACY
   //
   //  E' un documento legale, non un'interfaccia: si traduce come cortesia
@@ -745,7 +796,8 @@ export default {
       rimborsoNonInviato: "Non sono riuscito a inviare la richiesta. Riprova.",
 
       tecnicoDati: "Inserisci nome e telefono: servono al tecnico per contattarti.",
-      tecnicoCap: "Inserisci un CAP valido di 5 cifre.",
+      // "cinque cifre" valeva solo in Italia: ora la forma la dice l'esempio.
+      tecnicoCap: "Il codice postale non sembra giusto. Per {paese} si scrive così: {esempio}",
 
       vocaleNonDisponibile:
         "Il riconoscimento vocale non è disponibile su questo telefono. Puoi scrivere il messaggio.",
