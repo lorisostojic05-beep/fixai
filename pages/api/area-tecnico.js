@@ -12,6 +12,7 @@ import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
 import { testiPer } from "../../lib/testi";
 import { riempi } from "../../lib/frasi";
 import { linguaValida, PREDEFINITA } from "../../lib/lingue";
+import { comeStaIlConto } from "../../lib/stripe-connect.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -26,7 +27,10 @@ async function tecnicoDaToken(token) {
   if (!token) return null;
   const { data } = await supabase
     .from("tecnici")
-    .select("id, nome, cognome, email, telefono, citta, cap, specializzazioni, approvato")
+    .select(
+      "id, nome, cognome, email, telefono, citta, cap, specializzazioni, approvato, " +
+        "stripe_account_id, stripe_bonifici_attivi, stripe_requisiti"
+    )
     .eq("accesso_token", token)
     .eq("approvato", true)
     .maybeSingle();
@@ -66,12 +70,27 @@ export default async function handler(req, res) {
 
     const { data: lavori } = await supabase
       .from("richieste_intervento")
-      .select("id, nome, telefono, email, citta, cap, appliance, brand, problem, report, stato, created_at, accettata_at, completata_at, recensione_voto, recensione_commento")
+      .select(
+        "id, nome, telefono, email, citta, cap, appliance, brand, problem, report, stato, " +
+          "created_at, accettata_at, completata_at, recensione_voto, recensione_commento, " +
+          // I soldi del lavoro: il tecnico deve poterli vedere tutti e tre —
+          // quanto ha chiesto, quanto trattiene Fixi, quanto gli resta — e
+          // devono arrivare dal server, non da un conto fatto nella pagina.
+          "preventivo_centesimi, prezzo_finale_centesimi, commissione_centesimi, " +
+          "netto_tecnico_centesimi, transfer_id, appuntamento_at"
+      )
       .eq("tecnico_id", tecnico.id)
       .order("accettata_at", { ascending: false });
 
-    const { approvato, ...profilo } = tecnico;
-    return res.status(200).json({ tecnico: profilo, lavori: lavori || [] });
+    // Lo stato dei pagamenti si riassume in una parola sola: al tecnico non
+    // serve sapere cos'e' un conto collegato, gli serve sapere se verra'
+    // pagato. I dettagli tecnici di Stripe non escono da qui.
+    const { approvato, stripe_account_id, stripe_bonifici_attivi, stripe_requisiti, ...profilo } = tecnico;
+    return res.status(200).json({
+      tecnico: profilo,
+      pagamenti: comeStaIlConto({ stripe_account_id, stripe_bonifici_attivi }),
+      lavori: lavori || [],
+    });
   }
 
   if (req.method !== "POST") {
