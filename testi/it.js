@@ -762,6 +762,22 @@ export default {
       nessuno:
         "Al momento non ci sono tecnici attivi nella tua zona: abbiamo registrato la richiesta e ti contatteremo appena ne troviamo uno.",
 
+      // ┌─────────────────────────────────────────────────────────────────┐
+      // │  LA FRASE CHE VALE SOLDI                                        │
+      // │                                                                 │
+      // │  Il cliente ha appena pagato 9,90 € e sta leggendo che gli       │
+      // │  serve un tecnico. In quel momento pensa "quindi ho speso 9,90 € │
+      // │  per scoprire che devo spendere ancora". Questa riga ribalta la  │
+      // │  frase: quei soldi non sono spesi, sono un acconto.              │
+      // │                                                                 │
+      // │  NON si dice "gratis" e NON si dice "rimborso". La diagnosi      │
+      // │  costa, e non torna indietro niente: viene scalata.              │
+      // └─────────────────────────────────────────────────────────────────┘
+      creditoTitolo: "Hai già {credito} di credito sulla riparazione",
+      creditoTesto:
+        "Se ripari tramite Fixi, i {credito} della videodiagnosi vengono scalati interamente dal costo dell'intervento.",
+      trovaTecnico: "Trova un tecnico",
+
       preferisci: "Preferisci un tecnico?",
       spiegazione:
         "Inviamo il referto ai tecnici della tua zona: il primo disponibile ti contatta. Gratis e senza impegno.",

@@ -1,5 +1,38 @@
 import { useState, useEffect } from "react";
 
+// Gli importi arrivano dal server in centesimi: qui si scrivono e basta.
+const euro = (c) =>
+  typeof c === "number"
+    ? new Intl.NumberFormat("it", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(c / 100)
+    : "—";
+
+const grigliaNumeri = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+  gap: "12px",
+  marginBottom: "1.5rem",
+};
+const riquadroNumero = {
+  background: "white",
+  borderRadius: "12px",
+  padding: "1rem",
+  boxShadow: "0 1px 8px rgba(0,0,0,0.06)",
+};
+const etichettaNumero = {
+  fontSize: "11px",
+  color: "#999",
+  marginBottom: "4px",
+  textTransform: "uppercase",
+  letterSpacing: "0.5px",
+};
+const schedaBianca = {
+  background: "white",
+  borderRadius: "12px",
+  padding: "1.25rem",
+  boxShadow: "0 1px 8px rgba(0,0,0,0.06)",
+};
+const titoloScheda = { fontSize: "15px", fontWeight: 600, marginBottom: "1rem" };
+
 export default function Admin() {
   const [autenticato, setAutenticato] = useState(false);
   const [password, setPassword] = useState("");
@@ -218,6 +251,97 @@ export default function Admin() {
 
         {dati && (
           <>
+            {/* ── MARKETPLACE ────────────────────────────────────────────────
+                Sta in cima perche' e' la domanda che ti fai per prima: quanto
+                sta girando, e quanto ne resta a Fixi.
+
+                I DUE RICAVI SONO SEPARATI DI PROPOSITO. I 9,90 € di una
+                diagnosi che diventa riparazione non sono piu' ricavo: sono
+                parte di quanto il cliente ha pagato per l'intervento, e li'
+                il ricavo e' la commissione. Sommarli gonfierebbe il fatturato.
+                Vedi lib/metriche.js. */}
+            {dati.marketplace && (
+              <>
+                <div style={grigliaNumeri}>
+                  {[
+                    { label: "Giro d'affari", valore: euro(dati.marketplace.gmv), colore: "#185FA5" },
+                    { label: "Ricavo Fixi", valore: euro(dati.marketplace.ricavoTotale), colore: "#0F6E56" },
+                    { label: "— da diagnosi", valore: euro(dati.marketplace.ricavoDiagnosi), colore: "#6B6B68" },
+                    { label: "— da commissioni", valore: euro(dati.marketplace.ricavoCommissioni), colore: "#6B6B68" },
+                    { label: "Pagato ai tecnici", valore: euro(dati.marketplace.payoutFatti), colore: "#854F0B" },
+                    {
+                      label: "Bonifici in sospeso",
+                      valore:
+                        dati.marketplace.bonificiInSospeso > 0
+                          ? `${dati.marketplace.bonificiInSospeso} · ${euro(dati.marketplace.payoutInSospeso)}`
+                          : "—",
+                      colore: dati.marketplace.bonificiInSospeso > 0 ? "#A01E1E" : "#6B6B68",
+                    },
+                    {
+                      label: "Riparazione media",
+                      valore: dati.marketplace.completate ? euro(dati.marketplace.valoreMedioRiparazione) : "—",
+                      colore: "#185FA5",
+                    },
+                    {
+                      label: "Contestazioni aperte",
+                      valore: dati.contestazioni?.length || "—",
+                      colore: dati.contestazioni?.length ? "#A01E1E" : "#6B6B68",
+                    },
+                  ].map((s, i) => (
+                    <div key={i} style={riquadroNumero}>
+                      <p style={etichettaNumero}>{s.label}</p>
+                      <p style={{ fontSize: "20px", fontWeight: 700, color: s.colore }}>{s.valore}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ ...schedaBianca, marginBottom: "1.5rem" }}>
+                  <h2 style={titoloScheda}>Dove si perdono le persone</h2>
+                  {/* Ogni passo e' misurato sul PRECEDENTE, non sul totale:
+                      cosi' si vede dove si rompe l'imbuto, che e' l'unica cosa
+                      su cui si puo' fare qualcosa. */}
+                  {[
+                    ["Diagnosi → richiesta tecnico", dati.marketplace.conversioni.diagnosiARichiesta, `${dati.marketplace.richiesteTotali} su ${dati.marketplace.diagnosiPagate}`],
+                    ["Richiesta → preventivo", dati.marketplace.conversioni.richiestaAPreventivo, `${dati.marketplace.conPreventivo} su ${dati.marketplace.richiesteTotali}`],
+                    ["Preventivo → pagamento", dati.marketplace.conversioni.preventivoAPagamento, `${dati.marketplace.pagate} su ${dati.marketplace.conPreventivo}`],
+                    ["Pagamento → riparazione finita", dati.marketplace.conversioni.pagamentoACompletata, `${dati.marketplace.completate} su ${dati.marketplace.pagate}`],
+                  ].map(([nome, perc, conto], i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "8px 0", borderBottom: "1px solid #f0f0ee", fontSize: "14px" }}>
+                      <span>{nome}</span>
+                      <span style={{ textAlign: "right" }}>
+                        <strong style={{ color: "#0F6E56" }}>{perc == null ? "—" : perc + "%"}</strong>
+                        <span style={{ color: "#999", fontSize: "12px", marginLeft: "8px" }}>{conto}</span>
+                      </span>
+                    </div>
+                  ))}
+
+                  <div style={{ marginTop: "14px", fontSize: "13px", color: "#555", lineHeight: 1.8 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span>Diagnosi senza riparazione</span>
+                      <span>{dati.marketplace.diagnosiSenzaRiparazione}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span>Crediti scalati su riparazioni</span>
+                      <span>{euro(dati.marketplace.creditiScalati)}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span>Saldi incassati dai clienti</span>
+                      <span>{euro(dati.marketplace.saldiIncassati)}</span>
+                    </div>
+                  </div>
+
+                  {/* Il caso peggiore: puo' prendere lavori e non puo' essere
+                      pagato. Ce ne si accorge solo a lavoro finito. */}
+                  {dati.marketplace.tecnici.approvatiSenzaPagamenti > 0 && (
+                    <p style={{ marginTop: "14px", padding: "10px 12px", background: "#fdeaea", borderRadius: "8px", fontSize: "13px", color: "#A01E1E" }}>
+                      ⚠️ {dati.marketplace.tecnici.approvatiSenzaPagamenti} tecnico/i approvato/i non ha ancora
+                      configurato i pagamenti: puo&#39; prendere lavori ma non puo&#39; essere pagato.
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+
             {/* Statistiche principali */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "12px", marginBottom: "1.5rem" }}>
               {[

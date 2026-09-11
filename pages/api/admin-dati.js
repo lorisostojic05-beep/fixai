@@ -1,6 +1,7 @@
 // pages/api/admin-dati.js
 import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
 import { verificaTokenAdmin } from "../../lib/admin-token";
+import { metriche } from "../../lib/metriche.js";
 
 // Tariffe Claude Opus 5, in dollari per milione di token. Le quattro voci
 // sono separate perché la cache ha prezzi suoi: scriverla costa 1,25 volte
@@ -198,7 +199,41 @@ export default async function handler(req, res) {
       })
     );
 
+    // ── I numeri del marketplace ──────────────────────────────────────────
+    // Si leggono TUTTE le righe, non le ultime venti: una media fatta sugli
+    // ultimi venti lavori non e' una media, e' un caso. Le tabelle sono
+    // piccole (decine di righe), quindi costa niente; se un giorno
+    // diventassero grosse, questi conti andranno spostati in una vista SQL.
+    const [{ data: tuttiPagamenti }, { data: tutteRichieste }, { data: tuttiTecnici }] = await Promise.all([
+      supabase.from("pagamenti").select("credito_stato").limit(5000),
+      supabase
+        .from("richieste_intervento")
+        .select(
+          "stato, preventivo_centesimi, prezzo_finale_centesimi, credito_applicato_centesimi, " +
+            "saldo_cliente_centesimi, commissione_centesimi, netto_tecnico_centesimi, transfer_id"
+        )
+        .limit(5000),
+      supabase.from("tecnici").select("approvato, stripe_bonifici_attivi").limit(1000),
+    ]);
+
+    const marketplace = metriche({
+      pagamenti: tuttiPagamenti || [],
+      richieste: tutteRichieste || [],
+      tecnici: tuttiTecnici || [],
+    });
+
+    // Le contestazioni aperte: vanno guardate da una persona, e finche' ci
+    // sono il bonifico su quel lavoro resta fermo.
+    const { data: contestazioni } = await supabase
+      .from("contestazioni")
+      .select("*")
+      .is("chiusa_at", null)
+      .order("creata_at", { ascending: false })
+      .limit(20);
+
     return res.status(200).json({
+      marketplace,
+      contestazioni: contestazioni || [],
       rimborsi,
       rimborsiDaDecidere: rimborsi.filter((r) => r.stato === "richiesto").length,
 

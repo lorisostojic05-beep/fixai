@@ -9,6 +9,8 @@ import { prendiPlugin, prendiPluginSubito } from "../lib/plugin-nativo";
 import { messaggioBenvenuto } from "../lib/benvenuto";
 import { testiPer } from "../lib/testi";
 import { riempi } from "../lib/frasi";
+// Il prezzo della diagnosi e la sua formattazione: un posto solo, lib/soldi.js.
+import { PREZZO_DIAGNOSI, inEuro } from "../lib/soldi";
 import { voceDi, prefissoDi } from "../lib/lingue";
 import { capValido, ripulisciCap, mercatoDi } from "../lib/mercati";
 
@@ -1844,8 +1846,49 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
   </p>
 )}
 
+{/* ┌───────────────────────────────────────────────────────────────────────┐
+    │  IL CREDITO, DETTO PRIMA DI TUTTO IL RESTO                            │
+    │                                                                       │
+    │  Il cliente ha appena pagato 9,90 € e sta leggendo che gli serve un   │
+    │  tecnico. In quel momento il pensiero e' "ho speso 9,90 € per         │
+    │  scoprire che devo spendere ancora".                                  │
+    │                                                                       │
+    │  Questa striscia ribalta la frase prima che il pensiero si formi:     │
+    │  quei soldi non sono spesi, sono un acconto. Sta SOPRA il modulo e    │
+    │  non dentro, perche' deve leggerla anche chi il modulo non lo         │
+    │  compila — e magari torna fra tre giorni.                             │
+    │                                                                       │
+    │  E' piu' vistosa quando il referto dice che il fai-da-te non basta:   │
+    │  li' la riparazione e' probabile, e l'informazione vale di piu'.      │
+    └───────────────────────────────────────────────────────────────────────┘ */}
+{!tecEsito && (
+  <div
+    style={{
+      marginTop: "16px",
+      background: report?.diyPossible ? "#EAF5EF" : "#1A6B50",
+      color: report?.diyPossible ? "#1A6B50" : "white",
+      borderRadius: "12px",
+      padding: report?.diyPossible ? "14px 16px" : "18px",
+    }}
+  >
+    <p style={{ margin: 0, fontSize: report?.diyPossible ? "14px" : "17px", fontWeight: 700 }}>
+      💶 {riempi(t.tecnico.creditoTitolo, { credito: inEuro(PREZZO_DIAGNOSI, linguaPagina) })}
+    </p>
+    <p
+      style={{
+        margin: "6px 0 0",
+        fontSize: "13px",
+        lineHeight: 1.6,
+        opacity: report?.diyPossible ? 1 : 0.9,
+      }}
+    >
+      {riempi(t.tecnico.creditoTesto, { credito: inEuro(PREZZO_DIAGNOSI, linguaPagina) })}
+    </p>
+  </div>
+)}
+
 {/* Richiedi un tecnico della zona */}
-<div style={{ marginTop: "16px", background: "#e6f1fb", borderRadius: "10px", padding: "16px" }}>
+<div style={{ marginTop: "10px", background: "#e6f1fb", borderRadius: "10px", padding: "16px" }}>
   {tecEsito ? (
     <div style={{ textAlign: "center" }}>
       <p style={{ fontSize: "15px", fontWeight: 600, marginBottom: "6px" }}>
