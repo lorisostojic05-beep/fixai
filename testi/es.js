@@ -26,14 +26,14 @@ export default {
     "badge": "Diagnóstico con IA en 10 minutos",
     "titolo1": "La lavadora está rota.",
     "titolo2": "Sin pánico.",
-    "sottotitolo": "Una IA te guía por videollamada, identifica el problema y te entrega un informe preciso. Sin esperar al técnico. Sin pagar 80 € solo por que venga.",
+    "sottotitolo": "Una IA te guía por videollamada, identifica el problema y te entrega un informe preciso. Sin esperar al técnico. Sin pagar 80 € solo por la visita.",
     "avvia": "Iniciar diagnóstico",
     "comeFunziona": "Cómo funciona"
   },
   "telefono": {
     "sessione": "Sesión activa",
-    "analizza": "IA analizando",
-    "bolla1": "Vi el panelito. Intenta desenroscar el tapón con un paño — podría salir agua residual.",
+    "analizza": "La IA está analizando",
+    "bolla1": "He visto el panel. Intenta desenroscar el tapón con un paño — podría salir agua residual.",
     "bolla2": "Listo, había pelusa",
     "bolla3": "¡Perfecto! Ese es el problema. Vuelve a montar el filtro y prueba un ciclo corto.",
     "risparmioEtichetta": "Ahorro estimado",
@@ -48,11 +48,11 @@ export default {
     },
     {
       "valore": "10 min",
-      "etichetta": "Tiempo medio de sesión"
+      "etichetta": "Duración media de la sesión"
     },
     {
       "valore": "80%",
-      "etichetta": "Resueltos sin ayuda"
+      "etichetta": "Resueltos por su cuenta"
     },
     {
       "valore": "70 €",
@@ -63,7 +63,7 @@ export default {
     "tag": "Cómo funciona",
     "titolo1": "Cuatro pasos.",
     "titolo2": "Problema resuelto.",
-    "sottotitolo": "Nada de esperas, nada de sorpresas. En menos de 15 minutos sabes exactamente qué falla.",
+    "sottotitolo": "Sin esperas, sin sorpresas. En menos de 15 minutos sabrás exactamente qué falla.",
     "elenco": [
       {
         "titolo": "Describe el problema",
@@ -79,7 +79,7 @@ export default {
       },
       {
         "titolo": "Recibe el informe",
-        "testo": "Diagnóstico, solución casera y presupuesto estimado si hace falta el técnico. En PDF."
+        "testo": "Diagnóstico, solución para hacerlo tú mismo y estimación de costes si necesitas un técnico. En PDF."
       }
     ]
   },
@@ -114,7 +114,7 @@ export default {
       "tecnicoEtichetta": "Si necesitas al técnico",
       "tecnicoValore": "Sustitución de la bomba de desagüe",
       "costoEtichetta": "Coste estimado",
-      "costoValore": "85-145 €"
+      "costoValore": "85–145 €"
     }
   },
   "prezzi": {
@@ -127,10 +127,10 @@ export default {
     "importoCentesimi": ",90",
     "periodo": "por sesión · sin suscripción",
     "caratteristiche": [
-      "30 min videollamada IA",
+      "30 min videollamada con IA",
       "Informe PDF descargable",
-      "Guía de bricolaje incluida",
-      "Estimación del costo del técnico"
+      "Guía práctica incluida",
+      "Estimación de coste técnico"
     ],
     "avvia": "Iniciar diagnóstico"
   },
@@ -138,11 +138,11 @@ export default {
     "tag": "Para profesionales",
     "titolo1": "¿Eres técnico?",
     "titolo2": "Únete a Fixi.",
-    "sottotitolo": "Recibe trabajos cualificados con diagnóstico ya hecho. Sin cuota de inscripción, sin créditos que comprar: en esta fase de lanzamiento los contactos no te cuestan nada.",
+    "sottotitolo": "Recibe trabajos cualificados con el diagnóstico ya hecho. Sin cuota de inscripción, sin créditos que comprar: en esta fase de lanzamiento los contactos no te cuestan nada.",
     "vantaggi": [
       {
         "titolo": "Clientes ya cualificados",
-        "testo": "Llegan con diagnóstico e informe — sabes qué hacer antes de salir."
+        "testo": "Llegan con diagnóstico e informe: ya sabes qué hay que hacer antes de salir."
       },
       {
         "titolo": "Costo cero",
@@ -162,7 +162,7 @@ export default {
       },
       {
         "valore": "0%",
-        "etichetta": "Comisión sobre trabajos"
+        "etichetta": "Comisión por trabajo"
       },
       {
         "valore": "48h",
@@ -180,7 +180,7 @@ export default {
     "titolo2": "Tú tampoco.",
     "sottotitolo": "Diagnóstico completo en 10 minutos. 9,90 €. Sin cita previa.",
     "avvia": "Iniciar diagnóstico",
-    "garanziaTitolo": "Satisfacción garantizada o te devolvemos el dinero.",
+    "garanziaTitolo": "Satisfecho o te devolvemos el dinero.",
     "garanziaTesto": "Si el diagnóstico no te fue útil, te devolvemos los 9,90 €, en 14 días y sin discusiones."
   },
   "footer": {
@@ -193,13 +193,13 @@ export default {
     "oggetto": "Tu informe Fixi {numero} — {macchina}",
     "sottotitolo": "Diagnóstico de electrodomésticos por videollamada con IA",
     "intestazione": "Informe {numero} — {data}",
-    "problema": "Problema indicado: \"{problema}\"",
+    "problema": "Problema reportado: \"{problema}\"",
     "diagnosi": "DIAGNÓSTICO",
     "faiDaTe": "SOLUCIÓN CASERA",
-    "pezzo": "PIEZA A SUSTITUIR",
+    "pezzo": "PIEZA A REEMPLAZAR",
     "codice": "Código: {codice}",
     "prezzo": "Precio: {prezzo}",
-    "stima": "PRESUPUESTO DE REPARACIÓN",
+    "stima": "ESTIMACIÓN DE REPARACIÓN",
     "mostraAlTecnico": "Muestra este informe al técnico para un precio justo.",
     "urgenza": "Urgencia: {livello} — {cosaFare}",
     "urgenzaBassa": "BAJA",
@@ -207,13 +207,13 @@ export default {
     "urgenzaAlta": "ALTA",
     "urgenzaBassaCosaFare": "Sin prisa",
     "urgenzaMediaCosaFare": "Actúa en unos días",
-    "urgenzaAltaCosaFare": "Actúa cuanto antes",
-    "piede": "Informe generado por un sistema de IA. Consulta siempre a un técnico cualificado."
+    "urgenzaAltaCosaFare": "Actúa lo antes posible",
+    "piede": "Informe generado por sistema de IA. Consulta siempre a un técnico cualificado."
   },
   "emailTecnicoTrovato": {
     "oggetto": "¡Hemos encontrado a tu técnico! 🔧 (solicitud {numero})",
     "titolo": "Técnico encontrado ✅",
-    "sottotitolo": "Hola {nome}, un técnico ha aceptado tu solicitud y se pondrá en contacto contigo en breve. Aquí tienes sus datos:",
+    "sottotitolo": "Hola {nome}, un técnico ha aceptado tu solicitud y te contactará pronto. Aquí tienes sus datos:",
     "campoNome": "Nombre",
     "campoTelefono": "Teléfono",
     "campoEmail": "Email",
@@ -221,10 +221,10 @@ export default {
     "accordatevi": "Te recomendamos acordar por teléfono el horario y la visita."
   },
   "emailRecensione": {
-    "oggetto": "¿Qué tal salió la reparación? Deja una reseña ({numero})",
-    "intestazione": "¿Qué tal salió la reparación?",
+    "oggetto": "¿Qué tal fue la reparación? Deja una reseña ({numero})",
+    "intestazione": "¿Qué tal fue la reparación?",
     "saluto": "Hola {nome},",
-    "testo": "el técnico {tecnico} marcó tu intervención como completada. ¿Nos cuentas qué tal salió? Solo toma 30 segundos y ayudas a otros clientes a elegir bien.",
+    "testo": "el técnico {tecnico} marcó tu intervención como completada. ¿Nos cuentas qué tal fue? Solo tardas 30 segundos y ayudas a otros clientes a elegir bien.",
     "pulsante": "Deja una reseña"
   },
   "pdf": {
@@ -233,10 +233,37 @@ export default {
     "nome": "Nombre: {nome}",
     "codice": "Código: {codice}",
     "prezzoStimato": "Precio estimado: {prezzo}",
-    "risolvibileDaSolo": "Solucionable sin técnico",
+    "risolvibileDaSolo": "Solucionable por tu cuenta",
     "mostraAlTecnico": "Muestra este informe al técnico para obtener un precio justo.",
     "piedeSinistra": "Fixi — Diagnóstico de electrodomésticos con IA",
-    "piedeCentro": "Este informe ha sido generado por un sistema de IA con fines de diagnóstico."
+    "piedeCentro": "Este informe ha sido generado por un sistema de IA con fines diagnósticos."
+  },
+  "riparazione": {
+    "titolo": "Tu presupuesto",
+    "lavoro": "Reparación {macchina}",
+    "inAttesaTitolo": "El técnico está preparando el presupuesto",
+    "inAttesaTesto": "Te avisamos en cuanto llegue. Normalmente tarda menos de un día.",
+    "prezzoIntervento": "Precio de la intervención",
+    "creditoVideodiagnosi": "Crédito videodiagnóstico Fixi",
+    "daPagare": "A pagar",
+    "paga": "Paga {importo} y confirma",
+    "spiegazioneCredito": "Los {credito} pagados por el videodiagnóstico se usan como parte del pago de la reparación.",
+    "rifiuta": "No me interesa",
+    "confermaRifiuto": "¿Seguro que quieres rechazar este presupuesto? El informe sigue siendo tuyo y podrás pedir otro presupuesto.",
+    "pagatoTitolo": "Pago recibido",
+    "pagatoTesto": "El técnico te contactará para fijar la intervención.",
+    "inCorsoTitolo": "Intervención en curso",
+    "completatoTitolo": "Reparación completada",
+    "completatoTesto": "Gracias. Si quieres, deja una reseña al técnico.",
+    "annullatoTitolo": "Presupuesto rechazado",
+    "annullatoTesto": "El informe del diagnóstico sigue siendo tuyo. Puedes pedir otro técnico cuando quieras.",
+    "riepilogo": "Resumen",
+    "pagatoPerDiagnosi": "Videodiagnóstico",
+    "pagatoPerRiparazione": "Saldo de la reparación",
+    "totale": "Total",
+    "vocePagamento": "Reparación {macchina}",
+    "vocePagamentoDettaglio": "Intervención {totale}, menos {credito} de crédito videodiagnóstico ya pagado",
+    "erroreGenerico": "Algo no ha funcionado. Inténtalo de nuevo en un momento."
   },
   "privacy": {
     "metaTitolo": "Política de privacidad — Fixi",
@@ -247,8 +274,8 @@ export default {
       "titolo": "1. Quiénes somos (Responsable del tratamiento)",
       "cosa": "Fixi es un servicio de diagnóstico de electrodomésticos mediante videollamada con inteligencia artificial, que además pone en contacto a los usuarios con técnicos reparadores.",
       "titolare": "Responsable del tratamiento: **{nome}**{piva}{sede}.",
-      "conPiva": " — NIF/CIF {piva}",
-      "conSede": ", con domicilio en {sede}",
+      "conPiva": " — CIF {piva}",
+      "conSede": ", con sede en {sede}",
       "domande": "Para cualquier duda sobre privacidad puedes escribirnos a {email}."
     },
     "dati": {
@@ -257,18 +284,18 @@ export default {
       "voci": [
         "**Datos del diagnóstico**: tipo de electrodoméstico, marca, descripción del problema y los mensajes que intercambias con el asistente de IA.",
         "**Imágenes de la cámara**: durante la sesión, los fotogramas que enfocas se envían para su análisis a la IA. **No guardamos los vídeos ni los fotogramas**: se procesan y luego se descartan.",
-        "**Correo electrónico**: si eliges recibir el informe por correo o que un técnico te vuelva a contactar.",
+        "**Email**: si eliges recibir el informe por correo o que un técnico te contacte.",
         "**Datos para solicitar un técnico**: nombre, teléfono, ciudad y código postal, que compartimos con los técnicos de tu zona para que puedan contactarte.",
-        "**Datos de pago**: los pagos son gestionados por Stripe. **No vemos ni guardamos los datos de tu tarjeta**; solo registramos el resultado del pago.",
+        "**Datos de pago**: los pagos los gestiona Stripe. **No vemos ni conservamos los datos de tu tarjeta**; solo registramos el resultado del pago.",
         "**Reseñas**: la valoración y el comentario que dejas sobre una intervención.",
-        "**Si eres técnico**: nombre, apellidos, correo electrónico, teléfono, ciudad, código postal, especializaciones y experiencia que indicas al registrarte."
+        "**Si eres técnico**: nombre, apellidos, email, teléfono, ciudad, código postal, especializaciones y experiencia que indicas al inscribirte."
       ]
     },
     "perche": {
-      "titolo": "3. Por qué los usamos",
+      "titolo": "3. Para qué los usamos",
       "voci": [
         "Para ofrecerte el diagnóstico y generar el informe.",
-        "Para enviarte el informe por correo electrónico, si lo solicitas.",
+        "Para enviarte el informe por email, si lo solicitas.",
         "Para ponerte en contacto con un técnico de tu zona, si lo solicitas.",
         "Para gestionar el pago del servicio.",
         "Para mejorar el servicio (estadísticas agregadas y comentarios)."
@@ -277,19 +304,19 @@ export default {
     },
     "camera": {
       "titolo": "4. La cámara",
-      "testo": "El acceso a la cámara se usa **solo durante la sesión de diagnóstico** y solo para mostrarle a la IA lo que enfocas. Los fotogramas se analizan en tiempo real y no se almacenan en nuestros sistemas. Puedes desactivar la cámara en cualquier momento durante la sesión."
+      "testo": "El acceso a la cámara se usa **solo durante la sesión de diagnóstico** y solo para mostrar a la IA lo que enfocas. Los fotogramas se analizan en tiempo real y no se almacenan en nuestros sistemas. Puedes desactivar la cámara en cualquier momento durante la sesión."
     },
     "terzeParti": {
       "titolo": "5. Servicios de terceros",
       "intro": "Para funcionar, Fixi se apoya en proveedores que tratan algunos datos en nuestro nombre:",
       "voci": [
-        "**Anthropic** — la inteligencia artificial que analiza las imágenes y conversa contigo.",
+        "**Anthropic** — la inteligencia artificial que analiza las imágenes y dialoga contigo.",
         "**Stripe** — la gestión de los pagos.",
         "**Supabase** — la base de datos donde guardamos las sesiones, las solicitudes de intervención y los datos de los técnicos.",
-        "**Resend** — el envío de correos electrónicos (informes, notificaciones a técnicos).",
+        "**Resend** — el envío de emails (informes, notificaciones a técnicos).",
         "**Vercel** — el alojamiento del servicio."
       ],
-      "chiusura": "Cada proveedor trata los datos conforme a sus propias políticas de privacidad."
+      "chiusura": "Cada proveedor trata los datos según sus propias políticas de privacidad."
     },
     "conservazione": {
       "titolo": "6. Durante cuánto tiempo conservamos los datos",
@@ -298,12 +325,12 @@ export default {
     "diritti": {
       "titolo": "7. Tus derechos",
       "testo": "Tienes derecho a acceder a tus datos, corregirlos, solicitar su eliminación o limitar su uso, y a oponerte al tratamiento. Para ejercer estos derechos escríbenos a {email}.",
-      "cancellazione": "Solo para la eliminación encontrarás los pasos, la lista de datos eliminados y los plazos en la página {link}.",
+      "cancellazione": "Solo para la eliminación, encontrarás los pasos, la lista de datos eliminados y los plazos en la página {link}.",
       "cancellazioneLink": "solicitud de eliminación de datos"
     },
     "minori": {
       "titolo": "8. Menores",
-      "testo": "Fixi no está dirigido a menores de 16 años y no recopilamos conscientemente sus datos."
+      "testo": "Fixi no está dirigido a menores de 16 años y no recopilamos sus datos de forma consciente."
     },
     "modifiche": {
       "titolo": "9. Cambios en esta política",
@@ -311,7 +338,7 @@ export default {
     },
     "contatti": {
       "titolo": "10. Contacto",
-      "testo": "Para cualquier duda sobre privacidad o sobre tus datos: {email}."
+      "testo": "Para cualquier duda sobre privacidad o tus datos: {email}."
     },
     "torna": "Volver a Fixi"
   },
@@ -331,29 +358,29 @@ export default {
       "passo1": "Envía un correo a {email} con el asunto **«{oggetto}»**.",
       "passo2": "En el mensaje indica los datos que nos proporcionaste, para que podamos encontrar tu información: la **dirección de correo** que usaste para recibir el informe y, si solicitaste la intervención de un técnico, también **nombre, número de teléfono y código postal**.",
       "passo3": "Especifica si quieres eliminar **todos los datos** o solo una parte (por ejemplo, solo la solicitud de intervención).",
-      "passo4": "Recibirás una confirmación por correo cuando se haya completado la eliminación.",
+      "passo4": "Recibirás una confirmación por correo cuando la eliminación se haya completado.",
       "gratis": "No se necesita ningún formulario y la solicitud es gratuita."
     },
     "cosaSiCancella": {
       "titolo": "Qué datos se eliminan",
-      "intro": "A tu solicitud, eliminamos de nuestros sistemas:",
+      "intro": "A petición tuya, eliminamos de nuestros sistemas:",
       "voci": [
         "la **sesión de diagnóstico**: electrodoméstico, marca, descripción del problema, la conversación con el asistente de IA y el informe generado;",
-        "tu **dirección de correo**, si nos la dejaste para recibir el informe;",
+        "tu **dirección de correo**, si la dejaste para recibir el informe;",
         "la **solicitud de intervención**: nombre, teléfono, correo, ciudad y código postal proporcionados para que un técnico te contacte;",
-        "la posible **reseña** (valoración y comentario) dejada tras una intervención;",
-        "para los técnicos inscritos: **toda la ficha**, con nombre, apellidos, correo, teléfono, ciudad, código postal, especializaciones y experiencia."
+        "la eventual **reseña** (valoración y comentario) dejada después de una intervención;",
+        "para los técnicos inscritos: **toda la ficha**, con nombre, apellido, correo, teléfono, ciudad, código postal, especializaciones y experiencia."
       ],
-      "camera": "Las **imágenes de la cámara** no aparecen en esta lista porque nunca se guardan: los fotogramas se analizan durante la sesión y se descartan de inmediato, por lo que no hay nada que eliminar."
+      "camera": "Las **imágenes de la cámara** no aparecen en esta lista porque nunca se guardan: los fotogramas se analizan durante la sesión y se descartan de inmediato, así que no hay nada que eliminar."
     },
     "cosaResta": {
       "titolo": "Qué datos se conservan, y por cuánto tiempo",
       "voci": [
-        "**Registros de pagos** — son gestionados por Stripe y deben conservarse por las obligaciones contables y fiscales previstas por la ley, incluso después de eliminar los demás datos. No contienen los datos de tu tarjeta, que nunca vemos ni conservamos.",
-        "**Estadísticas de forma agregada y anónima** — por ejemplo «cuántos diagnósticos trataron una lavadora». No permiten identificarte y se conservan de forma indefinida.",
-        "**Datos ya compartidos con un técnico** — si solicitaste una intervención y un técnico aceptó el trabajo, ya recibió tus datos de contacto para llamarte. Eliminamos la solicitud de nuestros sistemas, pero el técnico es titular independiente de los datos recibidos: para esos hay que contactarlo directamente. A solicitud, te indicamos su contacto."
+        "**Registros de pagos** — los gestiona Stripe y deben conservarse por las obligaciones contables y fiscales previstas por la ley, incluso después de eliminar los demás datos. No contienen los datos de tu tarjeta, que nunca vemos ni conservamos.",
+        "**Estadísticas en forma agregada y anónima** — por ejemplo «cuántos diagnósticos se referían a una lavadora». No permiten identificarte y se conservan de forma indefinida.",
+        "**Datos ya compartidos con un técnico** — si solicitaste una intervención y un técnico aceptó el trabajo, ya recibió tus datos de contacto para llamarte. Eliminamos la solicitud de nuestros sistemas, pero el técnico es responsable autónomo de los datos recibidos: para esos hay que contactarlo directamente. Si lo solicitas, te indicamos su contacto."
       ],
-      "chiusura": "Fuera de estos casos no aplicamos ningún periodo de conservación adicional: los datos se eliminan de forma definitiva."
+      "chiusura": "Fuera de estos casos, no aplicamos ningún período de conservación adicional: los datos se eliminan de forma definitiva."
     },
     "tempi": {
       "titolo": "En cuánto tiempo",
@@ -371,9 +398,9 @@ export default {
   "stato": {
     "metaTitolo": "Estado técnico — Fixi",
     "titolo": "Estado técnico",
-    "aCosaServe": "Sirve para entender por qué algo no funciona. Haz una foto de esta pantalla y envíasela a quien hizo la app.",
+    "aCosaServe": "Sirve para entender por qué algo no funciona. Haz una foto de esta pantalla y envíasela a quien creó la app.",
     "nonLetto": "No pude leer el estado: {errore}",
-    "carico": "Cargando… (si esto continúa, la página no arrancó)",
+    "carico": "Cargando… (si esto no cambia, la página no se ha iniciado)",
     "dove": "Dónde estás usándolo",
     "dentroApp": "Dentro de la app",
     "si": "sí",
@@ -392,22 +419,22 @@ export default {
     "prova4": "4. Genera el PDF del informe",
     "prova5": "5. Informe + guardado, todo junto",
     "diario": "Registro de actividad",
-    "diarioSpiega": "Lo que ha pasado al pulsar los botones reales. Si aquí no aparece nada tras pulsar el micrófono o Descargar, es que el toque no llega ni al código.",
-    "diarioVuoto": "Ninguna línea. Usa la app y luego vuelve aquí.",
+    "diarioSpiega": "Lo que pasó al pulsar los botones reales. Si aquí no aparece nada tras pulsar el micrófono o Descargar, significa que el toque ni siquiera llega al código.",
+    "diarioVuoto": "Sin registros. Usa la app y vuelve después.",
     "svuota": "Vaciar el registro",
     "dettagli": "Detalles",
     "torna": "Volver al inicio"
   },
   "tecnicoIscrizione": {
     "metaTitolo": "Regístrate como técnico — Fixi",
-    "metaDescrizione": "Únete a la red Fixi. Recibe trabajos cualificados, sin costes fijos.",
+    "metaDescrizione": "Únete a la red Fixi. Recibe trabajos cualificados, cero costes fijos.",
     "specializzazioni": {
       "Lavatrici": "Lavadoras",
       "Lavastoviglie": "Lavavajillas",
       "Asciugatrici": "Secadoras",
       "Frigoriferi": "Frigoríficos",
       "Forni": "Hornos",
-      "Piani cottura": "Placas de cocina",
+      "Piani cottura": "Encimeras",
       "Climatizzatori": "Climatizadores",
       "Caldaie": "Calderas"
     },
@@ -425,12 +452,12 @@ export default {
     "emailEsempio": "mario@email.com",
     "telefono": "Teléfono",
     "telefonoEsempio": "+39 333 1234567",
-    "passo2Titolo1": "Dónde trabajas",
-    "passo2Titolo2": "¿y en qué eres experto?",
+    "passo2Titolo1": "¿Dónde trabajas",
+    "passo2Titolo2": "y en qué eres experto?",
     "citta": "Ciudad",
-    "cittaEsempio": "Madrid",
+    "cittaEsempio": "Milán",
     "cap": "Código postal",
-    "capEsempio": "28001",
+    "capEsempio": "20100",
     "specializzazioniTitolo": "Especializaciones",
     "anni": "Años de experiencia",
     "anniEsempio": "ej. 10",
@@ -438,12 +465,12 @@ export default {
     "passo3Titolo2": "a tus futuros clientes.",
     "passo3Sotto": "Una breve descripción de quién eres y cómo trabajas.",
     "descrizione": "Descripción (opcional)",
-    "descrizioneEsempio": "Ej. Técnico especializado en lavadoras y lavavajillas con 10 años de experiencia. Atiendo Madrid y alrededores en 24 horas...",
+    "descrizioneEsempio": "Ej. Técnico especializado en lavadoras y lavavajillas con 10 años de experiencia. Atiendo en Milán y alrededores en 24 horas...",
     "promessa1": "Inscripción gratuita",
     "promessa2": "Sin comisión sobre los trabajos durante esta fase de lanzamiento",
     "promessa3": "Activación en 48 horas tras la verificación",
     "promessa4": "Puedes darte de baja cuando quieras",
-    "seCambia": "Si en el futuro introducimos una comisión sobre los trabajos, te lo comunicaremos por email con antelación: podrás decidir si continuar o darte de baja.",
+    "seCambia": "Si en el futuro introducimos una comisión sobre los trabajos, te avisaremos por email con antelación: podrás decidir si continuar o darte de baja.",
     "indietro": "Atrás",
     "continua": "Continuar",
     "invio": "Enviando...",
@@ -463,29 +490,29 @@ export default {
     },
     "pagato": {
       "titolo": "¡Pago confirmado!",
-      "sottotitolo": "¡Genial! Tu sesión de videodiagnóstico empieza en pocos segundos.",
+      "sottotitolo": "¡Genial! Tu sesión de videodiagnóstico comienza en unos segundos.",
       "preparati": "Prepárate:",
-      "spina": "Desconecta el enchufe del electrodoméstico",
+      "spina": "Desenchufa el electrodoméstico",
       "luce": "Asegúrate de tener buena iluminación",
       "telefono": "Ten el teléfono listo para enfocar",
-      "attesa": "La sesión empieza automáticamente..."
+      "attesa": "La sesión comienza automáticamente..."
     },
     "aggiorna": {
-      "titolo": "Actualizar Fixi",
+      "titolo": "Actualiza Fixi",
       "apri": "Abrir Play Store",
       "dopo": "Más tarde"
     },
     "setup": {
-      "titolo": "Diagnóstico de electrodoméstico",
+      "titolo": "Diagnóstico del electrodoméstico",
       "sottotitolo": "Ahorra hasta 70 € en la visita del técnico. Nuestra IA diagnostica el problema por videollamada.",
       "ripresaTitoloReferto": "Tienes un informe sin guardar",
       "ripresaTitoloMeta": "Tienes un diagnóstico a medias",
       "ripresaSenzaNome": "Diagnóstico en curso",
       "ripresaTestoReferto": "Puedes reabrirlo y guardarlo, sin pagar de nuevo.",
-      "ripresaTestoMeta": "Puedes retomarlo donde lo dejaste, sin pagar de nuevo.",
+      "ripresaTestoMeta": "Puedes continuar donde lo dejaste, sin pagar de nuevo.",
       "ripresaApriReferto": "Reabrir informe",
-      "ripresaRiprendi": "Retomar diagnóstico",
-      "ripresaRicomincia": "Empezar de nuevo",
+      "ripresaRiprendi": "Continuar diagnóstico",
+      "ripresaRicomincia": "Reiniciar",
       "domanda": "¿Qué electrodoméstico?",
       "marca": "Marca",
       "marcaEsempio": "ej. Bosch, Samsung, Indesit...",
@@ -493,7 +520,7 @@ export default {
       "problemaEsempio": "ej. No desagua, código de error E18, hace un ruido raro...",
       "verifica": "Verificando pago...",
       "avvia": "Iniciar videodiagnóstico",
-      "paga": "Paga 9,90 € e inicia el diagnóstico",
+      "paga": "Paga 9,90 € y comienza el diagnóstico",
       "pagamentoSicuro": "Pago seguro con Stripe. Recibirás el informe en PDF al finalizar.",
       "tornaHome": "Volver al inicio",
       "camera": "La cámara solo se usa durante la sesión. No se guarda ningún vídeo.",
@@ -523,9 +550,12 @@ export default {
     },
     "tecnico": {
       "inviata": "¡Solicitud enviada!",
-      "avvisatoUno": "Hemos avisado a {quanti} técnico de tu zona con el informe ya listo. El primero disponible te llamará al número que dejaste.",
-      "avvisatiTanti": "Hemos avisado a {quanti} técnicos de tu zona con el informe ya listo. El primero disponible te llamará al número que dejaste.",
-      "nessuno": "Al momento no hay técnicos activos en tu zona: hemos registrado la solicitud y te contactaremos en cuanto encontremos uno.",
+      "avvisatoUno": "Hemos avisado a {quanti} técnico de tu zona con el informe ya preparado. El primero disponible te llamará al número que dejaste.",
+      "avvisatiTanti": "Hemos avisado a {quanti} técnicos de tu zona con el informe ya preparado. El primero disponible te llamará al número que dejaste.",
+      "nessuno": "Por el momento no hay técnicos activos en tu zona: hemos registrado la solicitud y te contactaremos en cuanto encontremos uno.",
+      "creditoTitolo": "Ya tienes {credito} de crédito en la reparación",
+      "creditoTesto": "Si reparas a través de Fixi, los {credito} del videodiagnóstico se descuentan íntegramente del coste de la intervención.",
+      "trovaTecnico": "Buscar un técnico",
       "preferisci": "¿Prefieres un técnico?",
       "spiegazione": "Enviamos el informe a los técnicos de tu zona: el primero disponible te contacta. Gratis y sin compromiso.",
       "nome": "Nombre *",
@@ -536,9 +566,9 @@ export default {
       "trova": "Buscar un técnico en mi zona"
     },
     "rimborso": {
-      "ricevuta": "Solicitud recibida. Te responderemos por email en pocos días.",
+      "ricevuta": "Solicitud recibida. Te responderemos por correo electrónico en pocos días.",
       "racconta": "Cuéntanos qué no funcionó. Si el diagnóstico no te sirvió, te devolvemos los 9,90 €.",
-      "email": "Email usado para el pago",
+      "email": "Correo usado para el pago",
       "motivo": "¿Por qué no te sirvió?",
       "invio": "Enviando...",
       "invia": "Enviar solicitud",
@@ -552,9 +582,9 @@ export default {
       "accendiCamera": "Activar cámara",
       "cameraSpenta": "Off",
       "analizza": "Analizar",
-      "analizzaSpiega": "Analiza lo que enfocas ahora (o pulsa un botón de volumen)",
+      "analizzaSpiega": "Analiza lo que enfocas ahora (o pulsa una tecla de volumen)",
       "generaReferto": "Generar informe",
-      "chiediReferto": "Genera ahora el informe final con diagnóstico, solución y coste estimado.",
+      "chiediReferto": "Genera ahora el informe final con diagnóstico, solución y estimación de costes.",
       "parlaOScrivi": "Habla o escribe...",
       "toccaPerSmettere": "Toca para detener",
       "toccaEParla": "Toca y habla",
@@ -567,70 +597,70 @@ export default {
     "errori": {
       "pagamentoNonValido": "Pago no válido.",
       "servizio": "Error del servicio.",
-      "generico": "⚠️ Algo salió mal. Vuelve a intentarlo, o haz clic en 📋 Generar informe para guardar el diagnóstico recopilado hasta ahora.",
-      "troppoLento": "⚠️ La respuesta está tardando demasiado. Comprueba tu conexión y vuelve a intentarlo en un momento.",
+      "generico": "⚠️ Algo salió mal. Vuelve a intentarlo, o haz clic en 📋 Generar informe para guardar el diagnóstico obtenido hasta ahora.",
+      "troppoLento": "⚠️ La respuesta está tardando demasiado. Comprueba la conexión y vuelve a intentarlo en un momento.",
       "rete": "⚠️ Problema de red. Comprueba tu conexión a internet y vuelve a intentarlo.",
-      "sovraccarico": "⚠️ Servicio de IA temporalmente sobrecargado. Vuelve a intentarlo en unos segundos."
+      "sovraccarico": "⚠️ Servicio de IA momentáneamente sobrecargado. Vuelve a intentarlo en unos segundos."
     },
     "avvisi": {
-      "pdfNonRiuscito": "No he podido generar el PDF. Pídelo por email aquí abajo: el informe es idéntico.",
+      "pdfNonRiuscito": "No pude preparar el PDF. Pídelo por email aquí abajo: el informe es idéntico.",
       "salvatoNeiDownload": "✅ Guardado en las Descargas del teléfono como {file}",
-      "salvataggioVecchiaApp": "Para guardar directamente en Descargas necesitas la última versión de Fixi: actualízala desde Play Store. Mientras tanto, abro el menú para compartir: elige «Guardar en archivo».",
-      "salvataggioAndroidVecchio": "Este teléfono tiene una versión de Android que no permite guardar directamente en Descargas. Abro el menú para compartir: elige «Guardar en archivo».",
-      "salvataggioAltro": "No se ha podido guardar en Descargas. Abro el menú para compartir: elige «Guardar en archivo».\n\nSi puedes, envía este detalle a quien creó la app: {dettaglio}",
-      "condivisioneNonRiuscita": "No he podido compartir el PDF. Pídelo por email aquí abajo: el informe es idéntico.",
+      "salvataggioVecchiaApp": "Para guardar directamente en las Descargas necesitas la última versión de Fixi: actualízala desde Play Store. Mientras tanto, abro el menú para compartir: elige «Guardar en archivo».",
+      "salvataggioAndroidVecchio": "Este teléfono tiene una versión de Android que no permite guardar directamente en las Descargas. Abro el menú para compartir: elige «Guardar en archivo».",
+      "salvataggioAltro": "No se pudo guardar en las Descargas. Abro el menú para compartir: elige «Guardar en archivo».\n\nSi puedes, envía este detalle a quien hizo la app: {dettaglio}",
+      "condivisioneNonRiuscita": "No pude compartir el PDF. Pídelo por email aquí abajo: el informe es idéntico.",
       "cameraNonAttiva": "Cámara no activa.",
-      "cameraNegata": "⚠️ Has denegado el acceso a la cámara. Para usar Fixi debes permitir el acceso a la cámara en los ajustes del navegador.",
-      "cameraAssente": "⚠️ No se ha encontrado ninguna cámara. Asegúrate de que el dispositivo tenga una cámara funcionando.",
-      "cameraOccupata": "⚠️ La cámara ya está en uso por otra aplicación. Cierra Teams, Zoom u otras apps y vuelve a intentarlo.",
-      "cameraGenerico": "⚠️ No se puede acceder a la cámara. Comprueba los permisos del navegador y vuelve a intentarlo.",
-      "refertoNonSalvato": "Todavía no has guardado el informe ni lo has recibido por email: si sales de aquí, lo pierdes.\n\n¿Quieres salir de todos modos?",
-      "diagnosiInCorso": "Estás en medio de un diagnóstico que ya has pagado.\n\nSi sales ahora, podrás retomarlo donde lo dejaste durante las próximas 2 horas.\n\n¿Quieres salir?",
-      "pagamentoNonConfermato": "Pago no confirmado. Inténtalo de nuevo.",
+      "cameraNegata": "⚠️ Has denegado el acceso a la cámara. Para usar Fixi debes permitir el acceso a la cámara en la configuración del navegador.",
+      "cameraAssente": "⚠️ No se encontró ninguna cámara. Asegúrate de que el dispositivo tenga una cámara funcionando.",
+      "cameraOccupata": "⚠️ La cámara ya está siendo usada por otra aplicación. Cierra Teams, Zoom u otras apps y vuelve a intentarlo.",
+      "cameraGenerico": "⚠️ No se pudo acceder a la cámara. Revisa los permisos del navegador y vuelve a intentarlo.",
+      "refertoNonSalvato": "Todavía no has guardado el informe ni lo has pedido por email: si sales de aquí lo pierdes.\n\n¿Quieres salir de todos modos?",
+      "diagnosiInCorso": "Estás en medio de un diagnóstico que ya pagaste.\n\nSi sales ahora, lo retomas donde lo dejaste, durante las próximas 2 horas.\n\n¿Quieres salir?",
+      "pagamentoNonConfermato": "Pago no confirmado. Vuelve a intentarlo.",
       "pagamentoAnnullato": "Pago cancelado. Puedes volver a intentarlo cuando quieras.",
       "compilaTutto": "Completa todos los campos antes de continuar.",
       "selezionaElettrodomestico": "Selecciona el electrodoméstico y describe el problema.",
-      "emailNonValida": "Introduce una dirección de email válida.",
-      "emailNonInviata": "No se ha podido enviar el email. Inténtalo de nuevo, o descarga el PDF.",
-      "reteEmail": "⚠️ Problema de red: email no enviado. Comprueba la conexión y vuelve a intentarlo.",
-      "rete": "⚠️ Problema de red. Inténtalo de nuevo.",
-      "rimborsoEmail": "Introduce la dirección de email que usaste para el pago.",
-      "rimborsoMotivo": "Escribe en pocas líneas qué no ha funcionado: nos sirve para decidir y no repetir el error.",
-      "rimborsoNonInviato": "No he podido enviar la solicitud. Inténtalo de nuevo.",
-      "tecnicoDati": "Introduce nombre y teléfono: el técnico los necesita para contactarte.",
+      "emailNonValida": "Ingresa una dirección de email válida.",
+      "emailNonInviata": "No se pudo enviar el email. Vuelve a intentarlo, o descarga el PDF.",
+      "reteEmail": "⚠️ Problema de red: email no enviado. Revisa la conexión y vuelve a intentarlo.",
+      "rete": "⚠️ Problema de red. Vuelve a intentarlo.",
+      "rimborsoEmail": "Ingresa el email que usaste para el pago.",
+      "rimborsoMotivo": "Escribe en dos líneas qué no funcionó: nos sirve para decidir, y para no repetir el error.",
+      "rimborsoNonInviato": "No pude enviar la solicitud. Vuelve a intentarlo.",
+      "tecnicoDati": "Ingresa nombre y teléfono: el técnico los necesita para contactarte.",
       "tecnicoCap": "El código postal no parece correcto. Para {paese} se escribe así: {esempio}",
       "vocaleNonDisponibile": "El reconocimiento de voz no está disponible en este teléfono. Puedes escribir el mensaje.",
-      "vocalePermesso": "Para dictar necesitas el permiso del micrófono: puedes activarlo desde los ajustes del teléfono.",
-      "vocaleNonCapito": "No he entendido lo que has dicho. Inténtalo de nuevo hablando cerca del teléfono, o escribe el mensaje en el cuadro.",
-      "vocaleNonAvviata": "No he podido iniciar el dictado. Puedes escribir el mensaje en el cuadro.\n\nDetalle: {dettaglio}",
+      "vocalePermesso": "Para dictar necesitas el permiso del micrófono: puedes activarlo desde la configuración del teléfono.",
+      "vocaleNonCapito": "No entendí lo que dijiste. Intenta hablar cerca del teléfono, o escribe el mensaje en el cuadro.",
+      "vocaleNonAvviata": "No pude iniciar el dictado. Puedes escribir el mensaje en el cuadro.\n\nDetalle: {dettaglio}",
       "vocaleAltro": "Dictado fallido ({motivo}). Puedes escribir el mensaje.",
       "vocaleBrowser": "Tu navegador no admite el reconocimiento de voz. Usa Chrome.",
-      "vocaleNegatoBrowser": "Se ha denegado el permiso del micrófono: puedes concederlo desde los ajustes del navegador."
+      "vocaleNegatoBrowser": "El permiso del micrófono fue denegado: puedes darlo desde la configuración del navegador."
     },
     "benvenuto": {
       "saluto": "¡Hola! Soy Fixi. Veo que tienes un problema con **{nome}**.",
       "salutoConProblema": "¡Hola! Soy Fixi. Veo que tienes un problema con **{nome}**: *\"{problema}\"*.",
       "generico": "electrodoméstico",
       "primaDiToccarlo": "⚠️ **Antes de tocarlo:** {sicurezza}.",
-      "targhetta": "Ahora busca la **placa de características** — está {dove} — enfócala y pulsa **📷 Analizar**, o un **botón de volumen** si el teléfono está en un lugar incómodo.",
+      "targhetta": "Ahora busca la **placa del modelo** — está {dove} — enfócala y pulsa **📷 Analizar**, o un **botón de volumen** si el teléfono está en un lugar incómodo.",
       "seNonLaTrovi": "Si no la encuentras, escríbeme y empezamos igual.",
       "altreLingue": "*(You can also write in English, Spanish, French or German.)*",
       "sicurezza": {
         "Lavatrice": "**apágala y desenchúfala**, luego cierra el grifo del agua",
         "Lavastoviglie": "**apágala y desenchúfala**, luego cierra el grifo del agua",
-        "Asciugatrice": "**apágala y desenchúfala**, y vacía el depósito de condensados si está lleno",
-        "Frigorifero": "**desenchúfalo** antes de mirar dentro — si va a quedar desenchufado mucho tiempo, guarda el contenido del congelador",
-        "Forno": "**apágalo, desenchúfalo y déjalo enfriar**. Si es a gas y notas olor a gas, cierra la llave, no enciendas nada y abre las ventanas",
+        "Asciugatrice": "**apágala y desenchúfala**, y vacía el depósito de condensación si está lleno",
+        "Frigorifero": "**desenchúfalo** antes de mirar dentro — si va a estar desenchufado mucho tiempo, guarda el contenido del congelador",
+        "Forno": "**apágalo, desenchúfalo y déjalo enfriar**. Si es a gas y notas olor a gas, cierra la llave de paso, no enciendas nada y abre las ventanas",
         "Piano cottura": "si notas **olor a gas**, cierra de inmediato la llave del gas, **no enciendas ni apagues nada** (ni siquiera la luz) y abre las ventanas. Si no hay olor a gas, corta la corriente desde el cuadro eléctrico",
-        "Condizionatore": "**apágalo con el interruptor dedicado**. No toques nunca los tubos del gas refrigerante, y no te asomes por la ventana para la unidad exterior",
-        "predefinito": "**apágalo y desenchúfalo de la corriente**"
+        "Condizionatore": "**apágalo desde el interruptor dedicado**. Nunca toques los tubos del gas refrigerante, y no te asomes por la ventana para la unidad exterior",
+        "predefinito": "**apágalo y desenchúfalo de la toma eléctrica**"
       },
       "targhette": {
         "Lavatrice": "**dentro de la puerta, en el borde**",
         "Lavastoviglie": "**dentro de la puerta, en el borde**",
         "Asciugatrice": "**dentro de la puerta**, o en la parte trasera",
         "Frigorifero": "**dentro del compartimento**, en la pared lateral",
-        "Forno": "**en el borde de la puerta**, abriéndola",
+        "Forno": "**en el borde de la puerta**, abriendo la puerta",
         "Piano cottura": "**debajo de la encimera**, o en el manual de instrucciones",
         "Condizionatore": "**levantando el panel frontal** de la unidad interior, o en el **lateral de la unidad exterior**",
         "predefinito": "normalmente **en el borde de la puerta** o en la parte trasera"
