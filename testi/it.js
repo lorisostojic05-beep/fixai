@@ -342,6 +342,19 @@ export default {
     erroreGenerico: "Qualcosa non ha funzionato. Riprova fra un momento.",
   },
 
+  // L'email che avvisa il cliente che c'e' un preventivo da guardare.
+  // Senza questa, il tecnico manda il prezzo e il cliente non lo scopre mai:
+  // e' l'anello che tiene in piedi tutto il giro.
+  emailPreventivo: {
+    oggetto: "Il preventivo per la tua {macchina} è pronto",
+    intestazione: "Hai un preventivo",
+    saluto: "Ciao {nome},",
+    testo: "{tecnico} ha preparato il preventivo per la riparazione: {prezzo}.",
+    credito: "Dei {credito} che hai già pagato per la videodiagnosi, non ne paghi altri: vengono scalati. Da pagare adesso: {daPagare}.",
+    pulsante: "Guarda il preventivo",
+    piede: "Puoi accettarlo o rifiutarlo. Se rifiuti, il referto della diagnosi resta tuo.",
+  },
+
   // ═══════════════════════════════════════════════════════════════════════════
   //  L'INFORMATIVA PRIVACY
   //
