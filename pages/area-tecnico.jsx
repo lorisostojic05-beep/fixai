@@ -402,7 +402,10 @@ export default function AreaTecnico() {
 
                       {l.stato === "pagata" && (
                         <button onClick={() => avanza(l.id, "inizia")} disabled={occupato === l.id} style={bottone}>
-                          {occupato === l.id ? "⏳..." : "🚗 Ho iniziato l&#39;intervento"}
+                          {/* Apostrofo vero, non &#39;: dentro una stringa JavaScript
+                              le entita' HTML non vengono decodificate e il tecnico
+                              leggerebbe "l&#39;intervento" scritto per esteso. */}
+                          {occupato === l.id ? "⏳..." : "🚗 Ho iniziato l’intervento"}
                         </button>
                       )}
 

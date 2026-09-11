@@ -68,6 +68,23 @@ export default function Riparazione({ testi: t, nomiMacchine, lingua, pre }) {
   async function paga() {
     setInCorso(true);
     try {
+      // ── Prima si accetta, poi si paga ────────────────────────────────────
+      // Il pulsante dice "paga E CONFERMA": sono due cose, e questa e' la
+      // prima. E' accettando che i numeri si congelano sulla riga e che il
+      // credito da 9,90 € viene messo da parte. Senza, /api/paga-saldo
+      // trova il lavoro ancora in stato "preventivo" e rifiuta — cioe'
+      // nessuna riparazione si potrebbe pagare.
+      //
+      // Se questa chiamata fallisce NON ci si ferma: quasi sempre vuol dire
+      // che il cliente aveva gia' accettato e poi era uscito dalla cassa di
+      // Stripe senza pagare. Chi decide davvero e' /api/paga-saldo, che
+      // rifiuta tutto quello che non e' un preventivo accettato.
+      await fetch("/api/preventivo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ azione: "accetta", clienteToken: token }),
+      });
+
       const r = await fetch("/api/paga-saldo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
