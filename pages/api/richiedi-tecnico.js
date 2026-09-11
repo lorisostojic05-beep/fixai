@@ -100,7 +100,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Metodo non consentito" });
   }
 
-  const { nome, telefono, email, citta, cap, appliance, brand, problem, report, lingua } = req.body || {};
+  const { nome, telefono, email, citta, cap, appliance, brand, problem, report, lingua, diagnosiStripeSessionId } =
+    req.body || {};
 
   if (!nome || !telefono || !cap) {
     return res.status(400).json({ error: "Nome, telefono e CAP sono obbligatori" });
@@ -119,6 +120,10 @@ export default async function handler(req, res) {
     const capPulito = String(cap).trim();
     const tecnici = await trovaTecnici(appliance, capPulito);
     const token = crypto.randomBytes(24).toString("hex");
+    // Un secondo segreto, per il cliente. Quello sopra lo ricevono TUTTI i
+    // tecnici della zona via email: darlo anche al cliente vorrebbe dire che
+    // chi ha ricevuto l'una puo' agire dall'altra parte.
+    const clienteToken = crypto.randomBytes(24).toString("hex");
     const stato = tecnici.length > 0 ? "inviata" : "nuova";
 
     const { error } = await supabase.from("richieste_intervento").insert({
@@ -138,6 +143,22 @@ export default async function handler(req, res) {
       // partono giorni piu' tardi, quando il cliente non e' piu' sul sito e
       // non c'e' piu' nessuna pagina da cui dedurre la sua lingua.
       lingua: linguaValida(lingua) ? lingua : PREDEFINITA,
+      cliente_token: clienteToken,
+      // ┌───────────────────────────────────────────────────────────────────┐
+      // │  L'ANCORA DEL CREDITO                                             │
+      // │                                                                   │
+      // │  Senza questa riga i 9,90 € non si possono scalare da niente.     │
+      // │  Prima di oggi sessioni e richieste si collegavano SOLO per       │
+      // │  email — sta scritto nei commenti di admin-dati.js — e            │
+      // │  sull'indirizzo email non si fanno girare dei soldi: due persone  │
+      // │  in casa, due indirizzi, e il credito finisce sulla riparazione   │
+      // │  sbagliata.                                                       │
+      // │                                                                   │
+      // │  Questo invece e' l'identificativo del pagamento vero della       │
+      // │  diagnosi: esiste una riga in "pagamenti" per ognuno, e il        │
+      // │  credito vive li' sopra.                                          │
+      // └───────────────────────────────────────────────────────────────────┘
+      diagnosi_stripe_session_id: diagnosiStripeSessionId || null,
     });
     if (error) throw error;
 

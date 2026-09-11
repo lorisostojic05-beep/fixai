@@ -296,6 +296,53 @@ export default {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
+  //  LA RIPARAZIONE: PREVENTIVO, CREDITO, PAGAMENTO
+  //
+  //  La parola da NON usare qui e' "gratis". La diagnosi costa 9,90 € e li ha
+  //  gia' pagati: quello che succede e' che il suo valore viene scalato dalla
+  //  riparazione. Dire "diagnosi gratis" sarebbe falso e farebbe arrivare
+  //  richieste di rimborso da chi non ripara.
+  //
+  //  E non si dice nemmeno "rimborso": non torna indietro nessun soldo, viene
+  //  usato come acconto.
+  // ═══════════════════════════════════════════════════════════════════════════
+  riparazione: {
+    titolo: "Il tuo preventivo",
+    lavoro: "Riparazione {macchina}",
+
+    inAttesaTitolo: "Il tecnico sta preparando il preventivo",
+    inAttesaTesto: "Ti avvisiamo appena arriva. Di solito ci vuole meno di un giorno.",
+
+    prezzoIntervento: "Prezzo intervento",
+    creditoVideodiagnosi: "Credito videodiagnosi Fixi",
+    daPagare: "Da pagare",
+    paga: "Paga {importo} e conferma",
+    spiegazioneCredito:
+      "I {credito} pagati per la videodiagnosi vengono utilizzati come parte del pagamento della riparazione.",
+    rifiuta: "Non mi interessa",
+    confermaRifiuto: "Vuoi davvero rifiutare questo preventivo? Il referto resta tuo e potrai farti fare un altro preventivo.",
+
+    pagatoTitolo: "Pagamento ricevuto",
+    pagatoTesto: "Il tecnico ti contattera' per fissare l'intervento.",
+    inCorsoTitolo: "Intervento in corso",
+    completatoTitolo: "Riparazione completata",
+    completatoTesto: "Grazie. Se ti va, lascia una recensione al tecnico.",
+    annullatoTitolo: "Preventivo rifiutato",
+    annullatoTesto: "Il referto della diagnosi resta tuo. Puoi chiedere un altro tecnico quando vuoi.",
+
+    riepilogo: "Riepilogo",
+    pagatoPerDiagnosi: "Videodiagnosi",
+    pagatoPerRiparazione: "Saldo riparazione",
+    totale: "Totale",
+
+    // Quello che il cliente legge dentro la cassa di Stripe.
+    vocePagamento: "Riparazione {macchina}",
+    vocePagamentoDettaglio: "Intervento {totale}, meno {credito} di credito videodiagnosi gia' pagato",
+
+    erroreGenerico: "Qualcosa non ha funzionato. Riprova fra un momento.",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
   //  L'INFORMATIVA PRIVACY
   //
   //  E' un documento legale, non un'interfaccia: si traduce come cortesia

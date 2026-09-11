@@ -1157,6 +1157,10 @@ sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice
           // Il server ricontrolla il CAP, e per farlo deve sapere di che
           // paese e' la forma attesa.
           lingua: linguaPagina,
+          // Da quale diagnosi pagata nasce questa richiesta. E' cio' che
+          // permette di scalare i 9,90 € dalla riparazione: senza, il credito
+          // non ha niente a cui agganciarsi. Vedi richiedi-tecnico.js.
+          diagnosiStripeSessionId: stripeSessionRef.current || null,
         }),
       });
       const data = await res.json();
