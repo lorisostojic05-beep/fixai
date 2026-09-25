@@ -170,8 +170,17 @@ export default {
     tag: "Per i professionisti",
     titolo1: "Sei un tecnico?",
     titolo2: "Unisciti a Fixi.",
+    // ┌───────────────────────────────────────────────────────────────────────┐
+    // │  QUI SI PROMETTE QUALCOSA A CHI LAVORA                                │
+    // │                                                                       │
+    // │  Fino al 25/09/2026 questa sezione diceva "0% di commissione", mentre │
+    // │  il marketplace dall'11/09 trattiene il 10%. Un tecnico avrebbe letto │
+    // │  "0%" e ricevuto 108 € invece di 120 al primo lavoro. Se la           │
+    // │  percentuale cambia in lib/soldi.js, va cambiata anche qui — e in     │
+    // │  tecnicoIscrizione piu' sotto.                                        │
+    // └───────────────────────────────────────────────────────────────────────┘
     sottotitolo:
-      "Ricevi lavori qualificati con diagnosi già fatta. Nessun costo di iscrizione, nessun credito da acquistare: in questa fase di lancio i contatti non ti costano nulla.",
+      "Ricevi lavori con la diagnosi già fatta. Nessun costo di iscrizione, nessun canone, nessun contatto da comprare: paghi solo il 10% sui lavori che porti a termine.",
     vantaggi: [
       {
         titolo: "Clienti già qualificati",
@@ -179,9 +188,9 @@ export default {
           "Arrivano con diagnosi e referto — sai già cosa c'è da fare prima di uscire.",
       },
       {
-        titolo: "Costo zero",
+        titolo: "Paghi solo se lavori",
         testo:
-          "Iscrizione gratuita e nessuna commissione: in fase di lancio i contatti sono gratis.",
+          "Iscrizione gratuita e nessun canone. Fixi trattiene il 10% del prezzo solo sui lavori completati, e il cliente ha già pagato prima che tu parta.",
       },
       {
         titolo: "Costruisci la tua reputazione",
@@ -192,9 +201,11 @@ export default {
     scopri: "Scopri di più",
     numeri: [
       { valore: "€0", etichetta: "Costo iscrizione" },
-      { valore: "0%", etichetta: "Commissione sui lavori" },
+      { valore: "10%", etichetta: "Solo sui lavori completati" },
       { valore: "48h", etichetta: "Tempo medio attivazione" },
-      { valore: "∞", etichetta: "Lavori disponibili" },
+      // Qui c'era "∞ lavori disponibili": falso finche' i lavori sono pochi,
+      // e letto proprio dai tecnici a cui si chiede di fidarsi.
+      { valore: "€0", etichetta: "Canone mensile" },
     ],
   },
 
@@ -652,11 +663,14 @@ export default {
       "Es. Tecnico specializzato in lavatrici e lavastoviglie con 10 anni di esperienza. Intervengo a Milano e provincia entro 24 ore...",
 
     promessa1: "Iscrizione gratuita",
-    promessa2: "Nessuna commissione sui lavori in questa fase di lancio",
+    promessa2: "Solo il 10% sui lavori completati, nessun canone",
     promessa3: "Attivazione entro 48 ore dalla verifica",
     promessa4: "Puoi disiscriverti in qualsiasi momento",
+    // La seconda frase e' vera perche' la percentuale si congela sulla riga
+    // quando il cliente accetta il preventivo (commissione_frazione): vedi
+    // lib/preventivo.js. Non e' una cortesia, e' come funziona il codice.
     seCambia:
-      "Se in futuro introdurremo una commissione sui lavori, te lo comunicheremo via email con anticipo: potrai decidere se continuare o disiscriverti.",
+      "Se in futuro la percentuale cambierà, te lo comunicheremo via email con anticipo: potrai decidere se continuare o disiscriverti. I preventivi già accettati restano alla percentuale di quel giorno.",
 
     indietro: "Indietro",
     continua: "Continua",
