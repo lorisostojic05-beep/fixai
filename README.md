@@ -63,9 +63,15 @@ Le parole stanno fuori dal codice, in `testi/<lingua>.js`. L'italiano è
 l'originale e si scrive a mano; le altre sei si rigenerano:
 
 ```bash
-node scripts/traduci.mjs          # solo quelle che mancano
-node scripts/traduci.mjs de       # una sola
+node scripts/traduci.mjs --prova  # cosa tradurrebbe e quanto costa, senza chiamare l'API
+node scripts/traduci.mjs          # solo le frasi cambiate, in tutte le lingue
+node scripts/traduci.mjs de       # solo le frasi cambiate, in una lingua
 ```
+
+Lo script si ricorda com'era ogni frase italiana l'ultima volta che è stata
+tradotta (`testi/.impronte.json`) e ritraduce solo quelle cambiate. Cambiare
+cinque frasi costa qualche migliaio di token; ritradurre tutto da capo
+(`--tutte`) circa 330 mila, e quasi mai serve.
 
 Prezzi e codici postali seguono il paese, non solo la lingua
 (`lib/mercati.js`, `lib/prezzi.js`).
@@ -114,9 +120,9 @@ npm test                          # tutte
 node --test test/soldi.test.mjs   # una sola
 ```
 
-79 prove sul test runner di Node, senza dipendenze aggiunte. Coprono i conti,
-gli stati, il credito, il bonifico, le metriche, e un giro completo
-dall'inizio alla fine (`test/e2e.test.mjs`).
+91 prove sul test runner di Node, senza dipendenze aggiunte. Coprono i conti,
+gli stati, il credito, il bonifico, le metriche, la scelta delle frasi da
+ritradurre, e un giro completo dall'inizio alla fine (`test/e2e.test.mjs`).
 
 Attenzione a cosa **non** coprono: le regole sui soldi sì, cosa fa una pagina
 quando si preme un pulsante no. Un percorso che passa da una schermata va

@@ -1,11 +1,25 @@
 // scripts/traduci.mjs
 // Genera i file delle lingue a partire da testi/it.js.
 //
-//   node scripts/traduci.mjs es        una lingua
-//   node scripts/traduci.mjs           tutte quelle che mancano
-//   node scripts/traduci.mjs --tutte   tutte, anche riscrivendo quelle che ci sono
+//   node scripts/traduci.mjs --prova   dice cosa tradurrebbe e quanto costa, senza chiamare nessuno
+//   node scripts/traduci.mjs           solo le frasi cambiate o nuove, in tutte le lingue
+//   node scripts/traduci.mjs es        solo le frasi cambiate o nuove, in una lingua
+//   node scripts/traduci.mjs --tutte   tutto da capo, in tutte le lingue (circa 300 mila token)
+//   node scripts/traduci.mjs --segna   segna le traduzioni attuali come aggiornate (vedi sotto)
 //
 // L'italiano e' l'originale e non si tocca mai.
+//
+// ── Come sa cosa e' cambiato ────────────────────────────────────────────────
+// Dopo ogni traduzione riuscita si salva in testi/.impronte.json un'impronta
+// di ogni frase italiana, per ogni lingua. Al giro dopo si ritraduce solo cio'
+// la cui impronta non torna, piu' cio' che nel file della lingua manca. I
+// dettagli, e il perche', stanno in scripts/traduzioni-incrementali.mjs.
+//
+// --segna scrive le impronte SENZA tradurre niente. Va usato solo quando si e'
+// sicuri che i file delle lingue corrispondono gia' all'italiano di adesso —
+// per esempio subito dopo un --tutte fatto con una versione vecchia dello
+// script. Usato a sproposito, una frase cambiata resterebbe vecchia nelle altre
+// lingue finche' qualcuno non la tocca di nuovo.
 //
 // ── Perche' questo script esiste ────────────────────────────────────────────
 // Dare in pasto pages/index.jsx a un traduttore significa dargli codice: si
@@ -27,10 +41,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
+import { daRifare, parziale, componi, impronte, chiaveDi } from "./traduzioni-incrementali.mjs";
 
 const QUI = path.dirname(fileURLToPath(import.meta.url));
 const RADICE = path.join(QUI, "..");
 const CARTELLA = path.join(RADICE, "testi");
+const FILE_IMPRONTE = path.join(CARTELLA, ".impronte.json");
 
 // Sonnet basta e avanza: sono poche centinaia di frasi corte, ed e' un lavoro
 // di traduzione, non di ragionamento. Per le guide — dove c'e' di mezzo la
@@ -248,13 +264,31 @@ export default `;
   );
 }
 
-// ─── Programma ──────────────────────────────────────────────────────────────
-const chiave = caricaChiave();
-if (!chiave) {
-  console.error("ANTHROPIC_API_KEY non trovata (ne' fra le variabili d'ambiente, ne' in .env.local).");
-  process.exit(1);
+// ─── Le impronte ────────────────────────────────────────────────────────────
+function leggiImpronte() {
+  if (!fs.existsSync(FILE_IMPRONTE)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(FILE_IMPRONTE, "utf8"));
+  } catch {
+    // Un file rovinato vale come nessun file: si vede solo cio' che manca, e
+    // il messaggio in fondo dice cosa fare. Meglio che fermarsi.
+    return {};
+  }
 }
 
+function salvaImpronte(tutte) {
+  fs.writeFileSync(FILE_IMPRONTE, JSON.stringify(tutte, null, 1) + "\n", "utf8");
+}
+
+// ─── Quanto costa, a occhio ─────────────────────────────────────────────────
+// Tarato sul giro completo del 25/09/2026: 198 richieste e 135 mila caratteri
+// sono stati circa 330 mila token. Buona parte e' il testo delle istruzioni,
+// che parte identico in ogni richiesta: per questo pesa il numero di richieste
+// piu' del numero di frasi. E' una stima; il conto vero lo stampa la fine.
+const stimaToken = (richieste, caratteri) => Math.round(richieste * 800 + caratteri * 1.2);
+const caratteriDi = (valore) => raccogli(valore).join("").length;
+
+// ─── Programma ──────────────────────────────────────────────────────────────
 // lib/lingue.js e' l'elenco ufficiale: se una lingua non e' li', questo script
 // si rifiuta di generarla. Cosi' non nascono file di traduzione per lingue che
 // il sito non sa servire.
@@ -264,33 +298,122 @@ const originale = await leggiModulo(path.join(CARTELLA, `${PREDEFINITA}.js`));
 
 const argomenti = process.argv.slice(2);
 const forza = argomenti.includes("--tutte");
+const prova = argomenti.includes("--prova");
+const segna = argomenti.includes("--segna");
 const richieste = argomenti.filter((a) => !a.startsWith("--"));
 
-let daFare = LINGUE.filter((l) => l.codice !== PREDEFINITA);
+let lingue = LINGUE.filter((l) => l.codice !== PREDEFINITA);
 if (richieste.length) {
-  daFare = daFare.filter((l) => richieste.includes(l.codice));
   const sconosciute = richieste.filter((c) => !LINGUE.some((l) => l.codice === c));
   if (sconosciute.length) {
     console.error(`Lingua non prevista in lib/lingue.js: ${sconosciute.join(", ")}`);
     process.exit(1);
   }
-} else if (!forza) {
-  daFare = daFare.filter((l) => !fs.existsSync(path.join(CARTELLA, `${l.codice}.js`)));
+  lingue = lingue.filter((l) => richieste.includes(l.codice));
 }
 
-if (!daFare.length) {
-  console.log("Niente da fare: ci sono gia' tutte. Usa --tutte per rigenerarle.");
+const tutteImpronte = leggiImpronte();
+const improntaOra = impronte(originale);
+
+// ─── --segna: dichiarare aggiornato cio' che c'e' ───────────────────────────
+// Nessuna traduzione, nessuna chiave: si guarda solo che il file abbia la
+// stessa forma dell'italiano, e se si' se ne ricordano le impronte.
+if (segna) {
+  for (const l of lingue) {
+    const f = path.join(CARTELLA, `${l.codice}.js`);
+    if (!fs.existsSync(f)) {
+      console.log(`${l.bandiera} ${l.nome.padEnd(12)} manca il file: non segno niente`);
+      continue;
+    }
+    const problemi = confronta(originale, await leggiModulo(f));
+    if (problemi.length) {
+      console.log(`${l.bandiera} ${l.nome.padEnd(12)} non combacia con l'italiano (${problemi[0]}): non segno`);
+      continue;
+    }
+    tutteImpronte[l.codice] = improntaOra;
+    console.log(`${l.bandiera} ${l.nome.padEnd(12)} segnata come aggiornata`);
+  }
+  salvaImpronte(tutteImpronte);
   process.exit(0);
+}
+
+// ─── Il piano: per ogni lingua, cosa c'e' da fare ───────────────────────────
+const piano = [];
+for (const l of lingue) {
+  const f = path.join(CARTELLA, `${l.codice}.js`);
+  const vecchio = fs.existsSync(f) ? await leggiModulo(f) : null;
+
+  if (forza || !vecchio) {
+    piano.push({ lingua: l, intero: true, vecchio: null, pezzi: pezzi(originale), elenco: null });
+    continue;
+  }
+
+  const ricordate = tutteImpronte[l.codice] || null;
+  const elenco = daRifare(originale, vecchio, ricordate);
+  const voce = { lingua: l, intero: false, vecchio, elenco, senzaImpronte: !ricordate };
+  // Le frasi da rifare si mandano tutte insieme: di solito sono poche e
+  // stanno in un pezzo solo, quindi in una richiesta sola per lingua.
+  voce.pezzi = elenco.length ? pezzi(parziale(elenco)) : [];
+  piano.push(voce);
+}
+
+const conLavoro = piano.filter((v) => v.pezzi.length);
+const totRichieste = conLavoro.reduce((t, v) => t + v.pezzi.length, 0);
+const totCaratteri = conLavoro.reduce((t, v) => t + v.pezzi.reduce((s, p) => s + caratteriDi(p.valore), 0), 0);
+
+for (const v of piano) {
+  const testa = `${v.lingua.bandiera} ${v.lingua.nome.padEnd(12)}`;
+  if (!v.pezzi.length) {
+    console.log(`${testa} gia' aggiornata`);
+    continue;
+  }
+  const quante = v.intero ? raccogli(originale).length : v.elenco.length;
+  console.log(
+    `${testa} ${v.intero ? "tutto da capo" : "da rifare"}: ${quante} ${quante === 1 ? "voce" : "voci"}, ` +
+      `${v.pezzi.length} ${v.pezzi.length === 1 ? "richiesta" : "richieste"}`
+  );
+  if (prova && !v.intero) v.elenco.slice(0, 8).forEach((u) => console.log(`      ${chiaveDi(u.percorso)}`));
+  if (prova && !v.intero && v.elenco.length > 8) console.log(`      ...e altre ${v.elenco.length - 8}`);
+}
+
+// Senza impronte si vede solo cio' che MANCA. Una frase modificata in
+// italiano resterebbe vecchia in quella lingua senza che nessuno lo dica:
+// qui invece lo si dice, ogni volta.
+const cieche = piano.filter((v) => v.senzaImpronte).map((v) => v.lingua.nome);
+if (cieche.length) {
+  console.log(
+    `\nATTENZIONE: per ${cieche.join(", ")} non so com'era l'italiano all'ultima traduzione.\n` +
+      `Vedo le frasi che mancano, non quelle modificate. Se i file sono aggiornati:\n` +
+      `  node scripts/traduci.mjs --segna\n` +
+      `altrimenti, una volta:\n` +
+      `  node scripts/traduci.mjs --tutte`
+  );
+}
+
+if (!totRichieste) {
+  console.log("\nNiente da tradurre.");
+  process.exit(0);
+}
+
+console.log(`\nIn tutto: ${totRichieste} ${totRichieste === 1 ? "richiesta" : "richieste"}, circa ${Math.round(stimaToken(totRichieste, totCaratteri) / 1000)} mila token.`);
+
+if (prova) {
+  console.log("(--prova: non ho chiamato nessuno e non ho scritto niente)");
+  process.exit(0);
+}
+
+const chiave = caricaChiave();
+if (!chiave) {
+  console.error("ANTHROPIC_API_KEY non trovata (ne' fra le variabili d'ambiente, ne' in .env.local).");
+  process.exit(1);
 }
 
 // Un limite di tempo esplicito, imparato alla prima prova vera: il tedesco e'
 // rimasto appeso venti minuti senza dire niente, e con lui il resto del giro.
 // Meglio una lingua che fallisce e viene ritentata da sola che sei ferme.
 const cliente = new Anthropic({ apiKey: chiave, timeout: 180000, maxRetries: 2 });
+const consumo = { entrata: 0, uscita: 0 };
 let falliti = 0;
-
-const daTradurre = pezzi(originale);
-console.log(`${daFare.length} lingue x ${daTradurre.length} pezzi\n`);
 
 // Quanti pezzi chiedere insieme. In fila i 23 pezzi di una lingua ci mettevano
 // piu' di mezz'ora: sono richieste piccole, e quasi tutto il tempo se ne va ad
@@ -307,69 +430,64 @@ async function aGruppi(elenco, quanti, lavora) {
   return esiti;
 }
 
-for (const lingua of daFare) {
-  process.stdout.write(`${lingua.bandiera} ${lingua.nome.padEnd(12)} `);
-  const guai = [];
-  const fatti = [];
+/** Traduce un pezzo. Torna { tradotto } oppure { guai: [...] }. */
+async function traduciPezzo(lingua, pezzo) {
+  const nome = pezzo.percorso.join(".") || "(tutto)";
+  // I nomi dei buchi restano qui: fuori esce {0}, {1}, e al ritorno li
+  // rimettiamo a posto noi.
+  const originali = raccogli(pezzo.valore);
+  const coperte = originali.map(maschera);
+  const mascherate = coperte.map((c) => c.testo);
+  try {
+    const risposta = await cliente.messages.create({
+      model: MODELLO,
+      max_tokens: 8000,
+      messages: [
+        {
+          role: "user",
+          content: `${istruzioni(lingua.nome)}\n\n${JSON.stringify(mascherate, null, 2)}`,
+        },
+      ],
+    });
+    consumo.entrata += risposta.usage?.input_tokens || 0;
+    consumo.uscita += risposta.usage?.output_tokens || 0;
 
-  await aGruppi(daTradurre, INSIEME, async (pezzo) => {
-    const nome = pezzo.percorso.join(".") || "(tutto)";
-    // I nomi dei buchi restano qui: fuori esce {0}, {1}, e al ritorno li
-    // rimettiamo a posto noi.
-    const originali = raccogli(pezzo.valore);
-    const coperte = originali.map(maschera);
-    const mascherate = coperte.map((c) => c.testo);
-    try {
-      const risposta = await cliente.messages.create({
-        model: MODELLO,
-        max_tokens: 8000,
-        messages: [
-          {
-            role: "user",
-            content: `${istruzioni(lingua.nome)}\n\n${JSON.stringify(mascherate, null, 2)}`,
-          },
-        ],
-      });
-
-      // Se la risposta e' stata tagliata il JSON non si chiude, e l'errore che
-      // ne esce ("Unterminated string") non dice cos'e' successo davvero.
-      if (risposta.stop_reason === "max_tokens") {
-        guai.push(`${nome}: risposta troppo lunga, abbassa LIMITE_PEZZO`);
-        return;
-      }
-
-      const grezze = estraiJSON(risposta.content.map((b) => b.text || "").join(""));
-      if (!Array.isArray(grezze) || grezze.length !== originali.length) {
-        guai.push(
-          `${nome}: tornate ${Array.isArray(grezze) ? grezze.length : "?"} frasi invece di ${originali.length}`
-        );
-        return;
-      }
-      const frasi = grezze.map((f, i) => smaschera(f, coperte[i].nomi));
-
-      // Rimessi i nomi, si ricontrolla lo stesso: qui restano da verificare le
-      // frasi vuote e i segnaposto persi, che l'ordine giusto non garantisce.
-      const tradotto = ricostruisci(pezzo.valore, frasi);
-      const problemi = confronta(pezzo.valore, tradotto, nome);
-      if (problemi.length) {
-        guai.push(...problemi);
-        return;
-      }
-      fatti.push({ percorso: pezzo.percorso, tradotto });
-      process.stdout.write(".");
-    } catch (e) {
-      guai.push(`${nome}: ${e?.message || e}`);
+    // Se la risposta e' stata tagliata il JSON non si chiude, e l'errore che
+    // ne esce ("Unterminated string") non dice cos'e' successo davvero.
+    if (risposta.stop_reason === "max_tokens") {
+      return { guai: [`${nome}: risposta troppo lunga, abbassa LIMITE_PEZZO`] };
     }
-  });
 
-  // Si assembla solo dopo, e nell'ordine dell'originale: i pezzi tornano
-  // quando vogliono, e montarli man mano rimescolerebbe le voci del file.
-  const assemblato = {};
-  const perPercorso = new Map(fatti.map((f) => [f.percorso.join("."), f.tradotto]));
-  for (const pezzo of daTradurre) {
-    const trovato = perPercorso.get(pezzo.percorso.join("."));
-    if (trovato !== undefined) innesta(assemblato, pezzo.percorso, trovato);
+    const grezze = estraiJSON(risposta.content.map((b) => b.text || "").join(""));
+    if (!Array.isArray(grezze) || grezze.length !== originali.length) {
+      return {
+        guai: [`${nome}: tornate ${Array.isArray(grezze) ? grezze.length : "?"} frasi invece di ${originali.length}`],
+      };
+    }
+    const frasi = grezze.map((f, i) => smaschera(f, coperte[i].nomi));
+
+    // Rimessi i nomi, si ricontrolla lo stesso: qui restano da verificare le
+    // frasi vuote e i segnaposto persi, che l'ordine giusto non garantisce.
+    const tradotto = ricostruisci(pezzo.valore, frasi);
+    const problemi = confronta(pezzo.valore, tradotto, nome);
+    return problemi.length ? { guai: problemi } : { tradotto };
+  } catch (e) {
+    return { guai: [`${nome}: ${e?.message || e}`] };
   }
+}
+
+console.log("");
+for (const v of conLavoro) {
+  process.stdout.write(`${v.lingua.bandiera} ${v.lingua.nome.padEnd(12)} `);
+  const guai = [];
+  const fatti = new Map();
+
+  await aGruppi(v.pezzi, INSIEME, async (pezzo) => {
+    const esito = await traduciPezzo(v.lingua, pezzo);
+    if (esito.guai) return guai.push(...esito.guai);
+    fatti.set(pezzo.percorso.join("."), esito.tradotto);
+    process.stdout.write(".");
+  });
 
   if (guai.length) {
     falliti++;
@@ -379,9 +497,38 @@ for (const lingua of daFare) {
     continue;
   }
 
-  scrivi(lingua.codice, lingua.nome, assemblato);
+  // Si assembla solo dopo, e nell'ordine dell'originale: i pezzi tornano
+  // quando vogliono, e montarli man mano rimescolerebbe le voci del file.
+  // Il valore di ritorno di innesta() va tenuto: quando il pezzo e' uno solo
+  // e copre tutto (succede spesso con poche frasi da rifare) innesta non
+  // riempie la radice, la sostituisce.
+  let nuovo = {};
+  for (const pezzo of v.pezzi) nuovo = innesta(nuovo, pezzo.percorso, fatti.get(pezzo.percorso.join(".")));
+
+  const file = v.intero ? nuovo : componi(originale, v.vecchio, nuovo);
+
+  // L'ultimo controllo e' sul file INTERO, non solo sulle frasi appena
+  // tradotte: e' qui che si vedrebbe una voce persa nel rimontarlo.
+  const problemi = confronta(originale, file);
+  if (problemi.length) {
+    falliti++;
+    console.log(" NON scritto, il file rimontato non combacia:");
+    problemi.slice(0, 8).forEach((p) => console.log(`    ${p}`));
+    continue;
+  }
+
+  scrivi(v.lingua.codice, v.lingua.nome, file);
+  // Le impronte si salvano subito, lingua per lingua: se la prossima fallisce
+  // questa resta comunque segnata come aggiornata.
+  tutteImpronte[v.lingua.codice] = improntaOra;
+  salvaImpronte(tutteImpronte);
   console.log(" fatto");
 }
 
-console.log(`\n${daFare.length - falliti} su ${daFare.length}.`);
+console.log(`\n${conLavoro.length - falliti} su ${conLavoro.length}.`);
+console.log(
+  `Token usati: ${consumo.entrata.toLocaleString("it-IT")} in entrata + ` +
+    `${consumo.uscita.toLocaleString("it-IT")} in uscita = ` +
+    `${(consumo.entrata + consumo.uscita).toLocaleString("it-IT")}`
+);
 process.exit(falliti ? 1 : 0);

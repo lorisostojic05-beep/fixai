@@ -13,10 +13,11 @@ npm run build          # build di produzione
 npm start              # serve la build (vedi nota qui sotto)
 npm test               # tutte le prove
 node --test test/soldi.test.mjs        # una sola
-node scripts/traduci.mjs es            # rigenera una lingua
-node scripts/traduci.mjs               # solo quelle che mancano
-node scripts/traduci.mjs --tutte       # tutte, riscrivendo
-node scripts/ricontrolla-sicurezza.mjs # ritraduce all'indietro le 7 frasi pericolose
+node scripts/traduci.mjs --prova       # cosa tradurrebbe e quanti token: non chiama l'API
+node scripts/traduci.mjs               # solo le frasi cambiate, in tutte le lingue
+node scripts/traduci.mjs es            # solo le frasi cambiate, in una lingua
+node scripts/traduci.mjs --tutte       # tutto da capo: ~330 mila token, quasi mai serve
+node scripts/ricontrolla-sicurezza.mjs # ritraduce all'indietro le frasi su gas e corrente
 ```
 
 **Per provare a mano, usa `npm run build && npm start`, non `npm run dev`.**
@@ -102,6 +103,19 @@ Le parole stanno in `testi/<lingua>.js` — **solo testo**, niente `<br>`,
 niente `className`, niente href. `testi/it.js` è l'originale e l'unico che si
 scrive a mano: le altre sei si rigenerano con `scripts/traduci.mjs`. Non
 correggerle a mano, il giro dopo si perde.
+
+**Lo script usa la chiave API di Loris, e costa.** Prima di lanciarlo, fai
+girare `--prova` e diglielo con la stima dei token. Il 25/09/2026 un
+`--tutte` lanciato per cinque frasi ha consumato ~330 mila token, e se n'è
+accorto dalla console. Il giro normale ritraduce solo le frasi la cui impronta
+in `testi/.impronte.json` non torna: cinque frasi sono una richiesta per
+lingua, qualche migliaio di token.
+
+**Ogni `--tutte` riscrive anche le frasi di sicurezza** su gas, acqua e
+corrente, con parole nuove. Dopo va sempre lanciato
+`ricontrolla-sicurezza.mjs` e vanno lette le coppie: contano le azioni, il loro
+ordine e i divieti. Fra il 06/09 e il 25/09 sono state riscritte sei volte
+senza che nessuno le ricontrollasse.
 
 - `testiPer(locale)` si usa **solo dentro `getStaticProps`**. Importarlo in un
   componente trascina tutte e sette le lingue nel browser.
