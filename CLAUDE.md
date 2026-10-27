@@ -177,6 +177,24 @@ Stampa un `whsec_` da mettere in `.env.local`. Serve anche
 mittente di prova che consegna a un solo indirizzo e le email spariscono
 **senza errore visibile**.
 
+## iPhone
+
+Progetto in `ios/`, generato con `npx cap add ios` su Windows. Loris non ha un
+Mac: si compila **solo** in cloud con Codemagic, da `codemagic.yaml`. Il
+`pod install` saltato in locale lo fa `cap sync` sul Mac di Codemagic.
+
+- **Tutto ciò che è Android va chiuso dietro `piattaforma() === "android"`**
+  (`lib/versione-app.js`): SalvaFile, TastiVolume, VersioneApp, l'avviso di
+  aggiornamento. Su iPhone quei plugin non esistono per scelta, e il codice
+  li contava come "mancanti": ogni utente iPhone avrebbe visto "aggiorna dal
+  Play Store". Apple rifiuta le app che nominano un'altra piattaforma.
+- Su iPhone "Scarica" apre la condivisione, che ha "Salva su File".
+- Versione minima iOS 15: la fotocamera nella pagina c'è solo dalla 14.3.
+- **La diagnosi da 9,90 € su iPhone va venduta con il pagamento Apple**, non
+  con Stripe: è un servizio digitale usato nell'app. Le riparazioni possono
+  restare su Stripe (servizio fisico fuori dall'app). Il pagamento Apple non
+  è ancora scritto.
+
 ## Database
 
 Supabase, progetto `sokscyydhzpqitejzubs`. Le migrazioni stanno in

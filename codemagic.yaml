@@ -1,0 +1,86 @@
+# codemagic.yaml
+# Come si costruisce l'app iPhone senza avere un Mac.
+#
+# Loris lavora solo su Windows, e le app iOS si compilano solo con Xcode, che
+# esiste solo su Mac. Codemagic presta un Mac nel cloud: legge questo file dal
+# repository GitHub, compila, firma e carica la versione su TestFlight.
+#
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │  NON ANCORA PROVATO                                                       │
+# │                                                                           │
+# │  Scritto il 27/10/2026, prima di avere l'account Apple e quello           │
+# │  Codemagic. Per funzionare servono tre cose che oggi non esistono:        │
+# │                                                                           │
+# │   1. l'iscrizione all'Apple Developer Program (99 € l'anno);              │
+# │   2. l'app creata in App Store Connect con bundle id casa.fixi.app, e il  │
+# │      suo numero (Apple ID dell'app) scritto qui sotto in APP_ID_APPLE;    │
+# │   3. in Codemagic, una chiave API di App Store Connect aggiunta fra le    │
+# │      integrazioni con il nome ESATTO scritto in app_store_connect.        │
+# │                                                                           │
+# │  Il primo build quasi certamente si fermera' da qualche parte: e' normale │
+# │  con un file mai eseguito. Il registro di Codemagic dice dove.            │
+# └───────────────────────────────────────────────────────────────────────────┘
+
+workflows:
+  iphone-testflight:
+    name: iPhone → TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    integrations:
+      app_store_connect: Fixi App Store Connect
+
+    environment:
+      # Codemagic crea e rinnova da solo certificato e profilo di firma,
+      # passando dalla chiave API qui sopra. A mano, su Windows, non si
+      # potrebbe: il certificato si genera con il Portachiavi del Mac.
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: casa.fixi.app
+      vars:
+        APP_ID_APPLE: "0000000000" # da sostituire: App Store Connect → l'app → Informazioni sull'app → Apple ID
+      node: 20
+      xcode: latest
+      cocoapods: default
+
+    scripts:
+      - name: Dipendenze
+        script: npm ci
+
+      # Copia la configurazione Capacitor nel progetto iOS e, su Mac, lancia
+      # anche "pod install": il passo che sul PC di Loris viene saltato.
+      - name: Capacitor
+        script: npx cap sync ios
+
+      - name: Firma
+        script: xcode-project use-profiles
+
+      # Apple rifiuta un caricamento con un numero di build gia' usato. Si
+      # prende l'ultimo presente su TestFlight e si aggiunge uno. Alla prima
+      # volta non c'e' niente su TestFlight: si parte da 1.
+      #
+      # Si scrive direttamente nel progetto invece di usare agvtool, che
+      # richiede un'impostazione (VERSIONING_SYSTEM) che il progetto generato
+      # da Capacitor non ha.
+      - name: Numero di build
+        script: |
+          ULTIMO=$(app-store-connect get-latest-testflight-build-number "$APP_ID_APPLE" 2>/dev/null || echo 0)
+          NUOVO=$((ULTIMO + 1))
+          echo "Build numero $NUOVO"
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = $NUOVO;/g" ios/App/App.xcodeproj/project.pbxproj
+
+      - name: Compila
+        script: |
+          xcode-project build-ipa \
+            --workspace "ios/App/App.xcworkspace" \
+            --scheme "App"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        # Va su TestFlight, NON in revisione: prima si prova sul telefono.
+        # L'invio ad Apple per la pubblicazione resta un gesto fatto a mano.
+        submit_to_testflight: true

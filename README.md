@@ -120,7 +120,7 @@ npm test                          # tutte
 node --test test/soldi.test.mjs   # una sola
 ```
 
-91 prove sul test runner di Node, senza dipendenze aggiunte. Coprono i conti,
+98 prove sul test runner di Node, senza dipendenze aggiunte. Coprono i conti,
 gli stati, il credito, il bonifico, le metriche, la scelta delle frasi da
 ritradurre, e un giro completo dall'inizio alla fine (`test/e2e.test.mjs`).
 
@@ -136,8 +136,10 @@ percorso nel browser.
 **Claude Opus 5** con visione per la diagnosi.
 **Stripe** per i pagamenti e Connect per i bonifici ai tecnici.
 **Supabase** per i dati. **Resend** per le email.
-**Capacitor** per l'app Android: è un guscio nativo che carica il sito, quindi
+**Capacitor** per le app: è un guscio nativo che carica il sito, quindi
 una correzione al sito arriva sui telefoni senza ricompilare niente.
+L'app Android è sul Play Store; quella iPhone è in preparazione, e si compila
+in cloud con **Codemagic** (`codemagic.yaml`) perché serve un Mac.
 
 ```
 pages/          le schermate e le API
@@ -146,7 +148,8 @@ testi/          le parole, una lingua per file
 test/           le prove
 migrazioni/     SQL da eseguire a mano su Supabase
 components/     i pochi pezzi condivisi
-android/        il progetto Capacitor
+android/        il progetto Capacitor per Android
+ios/            il progetto Capacitor per iPhone
 ```
 
 Il ragionamento sui soldi vive tutto in `lib/`, senza rete e senza database:
