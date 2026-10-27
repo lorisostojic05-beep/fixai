@@ -5,6 +5,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { sezioneCosti } from "../../lib/prezzi";
 import Stripe from "stripe";
 import { supabaseAdmin } from "../../lib/supabase-admin";
+import { ePagamentoApple } from "../../lib/pagamento-apple";
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -50,6 +51,13 @@ async function verificaAccesso(stripeSessionId) {
     // Tabella mancante o Supabase giù: si degrada alla sola verifica Stripe
     tabellaDisponibile = false;
     console.warn("Tabella pagamenti non disponibile, verifico solo con Stripe:", e.message);
+  }
+
+  // Un acquisto App Store entra nel registro SOLO passando da
+  // /api/acquisto-apple, che l'ha verificato con Apple. Se la riga non c'e',
+  // non c'e' niente da chiedere a Stripe: non lo conosce.
+  if (!registro && ePagamentoApple(stripeSessionId)) {
+    return { ok: false, motivo: "Pagamento non riconosciuto. Riprova dal pulsante di pagamento." };
   }
 
   if (!registro) {

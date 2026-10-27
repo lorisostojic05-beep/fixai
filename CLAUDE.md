@@ -190,10 +190,25 @@ Mac: si compila **solo** in cloud con Codemagic, da `codemagic.yaml`. Il
   Play Store". Apple rifiuta le app che nominano un'altra piattaforma.
 - Su iPhone "Scarica" apre la condivisione, che ha "Salva su File".
 - Versione minima iOS 15: la fotocamera nella pagina c'è solo dalla 14.3.
-- **La diagnosi da 9,90 € su iPhone va venduta con il pagamento Apple**, non
-  con Stripe: è un servizio digitale usato nell'app. Le riparazioni possono
-  restare su Stripe (servizio fisico fuori dall'app). Il pagamento Apple non
-  è ancora scritto.
+- **La diagnosi da 9,90 € su iPhone si vende con il pagamento Apple**, non
+  con Stripe: è un servizio digitale usato nell'app. Le riparazioni restano su
+  Stripe (servizio fisico fuori dall'app). Il giro: `AcquistiPlugin.swift`
+  (StoreKit 2) compra → `/api/acquisto-apple` chiede ad Apple se è vero
+  (`lib/verifica-apple.js`) e lo registra → solo allora il plugin chiude la
+  transazione → stesso indirizzo di ritorno di Stripe.
+- **Un acquisto Apple sta in `pagamenti.stripe_session_id`** con il prefisso
+  `apple:` (vero) o `apple-sandbox:` (TestFlight e revisori: soldi finti, fuori
+  dal fatturato in `metriche.js`). Il perché sta in `lib/pagamento-apple.js`.
+- `lib/verifica-apple.js` usa `node:crypto`: **solo nelle rotte API**. Le
+  pagine importano `lib/pagamento-apple.js`, che non importa niente.
+- Il prezzo sul pulsante iPhone lo dice l'App Store, mai `testi/`: Apple
+  rifiuta un prezzo mostrato diverso da quello addebitato.
+- I rimborsi App Store li fa solo Apple: la pagina manda a
+  reportaproblem.apple.com invece del modulo.
+- `ViewControllerFixi.swift` registra il plugin, e `Main.storyboard` punta a
+  lui. Se si rigenera `ios/`, quella riga dello storyboard va rimessa.
+- `ios/` non è mai stato compilato su un Mac: il primo build Codemagic è anche
+  la prima prova dello Swift.
 
 ## Database
 

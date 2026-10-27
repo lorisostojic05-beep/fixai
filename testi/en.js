@@ -531,6 +531,9 @@ export default {
       "avvia": "Start video diagnosis",
       "paga": "Pay €9.90 and start diagnosis",
       "pagamentoSicuro": "Secure payment with Stripe. You'll get the PDF report at the end.",
+      "pagaApple": "Pay {importo} and start diagnosis",
+      "pagaSenzaPrezzo": "Pay and start diagnosis",
+      "pagamentoApple": "You'll pay with your Apple account. You'll get the PDF report when it's done.",
       "tornaHome": "Back to home",
       "camera": "The camera is used only during the session. No video is saved.",
       "statoTecnico": "Technical status"
@@ -582,7 +585,9 @@ export default {
       "invio": "Sending...",
       "invia": "Send request",
       "annulla": "Cancel",
-      "chiedi": "Wasn't the diagnosis helpful? Request a refund"
+      "chiedi": "Wasn't the diagnosis helpful? Request a refund",
+      "apple": "You paid via the App Store, so Apple handles the refund. Request it at reportaproblem.apple.com by choosing “Request a refund”.",
+      "appleApri": "Open Apple's page"
     },
     "sessione": {
       "silenzia": "Mute voice",
@@ -627,6 +632,10 @@ export default {
       "diagnosiInCorso": "You're in the middle of a diagnosis you've already paid for.\n\nIf you leave now, you can pick up where you left off for the next 2 hours.\n\nDo you want to leave?",
       "pagamentoNonConfermato": "Payment not confirmed. Please try again.",
       "pagamentoAnnullato": "Payment cancelled. You can try again whenever you like.",
+      "acquistoNonRiuscito": "The payment didn't go through and you haven't been charged. Try again whenever you like.",
+      "acquistoInAttesa": "The payment is awaiting approval. Once it's confirmed, reopen Fixi and the diagnosis will start on its own.",
+      "acquistoDaConfermare": "The payment went through, but I can't confirm it right now. Don't pay again: reopen Fixi in a few minutes and the diagnosis will start on its own.",
+      "appStoreNonDisponibile": "App Store payments aren't available right now. Please try again shortly.",
       "compilaTutto": "Fill in all fields before continuing.",
       "selezionaElettrodomestico": "Select the appliance and describe the problem.",
       "emailNonValida": "Enter a valid email address.",

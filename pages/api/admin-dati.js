@@ -205,7 +205,9 @@ export default async function handler(req, res) {
     // piccole (decine di righe), quindi costa niente; se un giorno
     // diventassero grosse, questi conti andranno spostati in una vista SQL.
     const [{ data: tuttiPagamenti }, { data: tutteRichieste }, { data: tuttiTecnici }] = await Promise.all([
-      supabase.from("pagamenti").select("credito_stato").limit(5000),
+      // stripe_session_id serve a metriche() per riconoscere gli acquisti
+      // App Store di prova e lasciarli fuori dal fatturato.
+      supabase.from("pagamenti").select("stripe_session_id, credito_stato").limit(5000),
       supabase
         .from("richieste_intervento")
         .select(

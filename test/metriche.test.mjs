@@ -126,6 +126,22 @@ test("il valore medio si fa solo sulle riparazioni finite", () => {
   assert.equal(m.valoreMedioRiparazione, 9000); // (12000 + 6000) / 2
 });
 
+test("GLI ACQUISTI DI PROVA DELL'IPHONE NON SONO FATTURATO", () => {
+  // TestFlight e revisori Apple comprano gratis. Quelli veri e quelli
+  // Stripe contano, quelli di prova no.
+  const m = metriche({
+    pagamenti: [
+      { stripe_session_id: "cs_live_a1", credito_stato: "disponibile" },
+      { stripe_session_id: "apple:2000000000000001", credito_stato: "disponibile" },
+      { stripe_session_id: "apple-sandbox:2000000000000002", credito_stato: "disponibile" },
+      { stripe_session_id: "apple-sandbox:2000000000000003", credito_stato: "usato" },
+    ],
+  });
+  assert.equal(m.diagnosiPagate, 2);
+  assert.equal(m.diagnosiConvertite, 0); // l'"usato" era di prova
+  assert.equal(m.ricavoDiagnosi, 2 * 990);
+});
+
 test("senza dati non esplode e non inventa percentuali", () => {
   const m = metriche();
   assert.equal(m.diagnosiPagate, 0);

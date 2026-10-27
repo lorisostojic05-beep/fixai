@@ -531,6 +531,9 @@ export default {
       "avvia": "Pornește videodiagnosticul",
       "paga": "Plătește 9,90€ și pornește diagnosticul",
       "pagamentoSicuro": "Plată securizată cu Stripe. Vei primi raportul PDF la final.",
+      "pagaApple": "Plătește {importo} și începe diagnoza",
+      "pagaSenzaPrezzo": "Plătește și începe diagnoza",
+      "pagamentoApple": "Plătești cu contul tău Apple. Vei primi raportul PDF la final.",
       "tornaHome": "Înapoi la pagina principală",
       "camera": "Camera este folosită doar în timpul sesiunii. Niciun video nu este salvat.",
       "statoTecnico": "Stare tehnică"
@@ -582,7 +585,9 @@ export default {
       "invio": "Se trimite...",
       "invia": "Trimite cererea",
       "annulla": "Anulează",
-      "chiedi": "Diagnoza nu ți-a fost utilă? Cere rambursarea"
+      "chiedi": "Diagnoza nu ți-a fost utilă? Cere rambursarea",
+      "apple": "Ai plătit prin App Store, deci rambursarea este gestionată de Apple. Solicită-o de pe reportaproblem.apple.com, alegând «Solicită o rambursare».",
+      "appleApri": "Deschide pagina Apple"
     },
     "sessione": {
       "silenzia": "Oprește vocea",
@@ -627,6 +632,10 @@ export default {
       "diagnosiInCorso": "Ești în mijlocul unui diagnostic pe care l-ai plătit.\n\nDacă ieși acum, îl regăsești de unde l-ai lăsat, în următoarele 2 ore.\n\nVrei să ieși?",
       "pagamentoNonConfermato": "Plata nu a fost confirmată. Încearcă din nou.",
       "pagamentoAnnullato": "Plată anulată. Poți încerca din nou oricând.",
+      "acquistoNonRiuscito": "Plata nu a reușit și nu ți s-a perceput nicio sumă. Poți încerca din nou oricând.",
+      "acquistoInAttesa": "Plata este în așteptarea aprobării. Când va fi confirmată, redeschide Fixi și diagnoza va porni automat.",
+      "acquistoDaConfermare": "Plata a reușit, dar nu o pot confirma acum. Nu plăti din nou: redeschide Fixi peste câteva minute și diagnoza va porni automat.",
+      "appStoreNonDisponibile": "Plățile prin App Store nu sunt disponibile momentan. Încearcă din nou în curând.",
       "compilaTutto": "Completează toate câmpurile înainte de a continua.",
       "selezionaElettrodomestico": "Selectează electrocasnicul și descrie problema.",
       "emailNonValida": "Introdu o adresă de email validă.",

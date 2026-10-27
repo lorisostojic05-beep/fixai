@@ -531,6 +531,9 @@ export default {
       "avvia": "Démarrer le vidéodiagnostic",
       "paga": "Payer 9,90 € et démarrer le diagnostic",
       "pagamentoSicuro": "Paiement sécurisé avec Stripe. Tu recevras le rapport PDF à la fin.",
+      "pagaApple": "Payer {importo} et lancer le diagnostic",
+      "pagaSenzaPrezzo": "Payer et lancer le diagnostic",
+      "pagamentoApple": "Tu payes avec ton compte Apple. Tu recevras le rapport PDF à la fin.",
       "tornaHome": "Retour à l'accueil",
       "camera": "La caméra est utilisée uniquement pendant la session. Aucune vidéo n'est enregistrée.",
       "statoTecnico": "État technique"
@@ -582,7 +585,9 @@ export default {
       "invio": "Envoi...",
       "invia": "Envoyer la demande",
       "annulla": "Annuler",
-      "chiedi": "Le diagnostic ne t'a pas été utile ? Demande le remboursement"
+      "chiedi": "Le diagnostic ne t'a pas été utile ? Demande le remboursement",
+      "apple": "Tu as payé via l'App Store, donc c'est Apple qui gère le remboursement. Demande-le sur reportaproblem.apple.com, en choisissant « Demander un remboursement ».",
+      "appleApri": "Ouvrir la page Apple"
     },
     "sessione": {
       "silenzia": "Couper la voix",
@@ -627,6 +632,10 @@ export default {
       "diagnosiInCorso": "Tu es en plein diagnostic que tu as payé.\n\nSi tu sors maintenant, tu le retrouveras là où tu l'as laissé, pendant les 2 prochaines heures.\n\nVeux-tu sortir ?",
       "pagamentoNonConfermato": "Paiement non confirmé. Réessaie.",
       "pagamentoAnnullato": "Paiement annulé. Tu peux réessayer quand tu veux.",
+      "acquistoNonRiuscito": "Le paiement a échoué et aucun montant ne t'a été débité. Réessaie quand tu veux.",
+      "acquistoInAttesa": "Le paiement est en attente d'approbation. Une fois confirmé, rouvre Fixi et le diagnostic démarrera automatiquement.",
+      "acquistoDaConfermare": "Le paiement a bien été effectué, mais je ne peux pas le confirmer pour l'instant. Ne paie pas à nouveau : rouvre Fixi dans quelques minutes et le diagnostic démarrera automatiquement.",
+      "appStoreNonDisponibile": "Les paiements de l'App Store ne sont pas disponibles pour le moment. Réessaie plus tard.",
       "compilaTutto": "Remplis tous les champs avant de continuer.",
       "selezionaElettrodomestico": "Sélectionne l'appareil et décris le problème.",
       "emailNonValida": "Saisis une adresse email valide.",

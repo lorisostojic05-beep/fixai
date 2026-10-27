@@ -747,6 +747,13 @@ export default {
       paga: "Paga €9,90 e avvia diagnosi",
       pagamentoSicuro: "Pagamento sicuro con Stripe. Riceverai il referto PDF al termine.",
 
+      // Solo nell'app iPhone, dove si paga con Apple. Il prezzo NON si scrive
+      // qui: lo dice l'App Store ({importo}), perche' Apple rifiuta le app che
+      // mostrano un prezzo diverso da quello che poi fanno pagare.
+      pagaApple: "Paga {importo} e avvia diagnosi",
+      pagaSenzaPrezzo: "Paga e avvia diagnosi",
+      pagamentoApple: "Paghi con il tuo account Apple. Riceverai il referto PDF al termine.",
+
       tornaHome: "Torna alla home",
       camera: "La camera viene usata solo durante la sessione. Nessun video viene salvato.",
       statoTecnico: "Stato tecnico",
@@ -826,6 +833,13 @@ export default {
       invia: "Invia la richiesta",
       annulla: "Annulla",
       chiedi: "La diagnosi non ti è stata utile? Chiedi il rimborso",
+
+      // Chi ha pagato con l'App Store: Fixi non puo' rimborsarlo, Apple non lo
+      // permette agli sviluppatori. Meglio dirlo subito che raccogliere una
+      // richiesta a cui non si potra' dare seguito.
+      apple:
+        "Hai pagato con l'App Store, quindi il rimborso lo gestisce Apple. Chiedilo da reportaproblem.apple.com, scegliendo «Richiedi un rimborso».",
+      appleApri: "Apri la pagina di Apple",
     },
 
     sessione: {
@@ -900,6 +914,15 @@ export default {
 
       pagamentoNonConfermato: "Pagamento non confermato. Riprova.",
       pagamentoAnnullato: "Pagamento annullato. Puoi riprovare quando vuoi.",
+
+      // Pagamento Apple, solo iPhone. "Non pagare di nuovo" e' la frase che
+      // conta: chi vede un errore DOPO aver pagato ripreme il pulsante.
+      acquistoNonRiuscito: "Il pagamento non è andato a buon fine e non ti è stato addebitato nulla. Riprova quando vuoi.",
+      acquistoInAttesa:
+        "Il pagamento è in attesa di approvazione. Quando sarà confermato, riapri Fixi e la diagnosi partirà da sola.",
+      acquistoDaConfermare:
+        "Il pagamento è andato a buon fine, ma non riesco a confermarlo adesso. Non pagare di nuovo: riapri Fixi fra qualche minuto e la diagnosi partirà da sola.",
+      appStoreNonDisponibile: "I pagamenti dell'App Store non sono disponibili in questo momento. Riprova fra poco.",
       compilaTutto: "Compila tutti i campi prima di procedere.",
       selezionaElettrodomestico: "Seleziona l'elettrodomestico e descrivi il problema.",
 

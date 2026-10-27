@@ -531,6 +531,9 @@ export default {
       "avvia": "Videodiagnose starten",
       "paga": "€9,90 zahlen und Diagnose starten",
       "pagamentoSicuro": "Sichere Zahlung mit Stripe. Am Ende erhältst du den PDF-Bericht.",
+      "pagaApple": "{importo} zahlen und Diagnose starten",
+      "pagaSenzaPrezzo": "Zahlen und Diagnose starten",
+      "pagamentoApple": "Du zahlst mit deinem Apple-Account. Du erhältst den PDF-Bericht am Ende.",
       "tornaHome": "Zurück zur Startseite",
       "camera": "Die Kamera wird nur während der Sitzung verwendet. Es wird kein Video gespeichert.",
       "statoTecnico": "Technischer Status"
@@ -582,7 +585,9 @@ export default {
       "invio": "Wird gesendet...",
       "invia": "Anfrage senden",
       "annulla": "Abbrechen",
-      "chiedi": "Diagnose nicht hilfreich? Erstattung anfordern"
+      "chiedi": "Diagnose nicht hilfreich? Erstattung anfordern",
+      "apple": "Du hast über den App Store bezahlt, daher läuft die Rückerstattung über Apple. Beantrage sie auf reportaproblem.apple.com mit «Rückerstattung anfordern».",
+      "appleApri": "Apple-Seite öffnen"
     },
     "sessione": {
       "silenzia": "Ton stummschalten",
@@ -627,6 +632,10 @@ export default {
       "diagnosiInCorso": "Du bist mitten in einer bezahlten Diagnose.\n\nWenn du jetzt gehst, findest du sie in den nächsten 2 Stunden dort wieder, wo du aufgehört hast.\n\nMöchtest du gehen?",
       "pagamentoNonConfermato": "Zahlung nicht bestätigt. Versuche es erneut.",
       "pagamentoAnnullato": "Zahlung abgebrochen. Du kannst es jederzeit erneut versuchen.",
+      "acquistoNonRiuscito": "Die Zahlung ist fehlgeschlagen, es wurde dir nichts berechnet. Versuch es jederzeit erneut.",
+      "acquistoInAttesa": "Die Zahlung wartet auf Bestätigung. Sobald sie bestätigt ist, öffne Fixi erneut und die Diagnose startet automatisch.",
+      "acquistoDaConfermare": "Die Zahlung war erfolgreich, aber ich kann sie gerade nicht bestätigen. Zahle nicht erneut: Öffne Fixi in ein paar Minuten wieder, die Diagnose startet dann automatisch.",
+      "appStoreNonDisponibile": "App-Store-Zahlungen sind momentan nicht verfügbar. Versuch es gleich noch einmal.",
       "compilaTutto": "Fülle alle Felder aus, bevor du fortfährst.",
       "selezionaElettrodomestico": "Wähle das Gerät aus und beschreibe das Problem.",
       "emailNonValida": "Gib eine gültige E-Mail-Adresse ein.",

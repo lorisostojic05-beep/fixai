@@ -12,6 +12,7 @@
 import { Resend } from "resend";
 import { MITTENTE, RISPOSTA_A, riferimento } from "../../lib/email-mittente";
 import { supabaseAdmin as supabase } from "../../lib/supabase-admin";
+import { ePagamentoApple } from "../../lib/pagamento-apple";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -33,6 +34,16 @@ export default async function handler(req, res) {
   }
 
   const { email, motivo, stripeSessionId, sessioneToken, appliance, brand } = req.body || {};
+
+  // Gli acquisti fatti con l'App Store non li puo' rimborsare Fixi: Apple non
+  // lo permette agli sviluppatori. La pagina lo dice prima ancora di mostrare
+  // il modulo; questo e' il caso di chi ci arriva lo stesso. Registrare la
+  // richiesta qui farebbe aspettare il cliente una risposta che non arrivera'.
+  if (ePagamentoApple(stripeSessionId)) {
+    return res.status(409).json({
+      error: "Hai pagato con l'App Store: il rimborso lo gestisce Apple. Chiedilo da reportaproblem.apple.com.",
+    });
+  }
 
   if (!emailValida(email)) {
     return res.status(400).json({ error: "Serve l'indirizzo email che hai usato per il pagamento." });

@@ -531,6 +531,9 @@ export default {
       "avvia": "Iniciar videodiagnóstico",
       "paga": "Paga 9,90 € e inicia diagnóstico",
       "pagamentoSicuro": "Pago seguro con Stripe. Recibirás el informe en PDF al finalizar.",
+      "pagaApple": "Paga {importo} e inicia diagnóstico",
+      "pagaSenzaPrezzo": "Paga e inicia diagnóstico",
+      "pagamentoApple": "Pagas con tu cuenta de Apple. Recibirás el informe en PDF al finalizar.",
       "tornaHome": "Volver al inicio",
       "camera": "La cámara se usa solo durante la sesión. No se guarda ningún vídeo.",
       "statoTecnico": "Estado técnico"
@@ -582,7 +585,9 @@ export default {
       "invio": "Enviando...",
       "invia": "Enviar solicitud",
       "annulla": "Cancelar",
-      "chiedi": "¿El diagnóstico no te fue útil? Pide el reembolso"
+      "chiedi": "¿El diagnóstico no te fue útil? Pide el reembolso",
+      "apple": "Pagaste a través de la App Store, así que el reembolso lo gestiona Apple. Solicítalo en reportaproblem.apple.com, eligiendo «Solicitar un reembolso».",
+      "appleApri": "Abrir la página de Apple"
     },
     "sessione": {
       "silenzia": "Silenciar voz",
@@ -627,6 +632,10 @@ export default {
       "diagnosiInCorso": "Estás en medio de un diagnóstico que ya pagaste.\n\nSi sales ahora, lo retomas donde lo dejaste, durante las próximas 2 horas.\n\n¿Quieres salir?",
       "pagamentoNonConfermato": "Pago no confirmado. Inténtalo de nuevo.",
       "pagamentoAnnullato": "Pago cancelado. Puedes volver a intentarlo cuando quieras.",
+      "acquistoNonRiuscito": "El pago no se ha realizado y no se te ha cobrado nada. Vuelve a intentarlo cuando quieras.",
+      "acquistoInAttesa": "El pago está pendiente de aprobación. Cuando se confirme, vuelve a abrir Fixi y el diagnóstico empezará solo.",
+      "acquistoDaConfermare": "El pago se ha realizado correctamente, pero no puedo confirmarlo ahora. No vuelvas a pagar: abre Fixi de nuevo en unos minutos y el diagnóstico empezará solo.",
+      "appStoreNonDisponibile": "Los pagos de la App Store no están disponibles en este momento. Vuelve a intentarlo en unos minutos.",
       "compilaTutto": "Completa todos los campos antes de continuar.",
       "selezionaElettrodomestico": "Selecciona el electrodoméstico y describe el problema.",
       "emailNonValida": "Introduce una dirección de email válida.",

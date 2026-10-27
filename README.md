@@ -120,7 +120,7 @@ npm test                          # tutte
 node --test test/soldi.test.mjs   # una sola
 ```
 
-98 prove sul test runner di Node, senza dipendenze aggiunte. Coprono i conti,
+109 prove sul test runner di Node, senza dipendenze aggiunte. Coprono i conti,
 gli stati, il credito, il bonifico, le metriche, la scelta delle frasi da
 ritradurre, e un giro completo dall'inizio alla fine (`test/e2e.test.mjs`).
 

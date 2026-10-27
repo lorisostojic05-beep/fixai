@@ -13,6 +13,8 @@ import { riempi } from "../lib/frasi";
 import { PREZZO_DIAGNOSI, inEuro } from "../lib/soldi";
 import { voceDi, prefissoDi } from "../lib/lingue";
 import { capValido, ripulisciCap, mercatoDi } from "../lib/mercati";
+// Solo nomi e regole: la verifica vera con Apple sta sul server.
+import { PRODOTTO_DIAGNOSI, ePagamentoApple } from "../lib/pagamento-apple";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
@@ -160,6 +162,12 @@ export default function Diagnosi({ testi, linguaPagina }) {
   const [sessionId] = useState(() => `session_${Date.now()}`);
   const [pagamentoVerificato, setPagamentoVerificato] = useState(false);
   const [verificandoPagamento, setVerificandoPagamento] = useState(false);
+  // Il prezzo della diagnosi come lo scrive l'App Store: solo su iPhone.
+  const [prezzoApple, setPrezzoApple] = useState(null);
+  // "web" finche' la pagina non e' caricata: sul server window.Capacitor non
+  // esiste, e decidere durante il disegno darebbe due pagine diverse fra
+  // server e telefono — l'idratazione fallirebbe.
+  const [piattaformaPagina, setPiattaformaPagina] = useState("web");
   const messagesRef = useRef([]);
   const recognitionRef = useRef(null);
   const stripeSessionRef = useRef(null); // id sessione Stripe: il server lo verifica a ogni messaggio
@@ -656,6 +664,26 @@ useEffect(() => {
   };
 }, []);
 
+// Solo iPhone: il prezzo come lo scrive l'App Store, e i pagamenti rimasti a
+// meta' la volta prima.
+useEffect(() => {
+  setPiattaformaPagina(piattaforma());
+  if (piattaforma() !== "ios") return undefined;
+  const Acquisti = prendiPluginSubito("Acquisti");
+  if (!Acquisti) return undefined;
+  let vivo = true;
+  conScadenza(Acquisti.prodotto({ id: PRODOTTO_DIAGNOSI }), 15000, "prezzo dall'App Store")
+    .then((p) => vivo && setPrezzoApple(p?.prezzo || null))
+    .catch((e) => registra("App Store: prezzo non disponibile", e));
+  // Non quando si sta tornando da un pagamento: quello e' appena stato
+  // registrato, e se la sua chiusura con Apple non fosse riuscita lo si
+  // riprenderebbe qui, si tornerebbe qui, e cosi' via all'infinito.
+  if (!new URLSearchParams(window.location.search).get("pagamento")) recuperaAcquistiSospesi();
+  return () => {
+    vivo = false;
+  };
+}, []);
+
 // Salva a ogni messaggio. Costa niente e vale una diagnosi intera.
 useEffect(() => {
   if (phase !== "session" && phase !== "report") return;
@@ -694,6 +722,12 @@ useEffect(() => {
           setPagamentoVerificato(true);
           stripeSessionRef.current = stripeSessionId;
           sessionStorage.setItem("Fixi_stripe_session", stripeSessionId);
+          // Con Stripe elettrodomestico e problema tornano sempre nell'indirizzo.
+          // Con l'App Store c'e' un caso in cui mancano: un pagamento rimasto a
+          // meta' e ripreso all'avvio dopo che il telefono ha perso il modulo.
+          // Allora si resta qui, gia' pagati, con il pulsante "Avvia": senza,
+          // startSession si fermerebbe sulla schermata di conferma per sempre.
+          if (!urlAppliance || !urlProblem) return;
           setPhase("confermaPagamento");
           setTimeout(() => startSession(urlAppliance, urlBrand, urlProblem), 3000);
         } else {
@@ -1042,11 +1076,136 @@ setMessages((prev) => prev.filter(m => m.content !== "📷 Sto analizzando quell
       stopPeriodicAnalysis();
     };
   }, []);
+  // ── Pagamento con Apple (solo iPhone) ───────────────────────────
+  // Su iPhone la diagnosi si paga con il sistema di Apple: e' un servizio
+  // digitale usato nell'app, e Stripe li' non e' permesso. Il giro:
+  //
+  //   compra()  → finestra di Apple, torna il numero della transazione
+  //   /api/acquisto-apple → il server chiede ad Apple se e' vera, e la registra
+  //   concludi() → solo ADESSO la transazione si chiude con Apple
+  //   e poi lo stesso indirizzo di ritorno di Stripe, cosi' da li' in avanti
+  //   la diagnosi non sa e non deve sapere come si e' pagato.
+  //
+  // Il modulo si salva in localStorage e non in sessionStorage: se il
+  // telefono si spegne fra il pagamento e la conferma, al riavvio serve
+  // ancora per far partire la diagnosi giusta.
+  const CHIAVE_MODULO_APPLE = "Fixi_acquisto_modulo";
+
+  const registraAcquistoApple = async (transactionId, modulo) => {
+    const risposta = await fetch("/api/acquisto-apple", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transactionId }),
+    });
+    const dati = await risposta.json().catch(() => ({}));
+    if (!dati.ok) throw new Error(dati.error || `risposta ${risposta.status}`);
+    registra("App Store: acquisto registrato", dati.idPagamento);
+
+    // Se questa chiamata fallisce non e' grave: la transazione resta aperta,
+    // all'avvio dopo torna da inSospeso(), il server risponde "gia' fatto" e
+    // la si richiude. Il cliente non paga due volte.
+    try {
+      await conScadenza(prendiPluginSubito("Acquisti").concludi({ transactionId }), 15000, "chiusura della transazione");
+    } catch (e) {
+      registra("App Store: chiusura rimandata", e);
+    }
+    try {
+      localStorage.removeItem(CHIAVE_MODULO_APPLE);
+    } catch {}
+
+    const q = new URLSearchParams({
+      pagamento: "ok",
+      session_id: dati.idPagamento,
+      appliance: modulo?.appliance || "",
+      brand: modulo?.brand || "",
+      problem: modulo?.problem || "",
+    });
+    // pathname e non "/diagnosi": tiene il prefisso della lingua (/es/diagnosi)
+    window.location.href = `${window.location.pathname}?${q}`;
+  };
+
+  const acquistaConApple = async () => {
+    const Acquisti = prendiPluginSubito("Acquisti");
+    if (!Acquisti) {
+      alert(t.avvisi.appStoreNonDisponibile);
+      return;
+    }
+    const modulo = { appliance, brand, problem };
+    try {
+      localStorage.setItem(CHIAVE_MODULO_APPLE, JSON.stringify(modulo));
+    } catch {}
+
+    setVerificandoPagamento(true);
+    let esito;
+    try {
+      // Nessuna scadenza, come per la condivisione: la finestra di Apple
+      // aspetta Face ID o la password, e ci si puo' mettere quanto si vuole.
+      esito = await Acquisti.compra({ id: PRODOTTO_DIAGNOSI });
+      registra("App Store: esito", esito?.stato);
+    } catch (e) {
+      registra("App Store: acquisto fallito", e);
+      alert(t.avvisi.acquistoNonRiuscito);
+      setVerificandoPagamento(false);
+      return;
+    }
+
+    if (esito?.stato === "annullato") {
+      setVerificandoPagamento(false);
+      return; // ha chiuso la finestra: nessun avviso, non e' un errore
+    }
+    if (esito?.stato === "in_attesa") {
+      alert(t.avvisi.acquistoInAttesa);
+      setVerificandoPagamento(false);
+      return;
+    }
+
+    // Da qui il cliente HA pagato. Qualsiasi errore va detto in modo che non
+    // ripremi il pulsante: la transazione resta aperta e verra' ripresa.
+    try {
+      if (esito?.stato !== "acquistato" || !esito.transactionId) throw new Error(`esito inatteso: ${esito?.stato}`);
+      await registraAcquistoApple(esito.transactionId, modulo);
+    } catch (e) {
+      registra("App Store: pagato ma non confermato", e);
+      alert(t.avvisi.acquistoDaConfermare);
+      setVerificandoPagamento(false);
+    }
+  };
+
+  // All'apertura: pagamenti rimasti a meta' la volta prima. Apple li tiene
+  // finche' non li chiudiamo; qui si mandano al server e, se c'e' ancora il
+  // modulo, la diagnosi riparte da dove doveva partire.
+  const recuperaAcquistiSospesi = async () => {
+    const Acquisti = prendiPluginSubito("Acquisti");
+    if (!Acquisti) return;
+    let sospesi = [];
+    try {
+      sospesi = (await conScadenza(Acquisti.inSospeso(), 15000, "acquisti in sospeso"))?.transazioni || [];
+    } catch (e) {
+      registra("App Store: sospesi non leggibili", e);
+      return;
+    }
+    if (!sospesi.length) return;
+    registra("App Store: acquisti in sospeso", sospesi.join(", "));
+
+    let modulo = null;
+    try {
+      modulo = JSON.parse(localStorage.getItem(CHIAVE_MODULO_APPLE) || "null");
+    } catch {}
+    // Uno solo: registraAcquistoApple cambia pagina. Gli altri, se ci sono,
+    // verranno ripresi alla prossima apertura.
+    try {
+      await registraAcquistoApple(sospesi[0], modulo);
+    } catch (e) {
+      registra("App Store: ripresa non riuscita", e);
+    }
+  };
+
 const avviaCheckout = async () => {
   if (!appliance || !problem || !brand) {
     alert(t.avvisi.compilaTutto);
     return;
   }
+  if (piattaforma() === "ios") return acquistaConApple();
   // Salva le info prima di andare su Stripe
   sessionStorage.setItem("Fixi_appliance", appliance);
 sessionStorage.setItem("Fixi_brand", brand.charAt(0).toUpperCase() + brand.slice(1).toLowerCase());  sessionStorage.setItem("Fixi_problem", problem);
@@ -1625,9 +1784,16 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
       onClick={avviaCheckout}
       disabled={!appliance || !problem || !brand}
     >
-      💳 {t.setup.paga}
+      💳{" "}
+      {piattaformaPagina !== "ios"
+        ? t.setup.paga
+        : prezzoApple
+        ? riempi(t.setup.pagaApple, { importo: prezzoApple })
+        : t.setup.pagaSenzaPrezzo}
     </button>
-    <p className={styles.disclaimer}>{t.setup.pagamentoSicuro}</p>
+    <p className={styles.disclaimer}>
+      {piattaformaPagina === "ios" ? t.setup.pagamentoApple : t.setup.pagamentoSicuro}
+    </p>
   </>
 )}
 
@@ -1983,6 +2149,37 @@ onChange={(e) => setBrand(e.target.value.charAt(0).toUpperCase() + e.target.valu
   <p style={{ margin: "20px 0 0", fontSize: "13px", color: "#0F6E56", textAlign: "center", lineHeight: 1.6 }}>
     ✅ {t.rimborso.ricevuta}
   </p>
+) : mostraRimborso && ePagamentoApple(stripeSessionRef.current) ? (
+  // Pagato con l'App Store: il rimborso lo fa solo Apple. Niente modulo, che
+  // raccoglierebbe una richiesta a cui Fixi non puo' dare seguito.
+  <div style={{ marginTop: "20px", background: "#FAF8F3", border: "1px solid #E8E4DC", borderRadius: "12px", padding: "14px 16px" }}>
+    <p style={{ margin: "0 0 12px", fontSize: "13px", color: "#55655f", lineHeight: 1.5 }}>
+      {t.rimborso.apple}
+    </p>
+    <div style={{ display: "flex", gap: "8px" }}>
+      <a
+        href="https://reportaproblem.apple.com"
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          flex: 1, background: "#1D9E75", color: "white", textAlign: "center", textDecoration: "none",
+          borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 600,
+        }}
+      >
+        {t.rimborso.appleApri}
+      </a>
+      <button
+        onClick={() => setMostraRimborso(false)}
+        style={{
+          background: "none", border: "1px solid #E8E4DC", borderRadius: "8px",
+          padding: "11px 14px", fontSize: "14px", color: "#8A8A85",
+          fontFamily: "inherit", cursor: "pointer",
+        }}
+      >
+        {t.rimborso.annulla}
+      </button>
+    </div>
+  </div>
 ) : mostraRimborso ? (
   <div style={{ marginTop: "20px", background: "#FAF8F3", border: "1px solid #E8E4DC", borderRadius: "12px", padding: "14px 16px" }}>
     <p style={{ margin: "0 0 10px", fontSize: "13px", color: "#55655f", lineHeight: 1.5 }}>
