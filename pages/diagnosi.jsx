@@ -3,7 +3,7 @@ import styles from "../styles/diagnosi.module.css";
 import { loadStripe } from "@stripe/stripe-js";
 import { refertoPDF } from "../lib/generaPDF";
 import { salvaSessione, leggiSessioneSalvata, dimenticaSessione } from "../lib/sessione-salvata";
-import { avvisoAggiornamento, pluginDisponibile, LINK_PLAY_STORE } from "../lib/versione-app";
+import { avvisoAggiornamento, pluginDisponibile, piattaforma, LINK_PLAY_STORE } from "../lib/versione-app";
 import { registra } from "../lib/registro";
 import { prendiPlugin, prendiPluginSubito } from "../lib/plugin-nativo";
 import { messaggioBenvenuto } from "../lib/benvenuto";
@@ -259,6 +259,16 @@ export default function Diagnosi({ testi, linguaPagina }) {
     const { blob, nomeFile } = pdf;
     registra("Scarica: PDF pronto", `${nomeFile} ${blob?.size} byte, nell'app: ${dentroApp()}`);
 
+    // Su iPhone "Scarica" E' la condivisione: il foglio che si apre ha "Salva
+    // su File", ed e' cosi' che su iOS si mette un documento sul telefono.
+    // SalvaFile esiste solo su Android, e il ripiego qui sotto — pensato per
+    // un'app Android vecchia — mostrerebbe un avviso che parla di Play Store.
+    if (piattaforma() === "ios") {
+      registra("Scarica: iPhone, apro la condivisione");
+      await condividiReferto();
+      return;
+    }
+
     if (dentroApp()) {
       try {
         // Ogni passo è registrato a parte: il diario diceva "PDF pronto" e poi
@@ -446,7 +456,10 @@ export default function Diagnosi({ testi, linguaPagina }) {
   // dentro l'app (serve il plugin nativo) e solo durante la videodiagnosi:
   // fuori di lì i tasti devono tornare a fare il volume.
   useEffect(() => {
-    if (phase !== "session" || !dentroApp()) return undefined;
+    // Solo Android: iOS non lascia alle app intercettare i tasti del volume
+    // (ci si puo' solo arrangiare con trucchi che Apple rifiuta in revisione).
+    // Su iPhone resta il pulsante a schermo.
+    if (phase !== "session" || !dentroApp() || piattaforma() !== "android") return undefined;
     let vivo = true;
     let stacca = null;
     let plugin = null;
