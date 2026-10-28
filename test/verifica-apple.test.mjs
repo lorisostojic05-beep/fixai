@@ -14,6 +14,7 @@ import {
   chiediTransazione,
   controllaTransazione,
   credenzialiDaAmbiente,
+  normalizzaChiave,
 } from "../lib/verifica-apple.js";
 import {
   idPagamentoApple,
@@ -83,15 +84,39 @@ test("il JWT ha quello che Apple chiede, ed e' firmato con la nostra chiave", ()
   assert.equal(valida, true);
 });
 
-test("le credenziali: tutte e tre o niente, e i \\n scritti come testo diventano a capo", () => {
+test("le credenziali: tutte e tre o niente", () => {
   assert.equal(credenzialiDaAmbiente({}), null);
   assert.equal(credenzialiDaAmbiente({ APPLE_IAP_KEY_ID: "x", APPLE_IAP_ISSUER_ID: "y" }), null);
   const c = credenzialiDaAmbiente({
-    APPLE_IAP_KEY_ID: "x",
-    APPLE_IAP_ISSUER_ID: "y",
-    APPLE_IAP_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\\nABC\\n-----END PRIVATE KEY-----",
+    APPLE_IAP_KEY_ID: " ABC123DEFG ",
+    APPLE_IAP_ISSUER_ID: "57246542-96fe-1a63-e053-0824d011072a\n",
+    APPLE_IAP_PRIVATE_KEY: CREDENZIALI.chiavePrivata,
   });
-  assert.equal(c.chiavePrivata, "-----BEGIN PRIVATE KEY-----\nABC\n-----END PRIVATE KEY-----");
+  // Uno spazio o un a capo copiati per sbaglio insieme all'ID farebbero
+  // rifiutare la chiave da Apple con un 401 senza spiegazioni.
+  assert.equal(c.idChiave, "ABC123DEFG");
+  assert.equal(c.emittente, "57246542-96fe-1a63-e053-0824d011072a");
+});
+
+test("LA CHIAVE SI LEGGE COMUNQUE SIA STATA INCOLLATA", () => {
+  // Il 28/10/2026 su Vercel mancavano le righe BEGIN ed END. Qui tutti i
+  // modi sbagliati di incollarla devono dare la stessa chiave funzionante.
+  const pem = CREDENZIALI.chiavePrivata;
+  const corpo = pem.replace(/-----[A-Z ]+-----/g, "").replace(/\s+/g, "");
+  const modi = {
+    "originale": pem,
+    "senza BEGIN ed END": corpo.match(/.{1,64}/g).join("\n"),
+    "tutto su una riga": corpo,
+    "a capo diventati spazi": pem.replace(/\n/g, " "),
+    "a capo scritti come \\n": pem.replace(/\n/g, "\\n"),
+    "a capo di Windows": pem.replace(/\n/g, "\r\n"),
+  };
+  for (const [come, testo] of Object.entries(modi)) {
+    const jwt = jwtAppStore({ ...CREDENZIALI, chiavePrivata: normalizzaChiave(testo) });
+    const [h, c, f] = jwt.split(".");
+    const valida = verify("sha256", Buffer.from(`${h}.${c}`), { key: publicKey, dsaEncoding: "ieee-p1363" }, Buffer.from(f, "base64url"));
+    assert.equal(valida, true, `non funziona ${come}`);
+  }
 });
 
 // ─── La domanda ad Apple ───────────────────────────────────────────────────
