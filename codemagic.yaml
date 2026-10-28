@@ -9,11 +9,11 @@
 # │  NON ANCORA PROVATO                                                       │
 # │                                                                           │
 # │  Scritto il 27/10/2026, prima di avere l'account Apple e quello           │
-# │  Codemagic. Per funzionare servono tre cose che oggi non esistono:        │
+# │  Codemagic. Per funzionare servono tre cose:                              │
 # │                                                                           │
-# │   1. l'iscrizione all'Apple Developer Program (99 € l'anno);              │
+# │   1. l'iscrizione all'Apple Developer Program — fatta il 28/10/2026;      │
 # │   2. l'app creata in App Store Connect con bundle id casa.fixi.app, e il  │
-# │      suo numero (Apple ID dell'app) scritto qui sotto in APP_ID_APPLE;    │
+# │      suo numero scritto qui sotto in APP_ID_APPLE — fatta il 28/10/2026;  │
 # │   3. in Codemagic, una chiave API di App Store Connect aggiunta fra le    │
 # │      integrazioni con il nome ESATTO scritto in app_store_connect.        │
 # │                                                                           │
@@ -38,7 +38,7 @@ workflows:
         distribution_type: app_store
         bundle_identifier: casa.fixi.app
       vars:
-        APP_ID_APPLE: "0000000000" # da sostituire: App Store Connect → l'app → Informazioni sull'app → Apple ID
+        APP_ID_APPLE: "6828154250" # App Store Connect → Fixi → Informazioni sull'app → Apple ID
       node: 20
       xcode: latest
       cocoapods: default
