@@ -128,6 +128,19 @@ test("se Apple risponde con un errore vero, non si finge che la transazione non 
   await assert.rejects(() => chiediTransazione("1", { credenziali: CREDENZIALI, chiama: a.chiama }), /401/);
 });
 
+test("chiave incollata male e chiave rifiutata da Apple danno messaggi diversi", async () => {
+  // Sono i due guasti possibili dopo aver messo le chiavi su Vercel, e da
+  // fuori sembrano uguali. Il registro deve dire quale dei due.
+  const rotta = { ...CREDENZIALI, chiavePrivata: "-----BEGIN PRIVATE KEY-----\nmezza chiave" };
+  assert.throws(() => jwtAppStore(rotta), /APPLE_IAP_PRIVATE_KEY illeggibile/);
+
+  const a = appleFinta({ Production: { status: 401 } });
+  await assert.rejects(
+    () => chiediTransazione("1", { credenziali: CREDENZIALI, chiama: a.chiama }),
+    /rifiutato le credenziali.*APPLE_IAP_KEY_ID/
+  );
+});
+
 // ─── Le regole ─────────────────────────────────────────────────────────────
 
 test("l'acquisto giusto passa", () => {
