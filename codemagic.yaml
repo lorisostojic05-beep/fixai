@@ -6,19 +6,21 @@
 # repository GitHub, compila, firma e carica la versione su TestFlight.
 #
 # ┌───────────────────────────────────────────────────────────────────────────┐
-# │  NON ANCORA PROVATO                                                       │
+# │  FUNZIONA DAL 31/10/2026                                                  │
 # │                                                                           │
-# │  Scritto il 27/10/2026, prima di avere l'account Apple e quello           │
-# │  Codemagic. Per funzionare servono tre cose:                              │
+# │  Build 2 su Codemagic: firmato, compilato in 47 secondi, caricato su      │
+# │  App Store Connect come Fixi 1.0 (1) senza errori, in 3 minuti in tutto.  │
 # │                                                                           │
-# │   1. l'iscrizione all'Apple Developer Program — fatta il 28/10/2026;      │
-# │   2. l'app creata in App Store Connect con bundle id casa.fixi.app, e il  │
-# │      suo numero scritto qui sotto in APP_ID_APPLE — fatta il 28/10/2026;  │
-# │   3. in Codemagic, una chiave API di App Store Connect aggiunta fra le    │
-# │      integrazioni con il nome ESATTO scritto in app_store_connect.        │
-# │                                                                           │
-# │  Il primo build quasi certamente si fermera' da qualche parte: e' normale │
-# │  con un file mai eseguito. Il registro di Codemagic dice dove.            │
+# │  Cosa serve perche' continui a funzionare, tutto gia' fatto:              │
+# │   - in Codemagic, fra le integrazioni, la chiave API di App Store         │
+# │     Connect con il nome ESATTO scritto in app_store_connect (Key ID       │
+# │     QZVQCT2S6S, ruolo App Manager);                                       │
+# │   - in Codemagic, fra le identita' di firma, il certificato Apple         │
+# │     Distribution "fixi-distribuzione" e il profilo "fixi-app-store"       │
+# │     (App Store, casa.fixi.app). Scadono il 31/10/2027: quel giorno vanno  │
+# │     rifatti, se no il build si ferma su "No matching profiles";           │
+# │   - sull'account Apple, gli accordi accettati: con l'accordo di licenza   │
+# │     aggiornato e non accettato Apple rifiuta il caricamento.              │
 # └───────────────────────────────────────────────────────────────────────────┘
 
 workflows:

@@ -207,8 +207,14 @@ Mac: si compila **solo** in cloud con Codemagic, da `codemagic.yaml`. Il
   reportaproblem.apple.com invece del modulo.
 - `ViewControllerFixi.swift` registra il plugin, e `Main.storyboard` punta a
   lui. Se si rigenera `ios/`, quella riga dello storyboard va rimessa.
-- `ios/` non è mai stato compilato su un Mac: il primo build Codemagic è anche
-  la prima prova dello Swift.
+- Il 31/10/2026 il primo build Codemagic ha compilato lo Swift al primo colpo
+  e caricato Fixi 1.0 (1) su App Store Connect. Certificato e profilo di firma
+  scadono il 31/10/2027: il dettaglio è in cima a `codemagic.yaml`.
+- **La verifica degli acquisti Apple risponde 401 dall'ambiente vero** finché
+  l'app non è pubblicata: la chiave è giusta (l'ambiente di prova la accetta).
+  Per questo `chiediTransazione` chiede comunque anche all'ambiente di prova:
+  è da lì che passano gli acquisti dei revisori. Ricontrollare dopo la
+  pubblicazione che l'ambiente vero risponda.
 
 ## Database
 
