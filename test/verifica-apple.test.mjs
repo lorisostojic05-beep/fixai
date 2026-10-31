@@ -141,6 +141,27 @@ test("ACQUISTO DEI REVISORI: non c'e' fra i veri, si trova fra quelli di prova",
   assert.equal(a.chiamate.length, 2);
 });
 
+test("L'AMBIENTE VERO RIFIUTA MA QUELLO DI PROVA RISPONDE: l'acquisto passa", async () => {
+  // E' il caso dei revisori con un'app non ancora pubblicata. Prima un 401
+  // dall'ambiente vero fermava tutto, e la revisione falliva sul pagamento.
+  const diProva = { ...TRANSAZIONE, environment: "Sandbox" };
+  const a = appleFinta({
+    Production: { status: 401 },
+    Sandbox: { status: 200, corpo: { signedTransactionInfo: firmato(diProva) } },
+  });
+  const t = await chiediTransazione("2000000123456789", { credenziali: CREDENZIALI, chiama: a.chiama });
+  assert.equal(t.environment, "Sandbox");
+  assert.equal(a.chiamate.length, 2);
+});
+
+test("se nessuno dei due risponde, l'errore riporta tutti e due", async () => {
+  const a = appleFinta({ Production: { status: 500 }, Sandbox: { status: 503 } });
+  await assert.rejects(
+    () => chiediTransazione("1", { credenziali: CREDENZIALI, chiama: a.chiama }),
+    /Production 500, Sandbox 503/
+  );
+});
+
 test("una transazione che Apple non conosce torna null", async () => {
   const a = appleFinta({});
   assert.equal(await chiediTransazione("1", { credenziali: CREDENZIALI, chiama: a.chiama }), null);
