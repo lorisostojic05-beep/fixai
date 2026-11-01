@@ -3,15 +3,22 @@
 Testi pronti da copiare-incollare in App Store Connect, e le risposte ai
 questionari. Scritto il 01/11/2026, per la versione 1.0.
 
+**Il 01/11/2026 è stato tutto inserito in App Store Connect** così com'è
+scritto qui. Per la 1.0 mancavano solo tre cose, tutte di Loris: i dati
+fiscali DAC7 (Business → Compliance), il clic su "Publish" nella privacy
+dell'app e il contatto per i revisori.
+
 Accanto a ogni campo c'è il limite di Apple e la lunghezza del testo.
 
 ---
 
 ## 1. Pagina della versione — "1.0 Preparazione per l'invio"
 
-### Screenshot iPhone 6,9"
+### Screenshot iPhone
 
-Trascinali in quest'ordine (1290×2796, Apple li accetta per il 6,9"):
+Lo spazio obbligatorio ora è "iPhone with Dynamic Island (medium display)",
+6,1" o 6,3": i 1290×2796 del 6,7" li rifiuta. Questi sono 1206×2622, in
+quest'ordine:
 
 1. `store/ios/01-home.png` — la home
 2. `store/ios/02-come-funziona.png` — i quattro passi, col pagamento Apple
@@ -101,11 +108,23 @@ lavatrice,lavastoviglie,frigorifero,forno,asciugatrice,condizionatore,guasto,rip
 
 Quando Apple ha finito di elaborarlo: **Fixi 1.0 (1)**.
 
-### Acquisti in-app e abbonamenti
+### Acquisti in-app
 
-Aggiungi **casa.fixi.app.diagnosi**. Il primo acquisto in-app di un'app si
-può mandare in revisione solo insieme a una versione: se non lo aggiungi qui,
-l'app viene approvata senza il pagamento e nessuno può comprare la diagnosi.
+Il primo acquisto in-app di un'app si può mandare in revisione solo insieme
+a una versione. Nella pagina della versione non c'è più una sezione per
+agganciarlo: si preme **"Add for Review" sia nell'acquisto
+(casa.fixi.app.diagnosi) sia nella versione**, e finiscono nella stessa
+richiesta, che poi si invia da "App Review". Se l'acquisto resta fuori, l'app
+viene approvata senza il pagamento e nessuno può comprare la diagnosi.
+
+Nell'acquisto, oltre a nome e descrizione (già messi), servono:
+- **paesi**: gli stessi 21 dell'app (partiva con la sola Italia);
+- **screenshot per la revisione**: `store/ios/revisione-acquisto.png`;
+- **note per la revisione**:
+
+```
+One video diagnosis session with the AI, plus the written report. On the diagnosis page fill in appliance, brand and problem, then tap the pay button. The purchase is verified on our server with the App Store Server API before the session opens; sandbox purchases are accepted.
+```
 
 ### Informazioni per la revisione dell'app
 
@@ -156,7 +175,10 @@ Diagnosi elettrodomestici AI
 
 ### Classificazione per età
 
-Risposte al questionario. Il risultato atteso è **4+**.
+Risposte al questionario: il risultato calcolato è **4+**, ma all'ultimo
+passo si alza a **16+** ("Override to Higher Age Rating"). L'informativa
+privacy dice che Fixi non è rivolto ai minori di 16 anni, e la scheda deve
+dire la stessa cosa.
 
 | Domanda | Risposta |
 |---|---|
@@ -189,6 +211,7 @@ diagnosi, e risponde solo di elettrodomestici.
 | Informazioni di contatto → Numero di telefono | Sì | No | Funzionalità dell'app |
 | Informazioni di contatto → Indirizzo fisico (città e CAP) | Sì | No | Funzionalità dell'app |
 | Contenuti utente → Foto o video | No | No | Funzionalità dell'app |
+| Contenuti utente → Assistenza clienti (richieste di rimborso, segnalazioni) | Sì | No | Funzionalità dell'app |
 | Contenuti utente → Altri contenuti utente (problema, chat, referto) | Sì | No | Funzionalità dell'app, Analisi |
 | Acquisti → Cronologia acquisti | Sì | No | Funzionalità dell'app |
 
@@ -217,13 +240,15 @@ Perché queste risposte, e non altre:
 ## 4. Prezzi e disponibilità
 
 - **Prezzo dell'app**: Gratis (si paga solo la diagnosi, con l'acquisto in-app)
-- **Disponibilità**: i paesi dell'euro, così il €9,90 scritto nelle pagine
-  è lo stesso che Apple addebita. Austria, Belgio, Cipro, Croazia, Estonia,
-  Finlandia, Francia, Germania, Grecia, Irlanda, Italia, Lettonia, Lituania,
-  Lussemburgo, Malta, Paesi Bassi, Portogallo, Slovacchia, Slovenia, Spagna.
-
-Prima di confermare, controlla nel prezzo dell'acquisto in-app ("Vedi tutti i
-prezzi") che in questi paesi Apple mostri davvero 9,90 €.
+- **Disponibilità**: i 21 paesi dell'euro, così il €9,90 scritto nelle
+  pagine è lo stesso che Apple addebita. Austria, Belgio, Bulgaria (nell'euro
+  dal 2026), Cipro, Croazia, Estonia, Finlandia, Francia, Germania, Grecia,
+  Irlanda, Italia, Lettonia, Lituania, Lussemburgo, Malta, Paesi Bassi,
+  Portogallo, Slovacchia, Slovenia, Spagna. Controllato il 01/11/2026: in
+  tutti e 21 l'acquisto in-app costa 9,90 €.
+- **Mac e Apple Vision Pro: tolti.** Apple li spunta da sola per le app
+  iPhone. Fixi lì non l'ha mai provata nessuno, e un revisore che la apre su
+  un Mac senza camera boccia l'app.
 
 ---
 
@@ -233,5 +258,14 @@ Chi vende nell'Unione Europea come impresa deve mostrare nella scheda
 **indirizzo, telefono ed email**. Con la P.IVA, Fixi è un "trader": senza
 questi dati l'app non si distribuisce in nessun paese UE.
 
-**Da decidere**: quale indirizzo e quale telefono. Compaiono pubblicamente
-sull'App Store.
+Si dichiara a livello di account, non di app: Business → Compliance →
+Digital Services Act. Loris l'ha compilato il 28/10/2026 con l'indirizzo di
+casa e il suo cellulare; il 01/11/2026 era "In Review" presso Apple.
+Nell'app risulta già "trader".
+
+## 6. DAC7
+
+Sempre in Business → Compliance. È la direttiva europea che obbliga Apple a
+comunicare al fisco quanto incassa chi vende: chiede codice fiscale, data di
+nascita e partita IVA. **Senza, Apple non accetta app nuove in revisione.**
+Lo compila Loris: sono dati fiscali.

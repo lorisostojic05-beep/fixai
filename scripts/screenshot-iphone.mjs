@@ -4,7 +4,11 @@
 // righe che il codice decide guardando window.Capacitor (pulsante col prezzo
 // dell'App Store, "Paghi con il tuo account Apple"). Qui si apre Edge senza
 // finestra, gli si fa credere di essere dentro l'app iPhone prima che la
-// pagina parta, e si fotografa a 1290x2796 (iPhone 6,7").
+// pagina parta, e si fotografa a 1206x2622 (iPhone 6,3").
+//
+// Il formato e' quello che App Store Connect chiede: dal 2026 lo spazio
+// obbligatorio e' "iPhone with Dynamic Island (medium display)", 6,1" o
+// 6,3", e i 1290x2796 del 6,7" li rifiuta.
 //
 // Uso:
 //   node scripts/screenshot-iphone.mjs https://fixiai.it/diagnosi store/ios/x.png compila
@@ -83,7 +87,7 @@ const finto = `
 
 await cdp("Page.enable");
 await cdp("Runtime.enable");
-await cdp("Emulation.setDeviceMetricsOverride", { width: 430, height: 932, deviceScaleFactor: 3, mobile: true });
+await cdp("Emulation.setDeviceMetricsOverride", { width: 402, height: 874, deviceScaleFactor: 3, mobile: true });
 await cdp("Emulation.setUserAgentOverride", {
   userAgent:
     "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
@@ -122,19 +126,29 @@ if (azione === "compila") {
 
 if (azione?.startsWith("scorri:")) {
   const cerca = azione.slice("scorri:".length);
-  const r = await cdp("Runtime.evaluate", {
-    returnByValue: true,
-    expression: `(() => {
-      const el = [...document.querySelectorAll("h1, h2, h3, .section-tag")].find((e) => e.textContent.includes(${JSON.stringify(cerca)}));
-      if (!el) return false;
-      window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 84); // 84: sotto la barra in alto, che resta ferma e coprirebbe il titolo
-      return true;
-    })()`,
-  });
+  const scorri = () =>
+    cdp("Runtime.evaluate", {
+      returnByValue: true,
+      expression: `(() => {
+        const cerca = ${JSON.stringify(cerca)};
+        // Prima i titoli; poi qualunque elemento il cui testo sia esattamente
+        // quello, come l'etichetta "Esempio referto" che non e' un titolo.
+        const el =
+          [...document.querySelectorAll("h1, h2, h3, .section-tag")].find((e) => e.textContent.includes(cerca)) ||
+          [...document.querySelectorAll("body *")].find((e) => e.textContent.trim().toLowerCase() === cerca.toLowerCase());
+        if (!el) return false;
+        window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 84); // 84: sotto la barra in alto, che resta ferma e coprirebbe il titolo
+        return true;
+      })()`,
+    });
+  const r = await scorri();
   console.log(`scorri a "${cerca}":`, r.result.value ? "trovato" : "NON TROVATO");
-  // Le sezioni della home compaiono con un'animazione quando entrano nello
-  // schermo: si aspetta che sia finita.
+  // Le sezioni della home entrano con un'animazione che le fa salire: la
+  // prima misura e' presa prima dello spostamento. Si aspetta che finisca e
+  // si misura di nuovo.
   await aspetta(1500);
+  await scorri();
+  await aspetta(600);
 }
 
 const testo = await cdp("Runtime.evaluate", {
