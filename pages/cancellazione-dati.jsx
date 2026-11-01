@@ -21,7 +21,7 @@ const EMAIL = "lorisostojic05@gmail.com";
 // mese lo compone dataLeggibile() nella lingua di chi legge. Scritta per
 // esteso restava italiana dentro le pagine tradotte — "Letzte Aktualisierung:
 // 25 luglio 2026", tedesco tranne il mese.
-const AGGIORNAMENTO = "2026-07-25";
+const AGGIORNAMENTO = "2026-11-01";
 const TITOLARE = "Loris Ostojic";
 
 export async function getStaticProps({ locale }) {

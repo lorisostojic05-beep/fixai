@@ -18,7 +18,7 @@ import { prefissoDi, PREDEFINITA } from "../lib/lingue";
 // mese lo compone dataLeggibile() nella lingua di chi legge. Scritta per
 // esteso restava italiana dentro le pagine tradotte — "Letzte Aktualisierung:
 // 25 luglio 2026", tedesco tranne il mese.
-const AGGIORNAMENTO = "2026-08-31";
+const AGGIORNAMENTO = "2026-11-01";
 const EMAIL = "lorisostojic05@gmail.com";
 
 // P.IVA e sede compaiono nell'informativa SOLO se compilate qui: finché sono

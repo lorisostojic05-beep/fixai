@@ -8,7 +8,11 @@
 //
 // Uso:
 //   node scripts/screenshot-iphone.mjs https://fixiai.it/diagnosi store/ios/x.png compila
+//   node scripts/screenshot-iphone.mjs https://fixiai.it/ store/ios/x.png "scorri:Esempio referto"
 //   PREZZO="9,99 €" node scripts/...   se il prezzo su App Store e' diverso
+//
+// "scorri:<testo>" porta in cima allo schermo il primo titolo che contiene
+// quel testo: serve per fotografare una sezione della home.
 //
 // Non chiama nessuna API a pagamento: apre solo la pagina pubblica. Edge e'
 // quello installato con Windows; il percorso e' in EDGE qui sotto.
@@ -114,6 +118,23 @@ if (azione === "compila") {
     expression: `(() => { const b = [...document.querySelectorAll("button")].find((x) => x.textContent.includes("Paga")); b && b.scrollIntoView({ block: "center" }); })()`,
   });
   await aspetta(600);
+}
+
+if (azione?.startsWith("scorri:")) {
+  const cerca = azione.slice("scorri:".length);
+  const r = await cdp("Runtime.evaluate", {
+    returnByValue: true,
+    expression: `(() => {
+      const el = [...document.querySelectorAll("h1, h2, h3, .section-tag")].find((e) => e.textContent.includes(${JSON.stringify(cerca)}));
+      if (!el) return false;
+      window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 84); // 84: sotto la barra in alto, che resta ferma e coprirebbe il titolo
+      return true;
+    })()`,
+  });
+  console.log(`scorri a "${cerca}":`, r.result.value ? "trovato" : "NON TROVATO");
+  // Le sezioni della home compaiono con un'animazione quando entrano nello
+  // schermo: si aspetta che sia finita.
+  await aspetta(1500);
 }
 
 const testo = await cdp("Runtime.evaluate", {

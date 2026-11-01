@@ -105,6 +105,13 @@ export default {
           "Diagnosi, soluzione fai-da-te e stima dei costi se serve il tecnico. In PDF.",
       },
     ],
+    // Il secondo passo come lo legge chi e' nell'app iPhone: li' la diagnosi
+    // si paga con l'account Apple, e "con carta" sarebbe falso. Il prezzo non
+    // c'e' di proposito: su iPhone lo dice l'App Store, non questo file.
+    pagaApple: {
+      titolo: "Paga in un tocco",
+      testo: "Con il tuo account Apple, come ogni acquisto sull'App Store. Molto meno di una visita del tecnico.",
+    },
   },
 
   perche: {
@@ -405,7 +412,8 @@ export default {
         "**Immagini dalla camera**: durante la sessione, i fotogrammi che inquadri vengono inviati per l'analisi all'AI. **Non salviamo i video né i fotogrammi**: sono elaborati e poi scartati.",
         "**Email**: se scegli di ricevere il referto via email o di essere ricontattato da un tecnico.",
         "**Dati per la richiesta di un tecnico**: nome, telefono, città e CAP, che condividiamo con i tecnici della tua zona per permettere loro di contattarti.",
-        "**Dati di pagamento**: i pagamenti sono gestiti da Stripe. **Non vediamo né conserviamo i dati della tua carta**; registriamo solo l'esito del pagamento.",
+        "**Dati di pagamento**: i pagamenti sono gestiti da Stripe; nell'app per iPhone la diagnosi si paga con l'App Store, e il pagamento lo gestisce Apple. **Non vediamo né conserviamo i dati della tua carta**; registriamo solo l'esito del pagamento.",
+        "**Dettatura**: se detti un messaggio invece di scriverlo, la voce la trasforma in testo il riconoscimento vocale del telefono o del browser (Google su Android, Apple su iPhone). **A Fixi arriva solo il testo**, mai l'audio.",
         "**Recensioni**: il voto e il commento che lasci su un intervento.",
         "**Se sei un tecnico**: nome, cognome, email, telefono, città, CAP, specializzazioni ed esperienza che inserisci in fase di iscrizione.",
       ],
@@ -532,7 +540,7 @@ export default {
     cosaResta: {
       titolo: "Quali dati vengono conservati, e per quanto",
       voci: [
-        "**Registrazioni dei pagamenti** — sono trattate da Stripe e devono essere conservate per gli obblighi contabili e fiscali previsti dalla legge, anche dopo la cancellazione degli altri dati. Non contengono i dati della tua carta, che non vediamo e non conserviamo mai.",
+        "**Registrazioni dei pagamenti** — sono trattate da Stripe (da Apple per gli acquisti fatti nell'app per iPhone) e devono essere conservate per gli obblighi contabili e fiscali previsti dalla legge, anche dopo la cancellazione degli altri dati. Non contengono i dati della tua carta, che non vediamo e non conserviamo mai.",
         "**Statistiche in forma aggregata e anonima** — ad esempio «quante diagnosi hanno riguardato una lavatrice». Non permettono di risalire a te e vengono mantenute a tempo indeterminato.",
         "**Dati già condivisi con un tecnico** — se hai richiesto un intervento e un tecnico ha accettato il lavoro, ha già ricevuto i tuoi contatti per chiamarti. Cancelliamo la richiesta dai nostri sistemi, ma il tecnico è titolare autonomo dei dati ricevuti: per quelli va contattato direttamente. Su richiesta ti indichiamo il suo recapito.",
       ],

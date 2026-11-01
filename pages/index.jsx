@@ -4,6 +4,7 @@ import SceltaLingua from "../components/SceltaLingua";
 import { testiPer } from "../lib/testi";
 import { guideDisponibiliIn, prefissoDi, LINGUE, PREDEFINITA } from "../lib/lingue";
 import { SITO } from "../lib/guide";
+import { piattaforma } from "../lib/versione-app";
 
 // L'indirizzo di una lingua: l'italiano non ha prefisso (fixiai.it), le altre
 // si', ed e' la stessa regola che applica Next.js agli indirizzi veri.
@@ -34,6 +35,13 @@ export default function Home({ testi: t, guide, canonical, alternative, pre }) {
   const [scrollY, setScrollY] = useState(0);
   const [visible, setVisible] = useState({});
   const sectionRefs = useRef({});
+  // L'app iPhone apre questa pagina per prima. Li' la diagnosi si paga con
+  // Apple, non con carta, e i €9,90 li rimborsa solo Apple: due frasi di
+  // questa pagina sarebbero false. Si legge dopo il primo disegno, come in
+  // diagnosi.jsx, se no la pagina del server e quella del telefono non
+  // coincidono.
+  const [suIphone, setSuIphone] = useState(false);
+  useEffect(() => setSuIphone(piattaforma() === "ios"), []);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -1007,7 +1015,9 @@ export default function Home({ testi: t, guide, canonical, alternative, pre }) {
             { num: "02", icon: "💳" },
             { num: "03", icon: "🎥" },
             { num: "04", icon: "📋" },
-          ].map(({ num, icon }, i) => ({ num, icon, ...t.passi.elenco[i] })).map((s, i) => (
+          ]
+            .map(({ num, icon }, i) => ({ num, icon, ...(suIphone && i === 1 ? t.passi.pagaApple : t.passi.elenco[i]) }))
+            .map((s, i) => (
             <div
               key={i}
               ref={addRef(`step-${i}`)}
@@ -1156,10 +1166,12 @@ export default function Home({ testi: t, guide, canonical, alternative, pre }) {
         {/* La garanzia sta qui, sotto il pulsante, perché è qui che uno decide
             se fidarsi di un servizio che non conosce — ed è la fiducia
             l'ostacolo, non i €9,90. */}
-        <p style={{ margin: "18px auto 0", fontSize: "14px", color: "var(--grigio)", maxWidth: "460px", lineHeight: 1.6 }}>
-          <strong style={{ color: "var(--verde)" }}>{t.finale.garanziaTitolo}</strong>{" "}
-          {t.finale.garanziaTesto}
-        </p>
+        {!suIphone && (
+          <p style={{ margin: "18px auto 0", fontSize: "14px", color: "var(--grigio)", maxWidth: "460px", lineHeight: 1.6 }}>
+            <strong style={{ color: "var(--verde)" }}>{t.finale.garanziaTitolo}</strong>{" "}
+            {t.finale.garanziaTesto}
+          </p>
+        )}
       </div>
 
       {/* FOOTER */}
