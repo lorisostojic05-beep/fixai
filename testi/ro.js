@@ -81,7 +81,11 @@ export default {
         "titolo": "Primești raportul",
         "testo": "Diagnostic, soluție DIY și estimare a costurilor dacă e nevoie de tehnician. În PDF."
       }
-    ]
+    ],
+    "pagaApple": {
+      "titolo": "Plătește cu o atingere",
+      "testo": "Cu contul tău Apple, ca orice achiziție din App Store. Mult mai puțin decât o vizită a tehnicianului."
+    }
   },
   "perche": {
     "tag": "De ce Fixi",
@@ -291,11 +295,12 @@ export default {
       "titolo": "2. Ce date colectăm",
       "intro": "În funcție de modul în care folosești Fixi, prelucrăm:",
       "voci": [
-        "**Date despre diagnoză**: tipul electrocasnicului, marca, descrierea problemei și mesajele schimbate cu asistentul AI.",
-        "**Imagini de la cameră**: în timpul sesiunii, cadrele filmate sunt trimise pentru analiză către AI. **Nu salvăm videoclipurile și nici cadrele**: sunt procesate și apoi șterse.",
-        "**Email**: dacă alegi să primești raportul pe email sau să fii recontactat de un tehnician.",
-        "**Date pentru solicitarea unui tehnician**: nume, telefon, oraș și cod poștal, pe care le partajăm cu tehnicienii din zona ta pentru a-i permite să te contacteze.",
-        "**Date de plată**: plățile sunt gestionate de Stripe. **Nu vedem și nu păstrăm datele cardului tău**; înregistrăm doar rezultatul plății.",
+        "**Datele diagnosticării**: tipul aparatului, marca, descrierea problemei și mesajele pe care le schimbi cu asistentul AI.",
+        "**Imagini de la cameră**: în timpul sesiunii, cadrele pe care le filmezi sunt trimise pentru analiză către AI. **Nu salvăm videoclipurile și nici cadrele**: sunt procesate și apoi eliminate.",
+        "**Email**: dacă alegi să primești raportul prin email sau să fii contactat din nou de un tehnician.",
+        "**Datele pentru solicitarea unui tehnician**: nume, telefon, oraș și cod poștal, pe care le partajăm cu tehnicienii din zona ta pentru a le permite să te contacteze.",
+        "**Datele de plată**: plățile sunt gestionate de Stripe; în aplicația pentru iPhone, diagnosticarea se plătește prin App Store, iar plata este gestionată de Apple. **Nu vedem și nu păstrăm datele cardului tău**; înregistrăm doar rezultatul plății.",
+        "**Dictare**: dacă dictezi un mesaj în loc să-l scrii, vocea este transformată în text de recunoașterea vocală a telefonului sau a browserului (Google pe Android, Apple pe iPhone). **La Fixi ajunge doar textul**, niciodată audio.",
         "**Recenzii**: nota și comentariul pe care le lași despre o intervenție.",
         "**Dacă ești tehnician**: nume, prenume, email, telefon, oraș, cod poștal, specializări și experiență pe care le introduci la înscriere."
       ]
@@ -385,9 +390,9 @@ export default {
     "cosaResta": {
       "titolo": "Ce date sunt păstrate, și pentru cât timp",
       "voci": [
-        "**Înregistrările plăților** — sunt gestionate de Stripe și trebuie păstrate pentru obligațiile contabile și fiscale prevăzute de lege, chiar și după ștergerea celorlalte date. Nu conțin datele cardului tău, pe care nu le vedem și nu le păstrăm niciodată.",
-        "**Statisticile în formă agregată și anonimă** — de exemplu «câte diagnoze au vizat o mașină de spălat». Nu permit identificarea ta și sunt păstrate pe termen nelimitat.",
-        "**Datele deja partajate cu un tehnician** — dacă ai solicitat o intervenție și un tehnician a acceptat lucrarea, acesta a primit deja datele tale de contact pentru a te suna. Ștergem cererea din sistemele noastre, dar tehnicianul este operator autonom al datelor primite: pentru acestea trebuie contactat direct. La cerere, îți indicăm datele lui de contact."
+        "**Înregistrările plăților** — sunt procesate de Stripe (de Apple pentru achizițiile făcute în aplicația pentru iPhone) și trebuie păstrate pentru obligațiile contabile și fiscale prevăzute de lege, chiar și după ștergerea celorlalte date. Nu conțin datele cardului tău, pe care nu le vedem și nu le păstrăm niciodată.",
+        "**Statistici agregate și anonime** — de exemplu «câte diagnosticări au vizat o mașină de spălat». Nu permit identificarea ta și sunt păstrate pe termen nelimitat.",
+        "**Date deja partajate cu un tehnician** — dacă ai solicitat o intervenție și un tehnician a acceptat lucrarea, acesta a primit deja datele tale de contact pentru a te suna. Ștergem solicitarea din sistemele noastre, dar tehnicianul este operator independent al datelor primite: pentru acestea trebuie contactat direct. La cerere, îți oferim datele lui de contact."
       ],
       "chiusura": "În afara acestor cazuri nu aplicăm nicio perioadă suplimentară de păstrare: datele sunt eliminate definitiv."
     },

@@ -81,7 +81,11 @@ export default {
         "titolo": "Recebe o relatório",
         "testo": "Diagnóstico, solução faz-tu-mesmo e estimativa de custos, se for preciso um técnico. Em PDF."
       }
-    ]
+    ],
+    "pagaApple": {
+      "titolo": "Paga num toque",
+      "testo": "Com a tua conta Apple, como em qualquer compra na App Store. Muito menos do que uma visita do técnico."
+    }
   },
   "perche": {
     "tag": "Porquê a Fixi",
@@ -292,12 +296,13 @@ export default {
       "intro": "Dependendo de como usas o Fixi, tratamos:",
       "voci": [
         "**Dados do diagnóstico**: tipo de eletrodoméstico, marca, descrição do problema e as mensagens que trocas com o assistente de IA.",
-        "**Imagens da câmara**: durante a sessão, os fotogramas captados são enviados para análise pela IA. **Não guardamos vídeos nem fotogramas**: são processados e depois descartados.",
+        "**Imagens da câmara**: durante a sessão, os fotogramas que enquadras são enviados para análise à IA. **Não guardamos os vídeos nem os fotogramas**: são processados e depois descartados.",
         "**Email**: se escolheres receber o relatório por email ou ser contactado por um técnico.",
-        "**Dados para o pedido de um técnico**: nome, telefone, cidade e código postal, que partilhamos com os técnicos da tua zona para que te possam contactar.",
-        "**Dados de pagamento**: os pagamentos são geridos pela Stripe. **Não vemos nem guardamos os dados do teu cartão**; registamos apenas o resultado do pagamento.",
-        "**Avaliações**: a nota e o comentário que deixas sobre uma intervenção.",
-        "**Se és técnico**: nome, sobrenome, email, telefone, cidade, código postal, especializações e experiência que indicas na inscrição."
+        "**Dados para pedir um técnico**: nome, telefone, cidade e código postal, que partilhamos com os técnicos da tua zona para que te possam contactar.",
+        "**Dados de pagamento**: os pagamentos são geridos pela Stripe; na app para iPhone, o diagnóstico é pago através da App Store, e o pagamento é gerido pela Apple. **Não vemos nem guardamos os dados do teu cartão**; registamos apenas o resultado do pagamento.",
+        "**Ditado**: se ditares uma mensagem em vez de a escrever, a voz é convertida em texto pelo reconhecimento de voz do telemóvel ou do navegador (Google no Android, Apple no iPhone). **A Fixi recebe apenas o texto**, nunca o áudio.",
+        "**Avaliações**: a nota e o comentário que deixas sobre um serviço.",
+        "**Se és técnico**: nome, apelido, email, telefone, cidade, código postal, especializações e experiência que indicas no registo."
       ]
     },
     "perche": {
@@ -385,9 +390,9 @@ export default {
     "cosaResta": {
       "titolo": "Que dados são conservados, e por quanto tempo",
       "voci": [
-        "**Registos de pagamento** — são tratados pela Stripe e devem ser conservados para cumprir as obrigações contabilísticas e fiscais previstas por lei, mesmo após a eliminação dos restantes dados. Não contêm os dados do teu cartão, que nunca vemos nem conservamos.",
-        "**Estatísticas agregadas e anónimas** — por exemplo, «quantos diagnósticos envolveram uma máquina de lavar roupa». Não permitem identificar-te e são mantidas por tempo indeterminado.",
-        "**Dados já partilhados com um técnico** — se pediste uma intervenção e um técnico aceitou o trabalho, ele já recebeu os teus contactos para te ligar. Eliminamos o pedido dos nossos sistemas, mas o técnico é responsável autónomo pelos dados recebidos: para esses, deves contactá-lo diretamente. A pedido, indicamos-te o seu contacto."
+        "**Registos de pagamentos** — são tratados pela Stripe (pela Apple nas compras feitas na app para iPhone) e têm de ser conservados para cumprir as obrigações contabilísticas e fiscais previstas por lei, mesmo depois de apagados os outros dados. Não contêm os dados do teu cartão, que nunca vemos nem guardamos.",
+        "**Estatísticas de forma agregada e anónima** — por exemplo, «quantos diagnósticos foram sobre uma máquina de lavar roupa». Não permitem identificar-te e são mantidas por tempo indeterminado.",
+        "**Dados já partilhados com um técnico** — se pediste um serviço e um técnico aceitou o trabalho, ele já recebeu os teus contactos para te ligar. Apagamos o pedido dos nossos sistemas, mas o técnico é responsável autónomo pelos dados recebidos: para esses, deves contactá-lo diretamente. A pedido, indicamos-te o contacto dele."
       ],
       "chiusura": "Fora destes casos, não aplicamos nenhum período de conservação adicional: os dados são eliminados definitivamente."
     },

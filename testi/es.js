@@ -81,7 +81,11 @@ export default {
         "titolo": "Recibe el informe",
         "testo": "Diagnóstico, solución DIY y estimación de costes si necesitas al técnico. En PDF."
       }
-    ]
+    ],
+    "pagaApple": {
+      "titolo": "Paga con un toque",
+      "testo": "Con tu cuenta de Apple, como cualquier compra en el App Store. Mucho menos que una visita del técnico."
+    }
   },
   "perche": {
     "tag": "¿Por qué Fixi?",
@@ -293,11 +297,12 @@ export default {
       "voci": [
         "**Datos del diagnóstico**: tipo de electrodoméstico, marca, descripción del problema y los mensajes que intercambias con el asistente de IA.",
         "**Imágenes de la cámara**: durante la sesión, los fotogramas que enfocas se envían para su análisis a la IA. **No guardamos los vídeos ni los fotogramas**: se procesan y luego se descartan.",
-        "**Correo electrónico**: si eliges recibir el informe por email o que un técnico te vuelva a contactar.",
+        "**Correo electrónico**: si eliges recibir el informe por correo electrónico o que un técnico te contacte.",
         "**Datos para solicitar un técnico**: nombre, teléfono, ciudad y código postal, que compartimos con los técnicos de tu zona para que puedan contactarte.",
-        "**Datos de pago**: los pagos son gestionados por Stripe. **No vemos ni conservamos los datos de tu tarjeta**; solo registramos el resultado del pago.",
+        "**Datos de pago**: los pagos los gestiona Stripe; en la app para iPhone, el diagnóstico se paga con el App Store, y el pago lo gestiona Apple. **No vemos ni conservamos los datos de tu tarjeta**; solo registramos el resultado del pago.",
+        "**Dictado**: si dictas un mensaje en lugar de escribirlo, el reconocimiento de voz del teléfono o del navegador (Google en Android, Apple en iPhone) convierte la voz en texto. **A Fixi solo llega el texto**, nunca el audio.",
         "**Reseñas**: la valoración y el comentario que dejas sobre una intervención.",
-        "**Si eres técnico**: nombre, apellidos, email, teléfono, ciudad, código postal, especializaciones y experiencia que introduces al registrarte."
+        "**Si eres técnico**: nombre, apellido, correo electrónico, teléfono, ciudad, código postal, especializaciones y experiencia que indicas al registrarte."
       ]
     },
     "perche": {
@@ -385,9 +390,9 @@ export default {
     "cosaResta": {
       "titolo": "Qué datos se conservan, y durante cuánto tiempo",
       "voci": [
-        "**Registros de pagos** — los gestiona Stripe y deben conservarse por obligaciones contables y fiscales previstas por la ley, incluso después de eliminar los demás datos. No contienen los datos de tu tarjeta, que nunca vemos ni conservamos.",
-        "**Estadísticas agregadas y anónimas** — por ejemplo, «cuántos diagnósticos se referían a una lavadora». No permiten identificarte y se conservan de forma indefinida.",
-        "**Datos ya compartidos con un técnico** — si solicitaste una intervención y un técnico aceptó el trabajo, ya recibió tus datos de contacto para llamarte. Eliminamos la solicitud de nuestros sistemas, pero el técnico es responsable independiente de los datos que recibió: para esos datos hay que contactarlo directamente. Si lo solicitas, te indicamos su contacto."
+        "**Registros de los pagos** — los trata Stripe (Apple para las compras realizadas en la app para iPhone) y deben conservarse por las obligaciones contables y fiscales previstas por la ley, incluso después de eliminar el resto de los datos. No contienen los datos de tu tarjeta, que nunca vemos ni conservamos.",
+        "**Estadísticas en forma agregada y anónima** — por ejemplo, «cuántos diagnósticos trataron sobre una lavadora». No permiten identificarte y se conservan de forma indefinida.",
+        "**Datos ya compartidos con un técnico** — si has solicitado una intervención y un técnico ha aceptado el trabajo, ya ha recibido tus datos de contacto para llamarte. Eliminamos la solicitud de nuestros sistemas, pero el técnico es responsable autónomo de los datos recibidos: para esos datos hay que contactarlo directamente. Si lo solicitas, te facilitamos su contacto."
       ],
       "chiusura": "Fuera de estos casos, no aplicamos ningún periodo de conservación adicional: los datos se eliminan de forma definitiva."
     },

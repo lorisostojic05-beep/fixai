@@ -81,7 +81,11 @@ export default {
         "titolo": "Erhalte den Bericht",
         "testo": "Diagnose, Lösung zum Selbermachen und Kostenschätzung, falls ein Techniker nötig ist. Als PDF."
       }
-    ]
+    ],
+    "pagaApple": {
+      "titolo": "Mit einem Tipp bezahlen",
+      "testo": "Mit deinem Apple-Account, wie bei jedem Kauf im App Store. Viel günstiger als ein Technikerbesuch."
+    }
   },
   "perche": {
     "tag": "Warum Fixi",
@@ -291,12 +295,13 @@ export default {
       "titolo": "2. Welche Daten wir erheben",
       "intro": "Je nachdem, wie du Fixi nutzt, verarbeiten wir:",
       "voci": [
-        "**Diagnosedaten**: Art des Geräts, Marke, Beschreibung des Problems und die Nachrichten, die du mit dem KI-Assistenten austauschst.",
-        "**Kamerabilder**: Während der Sitzung werden die aufgenommenen Bilder zur Analyse an die KI gesendet. **Wir speichern weder Videos noch Einzelbilder**: Sie werden verarbeitet und danach verworfen.",
-        "**E-Mail**: wenn du dich entscheidest, den Bericht per E-Mail zu erhalten oder von einem Techniker kontaktiert zu werden.",
-        "**Daten für die Anfrage eines Technikers**: Name, Telefonnummer, Stadt und Postleitzahl, die wir mit den Technikern in deiner Region teilen, damit sie dich kontaktieren können.",
-        "**Zahlungsdaten**: Die Zahlungen werden von Stripe abgewickelt. **Wir sehen oder speichern deine Kartendaten nicht**; wir erfassen nur das Ergebnis der Zahlung.",
-        "**Bewertungen**: die Bewertung und der Kommentar, den du zu einem Einsatz hinterlässt.",
+        "**Diagnosedaten**: Gerätetyp, Marke, Problembeschreibung und die Nachrichten, die du mit dem KI-Assistenten austauschst.",
+        "**Kamerabilder**: Während der Sitzung werden die Bilder, die du aufnimmst, zur Analyse an die KI gesendet. **Wir speichern weder Videos noch Einzelbilder**: Sie werden verarbeitet und danach gelöscht.",
+        "**E-Mail**: wenn du den Bericht per E-Mail erhalten oder von einem Techniker zurückgerufen werden möchtest.",
+        "**Daten für die Anfrage eines Technikers**: Name, Telefonnummer, Stadt und Postleitzahl, die wir mit Technikern in deiner Nähe teilen, damit sie dich kontaktieren können.",
+        "**Zahlungsdaten**: Zahlungen werden von Stripe abgewickelt; in der iPhone-App bezahlst du die Diagnose über den App Store, und die Zahlung wird von Apple verwaltet. **Wir sehen und speichern deine Kartendaten nicht**; wir erfassen nur das Ergebnis der Zahlung.",
+        "**Diktieren**: Wenn du eine Nachricht diktierst, statt sie zu schreiben, wandelt die Spracherkennung deines Telefons oder Browsers (Google bei Android, Apple bei iPhone) die Stimme in Text um. **Bei Fixi kommt nur der Text an**, nie die Audioaufnahme.",
+        "**Bewertungen**: die Bewertung und der Kommentar, die du zu einem Einsatz hinterlässt.",
         "**Wenn du Techniker bist**: Vorname, Nachname, E-Mail, Telefonnummer, Stadt, Postleitzahl, Fachgebiete und Erfahrung, die du bei der Anmeldung angibst."
       ]
     },
@@ -385,9 +390,9 @@ export default {
     "cosaResta": {
       "titolo": "Welche Daten werden aufbewahrt, und wie lange",
       "voci": [
-        "**Zahlungsaufzeichnungen** — werden von Stripe verarbeitet und müssen aufgrund gesetzlicher Buchhaltungs- und Steuerpflichten aufbewahrt werden, auch nach der Löschung der übrigen Daten. Sie enthalten nicht die Daten deiner Karte, die wir nie sehen und nie speichern.",
-        "**Aggregierte und anonyme Statistiken** — zum Beispiel „wie viele Diagnosen betrafen eine Waschmaschine“. Sie lassen keine Rückschlüsse auf dich zu und werden auf unbestimmte Zeit aufbewahrt.",
-        "**Bereits mit einem Techniker geteilte Daten** — wenn du einen Einsatz angefragt hast und ein Techniker den Auftrag angenommen hat, hat er bereits deine Kontaktdaten erhalten, um dich anzurufen. Wir löschen die Anfrage aus unseren Systemen, aber der Techniker ist eigenständig für die erhaltenen Daten verantwortlich: Dafür musst du ihn direkt kontaktieren. Auf Anfrage geben wir dir seine Kontaktdaten."
+        "**Zahlungsaufzeichnungen** — werden von Stripe verarbeitet (von Apple bei Käufen über die iPhone-App) und müssen aufgrund gesetzlicher Buchhaltungs- und Steuerpflichten aufbewahrt werden, auch nach der Löschung anderer Daten. Sie enthalten keine Kartendaten, die wir nie sehen oder speichern.",
+        "**Statistiken in aggregierter und anonymer Form** — zum Beispiel „wie viele Diagnosen eine Waschmaschine betrafen“. Sie lassen keine Rückschlüsse auf dich zu und werden unbegrenzt aufbewahrt.",
+        "**Bereits mit einem Techniker geteilte Daten** — wenn du einen Einsatz angefragt hast und ein Techniker den Auftrag angenommen hat, hat er bereits deine Kontaktdaten erhalten, um dich anzurufen. Wir löschen die Anfrage aus unseren Systemen, aber der Techniker ist eigenständig verantwortlich für die erhaltenen Daten: Dafür musst du ihn direkt kontaktieren. Auf Anfrage nennen wir dir seine Kontaktdaten."
       ],
       "chiusura": "Außerhalb dieser Fälle wenden wir keine zusätzliche Aufbewahrungsfrist an: Die Daten werden endgültig gelöscht."
     },

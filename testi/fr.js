@@ -81,7 +81,11 @@ export default {
         "titolo": "Reçois le rapport",
         "testo": "Diagnostic, solution à faire soi-même et estimation des coûts si un technicien est nécessaire. En PDF."
       }
-    ]
+    ],
+    "pagaApple": {
+      "titolo": "Payez en un geste",
+      "testo": "Avec ton compte Apple, comme pour tout achat sur l'App Store. Bien moins cher qu'une visite de technicien."
+    }
   },
   "perche": {
     "tag": "Pourquoi Fixi",
@@ -291,13 +295,14 @@ export default {
       "titolo": "2. Quelles données nous collectons",
       "intro": "Selon l'usage que tu fais de Fixi, nous traitons :",
       "voci": [
-        "**Données du diagnostic** : type d'électroménager, marque, description du problème et les messages échangés avec l'assistant IA.",
-        "**Images de la caméra** : pendant la session, les images filmées sont envoyées pour être analysées par l'IA. **Nous ne conservons ni les vidéos ni les images** : elles sont traitées puis supprimées.",
-        "**Email** : si tu choisis de recevoir le rapport par email ou d'être recontacté par un technicien.",
-        "**Données pour la demande d'un technicien** : nom, téléphone, ville et code postal, que nous partageons avec les techniciens de ta région pour qu'ils puissent te contacter.",
-        "**Données de paiement** : les paiements sont gérés par Stripe. **Nous ne voyons ni ne conservons les données de ta carte** ; nous enregistrons uniquement le résultat du paiement.",
+        "**Données du diagnostic** : type d'appareil, marque, description du problème et les messages échangés avec l'assistant IA.",
+        "**Images de la caméra** : pendant la session, les images filmées sont envoyées à l'IA pour analyse. **Nous ne conservons ni les vidéos ni les images** : elles sont traitées puis supprimées.",
+        "**E-mail** : si tu choisis de recevoir le rapport par e-mail ou d'être recontacté par un technicien.",
+        "**Données pour la demande d'un technicien** : nom, téléphone, ville et code postal, que nous partageons avec les techniciens de ta région afin qu'ils puissent te contacter.",
+        "**Données de paiement** : les paiements sont gérés par Stripe ; dans l'application iPhone, le diagnostic se paie via l'App Store, et le paiement est géré par Apple. **Nous ne voyons ni ne conservons les données de ta carte** ; nous enregistrons uniquement le résultat du paiement.",
+        "**Dictée vocale** : si tu dictes un message au lieu de l'écrire, ta voix est transformée en texte par la reconnaissance vocale du téléphone ou du navigateur (Google sur Android, Apple sur iPhone). **Fixi ne reçoit que le texte**, jamais l'audio.",
         "**Avis** : la note et le commentaire que tu laisses sur une intervention.",
-        "**Si tu es technicien** : nom, prénom, email, téléphone, ville, code postal, spécialisations et expérience que tu renseignes lors de ton inscription."
+        "**Si tu es technicien** : nom, prénom, e-mail, téléphone, ville, code postal, spécialisations et expérience que tu renseignes lors de l'inscription."
       ]
     },
     "perche": {
@@ -385,9 +390,9 @@ export default {
     "cosaResta": {
       "titolo": "Quelles données sont conservées, et pendant combien de temps",
       "voci": [
-        "**Enregistrements des paiements** — ils sont traités par Stripe et doivent être conservés pour les obligations comptables et fiscales prévues par la loi, même après la suppression des autres données. Ils ne contiennent pas les données de ta carte, que nous ne voyons ni ne conservons jamais.",
-        "**Statistiques agrégées et anonymes** — par exemple « combien de diagnostics ont concerné un lave-linge ». Elles ne permettent pas de remonter jusqu'à toi et sont conservées indéfiniment.",
-        "**Données déjà partagées avec un technicien** — si tu as demandé une intervention et qu'un technicien a accepté le travail, il a déjà reçu tes coordonnées pour t'appeler. Nous supprimons la demande de nos systèmes, mais le technicien est responsable indépendant des données reçues : pour celles-ci, il faut le contacter directement. Sur demande, nous t'indiquons ses coordonnées."
+        "**Enregistrements des paiements** — ils sont traités par Stripe (par Apple pour les achats effectués dans l'application iPhone) et doivent être conservés pour les obligations comptables et fiscales prévues par la loi, même après la suppression des autres données. Ils ne contiennent pas les données de ta carte, que nous ne voyons ni ne conservons jamais.",
+        "**Statistiques sous forme agrégée et anonyme** — par exemple « combien de diagnostics ont concerné un lave-linge ». Elles ne permettent pas de remonter jusqu'à toi et sont conservées indéfiniment.",
+        "**Données déjà partagées avec un technicien** — si tu as demandé une intervention et qu'un technicien a accepté le travail, il a déjà reçu tes coordonnées pour t'appeler. Nous supprimons la demande de nos systèmes, mais le technicien est responsable autonome des données reçues : pour celles-ci, il faut le contacter directement. Sur demande, nous t'indiquons ses coordonnées."
       ],
       "chiusura": "En dehors de ces cas, nous n'appliquons aucune période de conservation supplémentaire : les données sont supprimées définitivement."
     },

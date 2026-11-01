@@ -81,7 +81,11 @@ export default {
         "titolo": "Get your report",
         "testo": "Diagnosis, DIY fix, and cost estimate if you need a technician. In PDF."
       }
-    ]
+    ],
+    "pagaApple": {
+      "titolo": "Pay in one tap",
+      "testo": "With your Apple account, just like any App Store purchase. Much less than a technician's visit."
+    }
   },
   "perche": {
     "tag": "Why Fixi",
@@ -291,13 +295,14 @@ export default {
       "titolo": "2. What data we collect",
       "intro": "Depending on how you use Fixi, we process:",
       "voci": [
-        "**Diagnostic data**: type of appliance, brand, description of the problem, and the messages you exchange with the AI assistant.",
-        "**Camera images**: during the session, the frames you capture are sent for analysis to the AI. **We don't save videos or frames**: they are processed and then discarded.",
-        "**Email**: if you choose to receive the report by email or to be contacted by a technician.",
-        "**Data for requesting a technician**: name, phone number, city, and postal code, which we share with technicians in your area so they can contact you.",
-        "**Payment data**: payments are handled by Stripe. **We don't see or store your card details**; we only record the payment outcome.",
-        "**Reviews**: the rating and comment you leave about a service.",
-        "**If you're a technician**: first name, last name, email, phone, city, postal code, specializations, and experience you provide when signing up."
+        "**Diagnosis data**: appliance type, brand, problem description and the messages you exchange with the AI assistant.",
+        "**Camera images**: during the session, the frames you capture are sent to the AI for analysis. **We don't save videos or frames**: they're processed and then discarded.",
+        "**Email**: if you choose to receive the report by email or to be contacted back by a technician.",
+        "**Data for requesting a technician**: name, phone, city and zip code, which we share with technicians in your area so they can contact you.",
+        "**Payment data**: payments are handled by Stripe; in the iPhone app, the diagnosis is paid through the App Store, and the payment is handled by Apple. **We never see or store your card details**; we only record the payment outcome.",
+        "**Dictation**: if you dictate a message instead of typing it, your phone's or browser's voice recognition (Google on Android, Apple on iPhone) turns it into text. **Only the text reaches Fixi**, never the audio.",
+        "**Reviews**: the rating and comment you leave on a job.",
+        "**If you're a technician**: first name, last name, email, phone, city, zip code, specializations and experience you provide when signing up."
       ]
     },
     "perche": {
@@ -385,9 +390,9 @@ export default {
     "cosaResta": {
       "titolo": "What data is kept, and for how long",
       "voci": [
-        "**Payment records** — these are handled by Stripe and must be kept for legally required accounting and tax purposes, even after other data is deleted. They don't contain your card details, which we never see or store.",
-        "**Aggregated, anonymous statistics** — for example, \"how many diagnoses involved a washing machine.\" These can't be traced back to you and are kept indefinitely.",
-        "**Data already shared with a technician** — if you requested a service visit and a technician accepted the job, they've already received your contact details to call you. We delete the request from our systems, but the technician is an independent controller of the data they received: for that data, you need to contact them directly. On request, we can provide you with their contact details."
+        "**Payment records** — handled by Stripe (by Apple for purchases made in the iPhone app) and must be kept to meet accounting and tax obligations required by law, even after other data is deleted. They don't contain your card details, which we never see or store.",
+        "**Aggregated and anonymous statistics** — for example «how many diagnoses involved a washing machine». These can't be traced back to you and are kept indefinitely.",
+        "**Data already shared with a technician** — if you requested a service call and a technician accepted the job, they've already received your contact details to call you. We delete the request from our systems, but the technician is an independent data controller for the data they received: you'll need to contact them directly for that. On request, we'll give you their contact details."
       ],
       "chiusura": "Outside of these cases, we don't apply any additional retention period: data is permanently deleted."
     },
