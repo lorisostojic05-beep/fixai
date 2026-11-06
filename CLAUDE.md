@@ -210,11 +210,14 @@ Mac: si compila **solo** in cloud con Codemagic, da `codemagic.yaml`. Il
 - Il 31/10/2026 il primo build Codemagic ha compilato lo Swift al primo colpo
   e caricato Fixi 1.0 (1) su App Store Connect. Certificato e profilo di firma
   scadono il 31/10/2027: il dettaglio è in cima a `codemagic.yaml`.
-- **La verifica degli acquisti Apple risponde 401 dall'ambiente vero** finché
-  l'app non è pubblicata: la chiave è giusta (l'ambiente di prova la accetta).
-  Per questo `chiediTransazione` chiede comunque anche all'ambiente di prova:
-  è da lì che passano gli acquisti dei revisori. Ricontrollare dopo la
-  pubblicazione che l'ambiente vero risponda.
+- **La verifica degli acquisti Apple rispondeva 401 dall'ambiente vero**
+  finché l'app non era approvata, pur con la chiave giusta. Per questo
+  `chiediTransazione` chiede comunque anche all'ambiente di prova: è da lì che
+  passano gli acquisti dei revisori. Approvata il 05/11/2026: dal 06/11
+  l'ambiente vero accetta la chiave. Per riprovarlo senza toccare il database,
+  un acquisto inesistente: `POST /api/acquisto-apple {"transactionId":"1"}`
+  deve dare **402** (Apple: "non esiste"); 502 vuol dire che Apple rifiuta di
+  nuovo la chiave.
 
 ## Database
 
